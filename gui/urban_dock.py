@@ -19,7 +19,8 @@ try:
         QMessageBox,
         QLineEdit,
         QDoubleSpinBox,
-        QSpinBox
+        QSpinBox,
+        QComboBox
     )
 except ImportError:
     # Mocks para quando rodado fora do QGIS (ex: smoke tests ou CLI)
@@ -140,6 +141,14 @@ except ImportError:
             pass
         def value(self):
             return 1000
+    class QComboBox:
+        def __init__(self, parent=None):
+            pass
+        def addItems(self, items):
+            pass
+        def currentIndex(self):
+            return 0
+
 
 
 class UrbanDock(QgsDockWidget):
@@ -268,6 +277,30 @@ class UrbanDock(QgsDockWidget):
         self.btn_calculate_betweenness = QPushButton(self.tr("Calcular Centralidade de Intermediação"))
         self.btn_calculate_betweenness.clicked.connect(self.calculate_edge_betweenness)
         layout.addWidget(self.btn_calculate_betweenness)
+
+        # Seção adicional: Distância de Entrega
+        delivery_title = QLabel(self.tr("<b>Distância de Entrega</b>"))
+        delivery_title.setStyleSheet("font-size: 13px; color: #2b6cb0; margin-top: 8px;")
+        layout.addWidget(delivery_title)
+
+        layout.addWidget(QLabel(self.tr("Camada de depósitos candidatos (Pontos):")))
+        self.cmb_delivery_depots = QgsMapLayerComboBox()
+        self.cmb_delivery_depots.setFilters(QgsMapLayerProxyModel.Filter.PointLayer)
+        layout.addWidget(self.cmb_delivery_depots)
+
+        layout.addWidget(QLabel(self.tr("Camada de zonas/centroides (Pontos):")))
+        self.cmb_delivery_zones = QgsMapLayerComboBox()
+        self.cmb_delivery_zones.setFilters(QgsMapLayerProxyModel.Filter.PointLayer)
+        layout.addWidget(self.cmb_delivery_zones)
+
+        layout.addWidget(QLabel(self.tr("Critério de custo:")))
+        self.cmb_delivery_criterion = QComboBox()
+        self.cmb_delivery_criterion.addItems([self.tr("Distância"), self.tr("Tempo de viagem")])
+        layout.addWidget(self.cmb_delivery_criterion)
+
+        self.btn_calculate_delivery = QPushButton(self.tr("Calcular Distância de Entrega"))
+        self.btn_calculate_delivery.clicked.connect(self.calculate_delivery_distance)
+        layout.addWidget(self.btn_calculate_delivery)
 
         self.setWidget(central)
 
@@ -567,4 +600,69 @@ class UrbanDock(QgsDockWidget):
         except Exception as e:
             self.txt_results.append(
                 self.tr("   -> <span style='color: #fc8181;'>Erro ao calcular centralidade de intermediação: {error}</span><br>").format(error=str(e))
+            )
+
+    def calculate_delivery_distance(self):
+        """
+        Executa o algoritmo de distância de entrega urbana a partir dos
+        depósitos candidatos e zonas/centroides de demanda selecionados.
+        """
+        network_layer = self.cmb_network.currentLayer()
+        depots_layer = self.cmb_delivery_depots.currentLayer()
+        zones_layer = self.cmb_delivery_zones.currentLayer()
+        criterion = self.cmb_delivery_criterion.currentIndex()
+
+        if not network_layer:
+            QMessageBox.warning(
+                self,
+                self.tr("Aviso"),
+                self.tr("Por favor, selecione uma camada de rede viária.")
+            )
+            return
+        if not depots_layer:
+            QMessageBox.warning(
+                self,
+                self.tr("Aviso"),
+                self.tr("Por favor, selecione uma camada de depósitos candidatos.")
+            )
+            return
+        if not zones_layer:
+            QMessageBox.warning(
+                self,
+                self.tr("Aviso"),
+                self.tr("Por favor, selecione uma camada de zonas/centroides.")
+            )
+            return
+
+        try:
+            import processing
+        except ImportError:
+            QMessageBox.critical(
+                self,
+                self.tr("Erro"),
+                self.tr("QGIS Processing não está disponível no ambiente atual.")
+            )
+            return
+
+        self.txt_results.append(self.tr("<b>Calculando distância de entrega...</b>"))
+        try:
+            res = processing.run("logis:urban_delivery_distance", {
+                'INPUT_NETWORK': network_layer,
+                'INPUT_DEPOTS': depots_layer,
+                'INPUT_ZONES': zones_layer,
+                'CRITERION': criterion,
+                'OUTPUT': 'memory:'
+            })
+            out_layer = res.get('OUTPUT')
+            if out_layer is not None:
+                QgsProject.instance().addMapLayer(out_layer)
+                count = out_layer.featureCount() if hasattr(out_layer, 'featureCount') else '?'
+                self.txt_results.append(
+                    self.tr("   -> <b>Distância de entrega:</b> camada adicionada ao projeto com {count} zona(s).<br>").format(count=count)
+                )
+            else:
+                self.txt_results.append(self.tr("   -> <b>Distância de entrega:</b> N/A (resultado vazio)<br>"))
+        except Exception as e:
+            self.txt_results.append(
+                self.tr("   -> <span style='color: #fc8181;'>Erro ao calcular distância de entrega: {error}</span><br>").format(error=str(e))
             )

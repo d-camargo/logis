@@ -97,5 +97,18 @@ class TestLogisPlugin(unittest.TestCase):
         self.assertIsNone(self.plugin.action_urban)
         self.assertIsNone(self.plugin.dock_urban)
 
+    def test_urban_dock_delivery_distance_controls(self):
+        self.plugin.initGui()
+        self.plugin.show_urban_dock()
+        dock = self.plugin.dock_urban
+        self.assertIsNotNone(dock)
+        
+        # Check that new controls exist
+        self.assertTrue(hasattr(dock, 'cmb_delivery_depots'))
+        self.assertTrue(hasattr(dock, 'cmb_delivery_zones'))
+        self.assertTrue(hasattr(dock, 'cmb_delivery_criterion'))
+        self.assertTrue(hasattr(dock, 'btn_calculate_delivery'))
+        self.assertTrue(hasattr(dock, 'calculate_delivery_distance'))
+
 if __name__ == '__main__':
     unittest.main()

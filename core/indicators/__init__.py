@@ -9,7 +9,8 @@ from .urban import (
     edge_betweenness,
     cargo_restriction_index,
     demand_density,
-    gravity_accessibility
+    gravity_accessibility,
+    nearest_depot_cost
 )
 
 __all__ = [
@@ -19,7 +20,8 @@ __all__ = [
     'edge_betweenness',
     'cargo_restriction_index',
     'demand_density',
-    'gravity_accessibility'
+    'gravity_accessibility',
+    'nearest_depot_cost'
 ]
 
 

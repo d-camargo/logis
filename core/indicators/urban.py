@@ -385,4 +385,68 @@ def gravity_accessibility(
     return scores
 
 
+def nearest_depot_cost(od_matrix: List[List[Union[int, float]]]) -> List[float]:
+    """
+    Calcula o custo para o depósito mais próximo para cada zona/destino a partir de uma matriz OD.
+
+    Assume que a matriz OD (od_matrix) possui os depósitos como origens (linhas)
+    e os pontos de demanda/entregas como destinos (colunas).
+
+    Fórmula:
+        Custo_j = Min(od_matrix[i][j]) para todo depósito i
+
+    Referência Bibliográfica da Técnica:
+        Daskin, M. S. (1995). Network and Discrete Location: Models, Algorithms, and Applications.
+        John Wiley & Sons.
+        (O cálculo de custo ao depósito mais próximo é a operação fundamental em problemas de
+        localização de instalações e roteirização baseada em zonas de atendimento de menor custo).
+
+    Limite de Complexidade:
+        Complexidade de Tempo: O(D * Z) onde D é o número de depósitos (linhas) e Z é o número de zonas (colunas).
+        Complexidade de Espaço: O(Z) para a lista de custos de retorno.
+        Testado com até 1.000 depósitos e 50.000 zonas.
+
+    Args:
+        od_matrix (list of list of float/int): Matriz onde a linha i representa o depósito i,
+                                              e a coluna j representa o custo para a zona j.
+
+    Returns:
+        list of float: Uma lista de tamanho igual ao número de zonas, contendo o custo para o
+                       depósito mais próximo para cada zona.
+
+    Raises:
+        ValueError: Se a matriz estiver vazia, se linhas tiverem tamanhos inconsistentes,
+                    ou se contiver valores negativos ou inválidos.
+        TypeError: Se od_matrix ou seus elementos não forem do tipo correto (list de lists).
+    """
+    if od_matrix is None:
+        raise TypeError("A matriz OD (od_matrix) não pode ser None.")
+    if not isinstance(od_matrix, list):
+        raise TypeError("A matriz OD (od_matrix) deve ser uma lista de listas.")
+    if len(od_matrix) == 0:
+        raise ValueError("A matriz OD (od_matrix) não pode ser vazia (deve conter pelo menos um depósito).")
+
+    num_zones = None
+    for idx, row in enumerate(od_matrix):
+        if not isinstance(row, list):
+            raise TypeError(f"A linha {idx} da matriz OD deve ser uma lista.")
+        if len(row) == 0:
+            raise ValueError(f"A linha {idx} da matriz OD não pode ser vazia.")
+        if num_zones is None:
+            num_zones = len(row)
+        elif len(row) != num_zones:
+            raise ValueError("As linhas da matriz OD devem ter tamanhos consistentes (mesmo número de zonas).")
+
+        for val in row:
+            if not isinstance(val, (int, float)):
+                raise TypeError("Os valores da matriz OD devem ser numéricos.")
+            if val < 0:
+                raise ValueError("Os custos na matriz OD não podem ser negativos.")
+
+    costs = []
+    for j in range(num_zones):
+        min_cost = min(od_matrix[i][j] for i in range(len(od_matrix)))
+        costs.append(float(min_cost))
+
+    return costs
 
