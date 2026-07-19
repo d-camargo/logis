@@ -46,7 +46,11 @@ from qgis.analysis import (
 class TravelTimeStrategy(QgsNetworkStrategy):
     """Custom network strategy to calculate travel time cost.
 
-    If a travel time field is available, returns it directly.
+    If a travel time field is available, prorates it by (arc distance / total feature
+    length) — QgsVectorLayerDirector splits each feature into one arc per pair of
+    consecutive vertices, so the precomputed travel_time (for the whole feature) must
+    be scaled down per arc, or multi-vertex features would have their full travel time
+    charged on every arc.
     Otherwise, calculates travel time from feature distance (meters) and speed (km/h).
     """
 
@@ -63,6 +67,19 @@ class TravelTimeStrategy(QgsNetworkStrategy):
             try:
                 c = float(val)
                 if c >= 0:
+                    # Scale by distance / total_length of feature
+                    length_val = feature.attribute("length") if "length" in feature.fields().names() else None
+                    try:
+                        total_len = float(length_val) if length_val is not None else 0.0
+                    except (ValueError, TypeError):
+                        total_len = 0.0
+
+                    if total_len <= 0:
+                        geom = feature.geometry()
+                        total_len = geom.length() if geom else 0.0
+
+                    if total_len > 0:
+                        return c * (distance / total_len)
                     return c
             except (ValueError, TypeError):
                 pass
