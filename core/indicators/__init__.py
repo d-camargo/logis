@@ -6,6 +6,7 @@ from .urban import (
     network_density,
     network_connectivity,
     mean_circuity,
+    edge_betweenness,
     cargo_restriction_index,
     demand_density,
     gravity_accessibility
@@ -15,6 +16,7 @@ __all__ = [
     'network_density',
     'network_connectivity',
     'mean_circuity',
+    'edge_betweenness',
     'cargo_restriction_index',
     'demand_density',
     'gravity_accessibility'

@@ -18,7 +18,8 @@ try:
         QTextEdit,
         QMessageBox,
         QLineEdit,
-        QDoubleSpinBox
+        QDoubleSpinBox,
+        QSpinBox
     )
 except ImportError:
     # Mocks para quando rodado fora do QGIS (ex: smoke tests ou CLI)
@@ -130,6 +131,15 @@ except ImportError:
             pass
         def value(self):
             return 2.0
+    class QSpinBox:
+        def __init__(self, parent=None):
+            pass
+        def setRange(self, minimum, maximum):
+            pass
+        def setValue(self, value):
+            pass
+        def value(self):
+            return 1000
 
 
 class UrbanDock(QgsDockWidget):
@@ -243,6 +253,21 @@ class UrbanDock(QgsDockWidget):
         self.btn_calculate_gravity = QPushButton(self.tr("Calcular Acessibilidade Gravitacional"))
         self.btn_calculate_gravity.clicked.connect(self.calculate_gravity_accessibility)
         layout.addWidget(self.btn_calculate_gravity)
+
+        # Seção adicional: Centralidade de Intermediação (Betweenness)
+        betweenness_title = QLabel(self.tr("<b>Centralidade de Intermediação (Betweenness)</b>"))
+        betweenness_title.setStyleSheet("font-size: 13px; color: #2b6cb0; margin-top: 8px;")
+        layout.addWidget(betweenness_title)
+
+        layout.addWidget(QLabel(self.tr("Número de amostras (pares OD):")))
+        self.spin_betweenness_samples = QSpinBox()
+        self.spin_betweenness_samples.setRange(1, 1000000)
+        self.spin_betweenness_samples.setValue(1000)
+        layout.addWidget(self.spin_betweenness_samples)
+
+        self.btn_calculate_betweenness = QPushButton(self.tr("Calcular Centralidade de Intermediação"))
+        self.btn_calculate_betweenness.clicked.connect(self.calculate_edge_betweenness)
+        layout.addWidget(self.btn_calculate_betweenness)
 
         self.setWidget(central)
 
@@ -495,4 +520,51 @@ class UrbanDock(QgsDockWidget):
         except Exception as e:
             self.txt_results.append(
                 self.tr("   -> <span style='color: #fc8181;'>Erro ao calcular acessibilidade gravitacional: {error}</span><br>").format(error=str(e))
+            )
+
+    def calculate_edge_betweenness(self):
+        """
+        Executa o algoritmo de centralidade de intermediação (betweenness) aproximada
+        das arestas da rede viária selecionada, por amostragem de pares OD.
+        """
+        network_layer = self.cmb_network.currentLayer()
+        num_samples = self.spin_betweenness_samples.value()
+
+        if not network_layer:
+            QMessageBox.warning(
+                self,
+                self.tr("Aviso"),
+                self.tr("Por favor, selecione uma camada de rede viária.")
+            )
+            return
+
+        try:
+            import processing
+        except ImportError:
+            QMessageBox.critical(
+                self,
+                self.tr("Erro"),
+                self.tr("QGIS Processing não está disponível no ambiente atual.")
+            )
+            return
+
+        self.txt_results.append(self.tr("<b>Calculando centralidade de intermediação...</b>"))
+        try:
+            res = processing.run("logis:urban_edge_betweenness", {
+                'INPUT_NETWORK': network_layer,
+                'NUM_SAMPLES': num_samples,
+                'OUTPUT': 'memory:'
+            })
+            out_layer = res.get('OUTPUT')
+            if out_layer is not None:
+                QgsProject.instance().addMapLayer(out_layer)
+                count = out_layer.featureCount() if hasattr(out_layer, 'featureCount') else '?'
+                self.txt_results.append(
+                    self.tr("   -> <b>Centralidade de intermediação:</b> camada adicionada ao projeto com {count} aresta(s).<br>").format(count=count)
+                )
+            else:
+                self.txt_results.append(self.tr("   -> <b>Centralidade de intermediação:</b> N/A (resultado vazio)<br>"))
+        except Exception as e:
+            self.txt_results.append(
+                self.tr("   -> <span style='color: #fc8181;'>Erro ao calcular centralidade de intermediação: {error}</span><br>").format(error=str(e))
             )
