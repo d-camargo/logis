@@ -18,8 +18,10 @@ class LogisPlugin:
         self.provider = None
         self.action = None
         self.action_urban = None
+        self.action_regional = None
         self.dialog = None
         self.dock_urban = None
+        self.dock_regional = None
 
     def tr(self, s):
         return QCoreApplication.translate("LogisPlugin", s)
@@ -45,6 +47,13 @@ class LogisPlugin:
         # Registra a entrada no menu "logis"
         self.iface.addPluginToMenu("logis", self.action_urban)
 
+        # Cria a ação do menu "Indicadores Regionais"
+        self.action_regional = QAction(self.tr("Indicadores Regionais"), self.iface.mainWindow())
+        self.action_regional.triggered.connect(self.show_regional_dock)
+        
+        # Registra a entrada no menu "logis"
+        self.iface.addPluginToMenu("logis", self.action_regional)
+
     def show_dependencies(self):
         from .gui.dependencies_dialog import DependenciesDialog
         if self.dialog is None:
@@ -59,6 +68,14 @@ class LogisPlugin:
             self.dock_urban = UrbanDock(self.iface, self.iface.mainWindow())
             self.iface.addDockWidget(Qt.RightDockWidgetArea, self.dock_urban)
         self.dock_urban.show()
+
+    def show_regional_dock(self):
+        from qgis.PyQt.QtCore import Qt
+        from .gui.regional_dock import RegionalDock
+        if self.dock_regional is None:
+            self.dock_regional = RegionalDock(self.iface, self.iface.mainWindow())
+            self.iface.addDockWidget(Qt.RightDockWidgetArea, self.dock_regional)
+        self.dock_regional.show()
 
     def unload(self):
         # Desregistra o Processing Provider
@@ -78,6 +95,11 @@ class LogisPlugin:
             self.iface.removePluginMenu("logis", self.action_urban)
             self.action_urban = None
 
+        # Remove o item de Indicadores Regionais do menu
+        if self.action_regional is not None:
+            self.iface.removePluginMenu("logis", self.action_regional)
+            self.action_regional = None
+
         # Libera referência ao diálogo
         if self.dialog is not None:
             self.dialog = None
@@ -88,3 +110,10 @@ class LogisPlugin:
             if not sip.isdeleted(self.dock_urban):
                 self.iface.removeDockWidget(self.dock_urban)
             self.dock_urban = None
+
+        # Remove e libera o dock regional widget
+        if self.dock_regional is not None:
+            from qgis.PyQt import sip
+            if not sip.isdeleted(self.dock_regional):
+                self.iface.removeDockWidget(self.dock_regional)
+            self.dock_regional = None

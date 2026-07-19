@@ -13,6 +13,11 @@ from .urban import (
     nearest_depot_cost
 )
 
+from .regional import (
+    road_density,
+    paved_duplicated_share
+)
+
 __all__ = [
     'network_density',
     'network_connectivity',
@@ -21,7 +26,10 @@ __all__ = [
     'cargo_restriction_index',
     'demand_density',
     'gravity_accessibility',
-    'nearest_depot_cost'
+    'nearest_depot_cost',
+    'road_density',
+    'paved_duplicated_share'
 ]
+
 
 
