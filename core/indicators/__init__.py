@@ -2,7 +2,22 @@
 """logis.core.indicators subpackage.
 """
 
-from .urban import network_density, network_connectivity, mean_circuity, cargo_restriction_index
+from .urban import (
+    network_density,
+    network_connectivity,
+    mean_circuity,
+    cargo_restriction_index,
+    demand_density,
+    gravity_accessibility
+)
 
-__all__ = ['network_density', 'network_connectivity', 'mean_circuity', 'cargo_restriction_index']
+__all__ = [
+    'network_density',
+    'network_connectivity',
+    'mean_circuity',
+    'cargo_restriction_index',
+    'demand_density',
+    'gravity_accessibility'
+]
+
 

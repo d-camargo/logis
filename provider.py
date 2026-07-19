@@ -10,6 +10,8 @@ from .algorithms.urban_network_density import UrbanNetworkDensity
 from .algorithms.urban_network_connectivity import UrbanNetworkConnectivity
 from .algorithms.urban_mean_circuity import UrbanMeanCircuity
 from .algorithms.urban_cargo_restriction import UrbanCargoRestriction
+from .algorithms.urban_demand_density import UrbanDemandDensity
+from .algorithms.urban_gravity_accessibility import UrbanGravityAccessibility
 
 
 class LogisProvider(QgsProcessingProvider):
@@ -18,6 +20,8 @@ class LogisProvider(QgsProcessingProvider):
         self.addAlgorithm(UrbanNetworkConnectivity())
         self.addAlgorithm(UrbanMeanCircuity())
         self.addAlgorithm(UrbanCargoRestriction())
+        self.addAlgorithm(UrbanDemandDensity())
+        self.addAlgorithm(UrbanGravityAccessibility())
 
     def id(self):
         return 'logis'

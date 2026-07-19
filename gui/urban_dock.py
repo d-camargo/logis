@@ -6,7 +6,7 @@ Licença: GPL-3.0
 """
 
 try:
-    from qgis.gui import QgsDockWidget, QgsMapLayerComboBox
+    from qgis.gui import QgsDockWidget, QgsMapLayerComboBox, QgsFieldComboBox
     from qgis.core import QgsMapLayerProxyModel, QgsProject
     from qgis.PyQt.QtCore import Qt, QCoreApplication
     from qgis.PyQt.QtWidgets import (
@@ -16,7 +16,9 @@ try:
         QLabel,
         QPushButton,
         QTextEdit,
-        QMessageBox
+        QMessageBox,
+        QLineEdit,
+        QDoubleSpinBox
     )
 except ImportError:
     # Mocks para quando rodado fora do QGIS (ex: smoke tests ou CLI)
@@ -36,6 +38,14 @@ except ImportError:
         class Filter:
             LineLayer = 1
             PolygonLayer = 2
+            PointLayer = 3
+    class QgsFieldComboBox:
+        def __init__(self, parent=None):
+            pass
+        def setLayer(self, layer):
+            pass
+        def currentField(self):
+            return None
     class QgsProject:
         @staticmethod
         def instance():
@@ -104,6 +114,22 @@ except ImportError:
         @staticmethod
         def critical(parent, title, text):
             pass
+    class QLineEdit:
+        def __init__(self, parent=None):
+            pass
+        def text(self):
+            return ""
+    class QDoubleSpinBox:
+        def __init__(self, parent=None):
+            pass
+        def setRange(self, minimum, maximum):
+            pass
+        def setValue(self, value):
+            pass
+        def setSingleStep(self, step):
+            pass
+        def value(self):
+            return 2.0
 
 
 class UrbanDock(QgsDockWidget):
@@ -168,6 +194,55 @@ class UrbanDock(QgsDockWidget):
             "font-family: monospace; font-size: 11px; background-color: #2d3748; color: #edf2f7; padding: 5px;"
         )
         layout.addWidget(self.txt_results)
+
+        # Seção adicional: Densidade de Demanda
+        demand_title = QLabel(self.tr("<b>Densidade de Demanda</b>"))
+        demand_title.setStyleSheet("font-size: 13px; color: #2b6cb0; margin-top: 8px;")
+        layout.addWidget(demand_title)
+
+        layout.addWidget(QLabel(self.tr("Código IBGE do município (7 dígitos):")))
+        self.txt_code_muni = QLineEdit()
+        layout.addWidget(self.txt_code_muni)
+
+        layout.addWidget(QLabel(self.tr("Campo de população (setor + censobr, requer GisBR):")))
+        self.txt_population_field = QLineEdit()
+        layout.addWidget(self.txt_population_field)
+
+        self.btn_calculate_demand = QPushButton(self.tr("Calcular Densidade de Demanda"))
+        self.btn_calculate_demand.clicked.connect(self.calculate_demand_density)
+        layout.addWidget(self.btn_calculate_demand)
+
+        # Seção adicional: Acessibilidade Gravitacional
+        gravity_title = QLabel(self.tr("<b>Acessibilidade Gravitacional</b>"))
+        gravity_title.setStyleSheet("font-size: 13px; color: #2b6cb0; margin-top: 8px;")
+        layout.addWidget(gravity_title)
+
+        layout.addWidget(QLabel(self.tr("Camada de origem (pontos/centroides):")))
+        self.cmb_gravity_origin = QgsMapLayerComboBox()
+        self.cmb_gravity_origin.setFilters(QgsMapLayerProxyModel.Filter.PointLayer)
+        layout.addWidget(self.cmb_gravity_origin)
+
+        layout.addWidget(QLabel(self.tr("Camada de destinos (POIs):")))
+        self.cmb_gravity_dest = QgsMapLayerComboBox()
+        self.cmb_gravity_dest.setFilters(QgsMapLayerProxyModel.Filter.PointLayer)
+        layout.addWidget(self.cmb_gravity_dest)
+
+        layout.addWidget(QLabel(self.tr("Campo de peso do destino (opcional, default 1):")))
+        self.cmb_gravity_weight_field = QgsFieldComboBox()
+        self.cmb_gravity_weight_field.setLayer(self.cmb_gravity_dest.currentLayer())
+        self.cmb_gravity_dest.layerChanged.connect(self.cmb_gravity_weight_field.setLayer)
+        layout.addWidget(self.cmb_gravity_weight_field)
+
+        layout.addWidget(QLabel(self.tr("Beta (decaimento por distância):")))
+        self.spin_gravity_beta = QDoubleSpinBox()
+        self.spin_gravity_beta.setRange(0.0001, 10.0)
+        self.spin_gravity_beta.setSingleStep(0.1)
+        self.spin_gravity_beta.setValue(2.0)
+        layout.addWidget(self.spin_gravity_beta)
+
+        self.btn_calculate_gravity = QPushButton(self.tr("Calcular Acessibilidade Gravitacional"))
+        self.btn_calculate_gravity.clicked.connect(self.calculate_gravity_accessibility)
+        layout.addWidget(self.btn_calculate_gravity)
 
         self.setWidget(central)
 
@@ -298,3 +373,126 @@ class UrbanDock(QgsDockWidget):
 
         self.txt_results.append(self.tr("<b>=== CÁLCULO CONCLUÍDO ===</b>"))
         self.btn_calculate.setEnabled(True)
+
+    def calculate_demand_density(self):
+        """
+        Executa o algoritmo de densidade de demanda (população/km² por setor
+        censitário) para o município e campo de população informados.
+        """
+        code_muni = self.txt_code_muni.text().strip()
+        population_field = self.txt_population_field.text().strip()
+
+        if not code_muni:
+            QMessageBox.warning(
+                self,
+                self.tr("Aviso"),
+                self.tr("Por favor, informe o código IBGE do município.")
+            )
+            return
+        if not population_field:
+            QMessageBox.warning(
+                self,
+                self.tr("Aviso"),
+                self.tr("Por favor, informe o campo de população.")
+            )
+            return
+
+        try:
+            import processing
+        except ImportError:
+            QMessageBox.critical(
+                self,
+                self.tr("Erro"),
+                self.tr("QGIS Processing não está disponível no ambiente atual.")
+            )
+            return
+
+        self.txt_results.append(self.tr("<b>Calculando densidade de demanda...</b>"))
+        try:
+            res = processing.run("logis:urban_demand_density", {
+                'INPUT_CODE_MUNI': code_muni,
+                'FIELD_POPULATION': population_field,
+                'OUTPUT': 'memory:'
+            })
+            out_layer = res.get('OUTPUT')
+            if out_layer is not None:
+                QgsProject.instance().addMapLayer(out_layer)
+                count = out_layer.featureCount() if hasattr(out_layer, 'featureCount') else '?'
+                self.txt_results.append(
+                    self.tr("   -> <b>Densidade de demanda:</b> camada adicionada ao projeto com {count} setor(es).<br>").format(count=count)
+                )
+            else:
+                self.txt_results.append(self.tr("   -> <b>Densidade de demanda:</b> N/A (resultado vazio)<br>"))
+        except Exception as e:
+            self.txt_results.append(
+                self.tr("   -> <span style='color: #fc8181;'>Erro ao calcular densidade de demanda: {error}</span><br>").format(error=str(e))
+            )
+
+    def calculate_gravity_accessibility(self):
+        """
+        Executa o algoritmo de acessibilidade gravitacional sobre a rede viária,
+        a camada de origem e a camada de destinos (POIs) selecionadas.
+        """
+        network_layer = self.cmb_network.currentLayer()
+        origin_layer = self.cmb_gravity_origin.currentLayer()
+        dest_layer = self.cmb_gravity_dest.currentLayer()
+        weight_field = self.cmb_gravity_weight_field.currentField()
+        beta = self.spin_gravity_beta.value()
+
+        if not network_layer:
+            QMessageBox.warning(
+                self,
+                self.tr("Aviso"),
+                self.tr("Por favor, selecione uma camada de rede viária.")
+            )
+            return
+        if not origin_layer:
+            QMessageBox.warning(
+                self,
+                self.tr("Aviso"),
+                self.tr("Por favor, selecione uma camada de origem.")
+            )
+            return
+        if not dest_layer:
+            QMessageBox.warning(
+                self,
+                self.tr("Aviso"),
+                self.tr("Por favor, selecione uma camada de destinos.")
+            )
+            return
+
+        try:
+            import processing
+        except ImportError:
+            QMessageBox.critical(
+                self,
+                self.tr("Erro"),
+                self.tr("QGIS Processing não está disponível no ambiente atual.")
+            )
+            return
+
+        self.txt_results.append(self.tr("<b>Calculando acessibilidade gravitacional...</b>"))
+        try:
+            params = {
+                'INPUT_NETWORK': network_layer,
+                'INPUT_ORIGINS': origin_layer,
+                'INPUT_DESTINATIONS': dest_layer,
+                'BETA': beta,
+                'OUTPUT': 'memory:'
+            }
+            if weight_field:
+                params['FIELD_WEIGHT'] = weight_field
+            res = processing.run("logis:urban_gravity_accessibility", params)
+            out_layer = res.get('OUTPUT')
+            if out_layer is not None:
+                QgsProject.instance().addMapLayer(out_layer)
+                count = out_layer.featureCount() if hasattr(out_layer, 'featureCount') else '?'
+                self.txt_results.append(
+                    self.tr("   -> <b>Acessibilidade gravitacional:</b> camada adicionada ao projeto com {count} origem(ns).<br>").format(count=count)
+                )
+            else:
+                self.txt_results.append(self.tr("   -> <b>Acessibilidade gravitacional:</b> N/A (resultado vazio)<br>"))
+        except Exception as e:
+            self.txt_results.append(
+                self.tr("   -> <span style='color: #fc8181;'>Erro ao calcular acessibilidade gravitacional: {error}</span><br>").format(error=str(e))
+            )
