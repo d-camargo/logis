@@ -16,6 +16,7 @@ from .algorithms.urban_edge_betweenness import UrbanEdgeBetweenness
 from .algorithms.urban_delivery_distance import UrbanDeliveryDistance
 from .algorithms.regional_network_density import RegionalNetworkDensity
 from .algorithms.regional_pavement_percentage import RegionalPavementPercentage
+from .algorithms.regional_critical_links import RegionalCriticalLinks
 
 
 class LogisProvider(QgsProcessingProvider):
@@ -30,6 +31,7 @@ class LogisProvider(QgsProcessingProvider):
         self.addAlgorithm(UrbanDeliveryDistance())
         self.addAlgorithm(RegionalNetworkDensity())
         self.addAlgorithm(RegionalPavementPercentage())
+        self.addAlgorithm(RegionalCriticalLinks())
 
     def id(self):
         return 'logis'

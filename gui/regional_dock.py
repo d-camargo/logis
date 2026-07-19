@@ -216,6 +216,12 @@ class RegionalDock(QgsDockWidget):
         self.btn_calculate_pavement.clicked.connect(self.calculate_pavement_percentage)
         layout.addWidget(self.btn_calculate_pavement)
 
+        # Botão Calcular Pontes/Arcos Críticos
+        self.btn_calculate_critical_links = QPushButton(self.tr("Calcular Pontes/Arcos Críticos"))
+        self.btn_calculate_critical_links.setStyleSheet("font-weight: bold; padding: 6px; font-size: 12px;")
+        self.btn_calculate_critical_links.clicked.connect(self.calculate_critical_links)
+        layout.addWidget(self.btn_calculate_critical_links)
+
         # Painel de resultados
         layout.addWidget(QLabel(self.tr("Resultados dos Indicadores Regionais:")))
         self.txt_results = QTextEdit()
@@ -363,3 +369,61 @@ class RegionalDock(QgsDockWidget):
 
         self.txt_results.append(self.tr("<b>=== CÁLCULO CONCLUÍDO ===</b>"))
         self.btn_calculate_pavement.setEnabled(True)
+
+    def calculate_critical_links(self):
+        """
+        Executa o algoritmo de identificação de pontes/arcos críticos da malha
+        regional e exibe os resultados.
+        """
+        self.txt_results.clear()
+
+        network_layer = self.cmb_network.currentLayer()
+
+        if not network_layer:
+            QMessageBox.warning(
+                self,
+                self.tr("Aviso"),
+                self.tr("Por favor, selecione uma camada de rede regional.")
+            )
+            self.txt_results.append(self.tr("<span style='color: #fc8181;'>Erro: Camada de rede regional não selecionada.</span>"))
+            return
+
+        try:
+            import processing
+        except ImportError:
+            QMessageBox.critical(
+                self,
+                self.tr("Erro"),
+                self.tr("QGIS Processing não está disponível no ambiente atual.")
+            )
+            self.txt_results.append(self.tr("<span style='color: #fc8181;'>Erro: QGIS Processing não disponível.</span>"))
+            return
+
+        self.btn_calculate_critical_links.setEnabled(False)
+        self.txt_results.append(self.tr("<b>=== CALCULANDO PONTES/ARCOS CRÍTICOS ===</b><br>"))
+
+        try:
+            res_critical = processing.run("logis:regional_critical_links", {
+                'INPUT_NETWORK': network_layer,
+                'OUTPUT': 'memory:'
+            })
+            output_layer = res_critical.get('OUTPUT')
+            num_bridges = res_critical.get('OUTPUT_NUM_CRITICAL_LINKS')
+            total = output_layer.featureCount() if output_layer is not None else 0
+
+            if output_layer is not None:
+                QgsProject.instance().addMapLayer(output_layer)
+
+            self.txt_results.append(
+                self.tr("-> <b>Pontes/Arcos Críticos:</b> {n} de {total} trechos.<br>").format(
+                    n=num_bridges, total=total
+                )
+            )
+
+        except Exception as e:
+            self.txt_results.append(
+                self.tr("<span style='color: #fc8181;'>Erro ao calcular pontes/arcos críticos: {error}</span><br>").format(error=str(e))
+            )
+
+        self.txt_results.append(self.tr("<b>=== CÁLCULO CONCLUÍDO ===</b>"))
+        self.btn_calculate_critical_links.setEnabled(True)
