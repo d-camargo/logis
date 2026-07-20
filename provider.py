@@ -23,6 +23,7 @@ from .algorithms.facility_lscp import FacilityLSCP
 from .algorithms.vrp_cvrp import VrpCvrp
 from .algorithms.waste_generation_estimate import WasteGenerationEstimate
 from .algorithms.waste_districting import WasteDistricting
+from .algorithms.waste_cpp_route import WasteCppRoute
 
 
 class LogisProvider(QgsProcessingProvider):
@@ -44,6 +45,7 @@ class LogisProvider(QgsProcessingProvider):
         self.addAlgorithm(VrpCvrp())
         self.addAlgorithm(WasteGenerationEstimate())
         self.addAlgorithm(WasteDistricting())
+        self.addAlgorithm(WasteCppRoute())
 
     def id(self):
         return 'logis'

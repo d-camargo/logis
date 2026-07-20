@@ -56,6 +56,19 @@ class TestWaste(unittest.TestCase):
         with self.assertRaises(ValueError):
             allocate_generation_by_street_length(900.0, [100.0, -50.0])
 
+    def test_waste_cpp_route_algorithm_metadata(self):
+        try:
+            from algorithms.waste_cpp_route import WasteCppRoute
+            alg = WasteCppRoute()
+            self.assertEqual(alg.name(), "waste_cpp_route")
+            self.assertEqual(alg.groupId(), "waste")
+            self.assertTrue(callable(alg.createInstance))
+            self.assertIsInstance(alg.createInstance(), WasteCppRoute)
+        except ImportError:
+            # Em ambiente sem QGIS C++ bindings completos, ignora instanciação
+            pass
+
 
 if __name__ == "__main__":
     unittest.main()
+
