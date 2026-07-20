@@ -18,6 +18,11 @@ from .regional import (
     paved_duplicated_share
 )
 
+from .waste import (
+    sector_waste_generation,
+    allocate_generation_by_street_length
+)
+
 __all__ = [
     'network_density',
     'network_connectivity',
@@ -28,7 +33,9 @@ __all__ = [
     'gravity_accessibility',
     'nearest_depot_cost',
     'road_density',
-    'paved_duplicated_share'
+    'paved_duplicated_share',
+    'sector_waste_generation',
+    'allocate_generation_by_street_length'
 ]
 
 

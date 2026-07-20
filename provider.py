@@ -21,6 +21,7 @@ from .algorithms.facility_p_median import FacilityPMedian
 from .algorithms.facility_mclp import FacilityMCLP
 from .algorithms.facility_lscp import FacilityLSCP
 from .algorithms.vrp_cvrp import VrpCvrp
+from .algorithms.waste_generation_estimate import WasteGenerationEstimate
 
 
 class LogisProvider(QgsProcessingProvider):
@@ -40,6 +41,7 @@ class LogisProvider(QgsProcessingProvider):
         self.addAlgorithm(FacilityMCLP())
         self.addAlgorithm(FacilityLSCP())
         self.addAlgorithm(VrpCvrp())
+        self.addAlgorithm(WasteGenerationEstimate())
 
     def id(self):
         return 'logis'
