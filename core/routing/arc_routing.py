@@ -13,12 +13,13 @@
 """Arc Routing pure-Python heuristics module for the logis plugin.
 
 Provides pure Python implementations for the undirected Chinese Postman
-Problem (CPP) on edge-based network graphs (RPP and CARP are out of scope
-for this module — see CLAUDE.md section 6):
+Problem (CPP) and Rural Postman Problem (RPP) component connection on
+edge-based network graphs (CARP is out of scope for this module — see CLAUDE.md section 6):
 - Identification of odd-degree nodes in edge-based network graphs.
 - Shortest path computation between node keys weighted by length (Dijkstra).
 - Greedy matching of odd-degree nodes via shortest path search.
 - Eulerian circuit construction (Hierholzer) over the duplicated-edge multigraph.
+- Connecting required components for RPP via MST (Kruskal) over component representatives.
 
 Edges are represented as dicts:
     {"id": edge_id, "from_node": node_key, "to_node": node_key, "length": float}
@@ -30,11 +31,14 @@ References:
       Mathematical Programming, 5(1), 88-124.
     - Hierholzer, C. (1873). Über die Möglichkeit, einen Linienzug ohne Wiederholung
       und ohne Unterbrechung zu umfahren. Mathematische Annalen, 6(1), 30-32.
+    - Frederickson, G. N. (1979). Approximation algorithms for some postman problems.
+      Journal of the ACM, 26(3), 538-554.
 
 Complexity/Scale limits:
     - find_odd_degree_nodes: O(E), scans all edges and counts node degrees.
     - shortest_path_between_nodes: O(E log V), standard Dijkstra algorithm with priority queue.
     - match_odd_degree_nodes: O(K² log V), greedy pairing of K odd-degree nodes using Dijkstra.
+    - connect_required_components: O(C² log V + C² log C), C components connected via Dijkstra + Kruskal.
     - Tested scale: up to ~5,000 road segments (neighborhood/collection-district scale).
 """
 
@@ -411,5 +415,147 @@ def build_eulerian_circuit(
         )
 
     return circuit
+
+
+def _sort_key(x: object) -> Tuple[str, str]:
+    """Chave determinística de ordenação para nós (suporta tipos mistos)."""
+    return (type(x).__name__, str(x))
+
+
+def connect_required_components(
+    required_edges: List[Dict],
+    full_edges: List[Dict]
+) -> List[object]:
+    """Identifica componentes conexos do subgrafo de trechos obrigatórios e conecta-os via MST.
+
+    Identifica os componentes conexos formados pelos trechos em required_edges (BFS sobre
+    from_node/to_node). Se houver mais de um componente, seleciona um nó representante por
+    componente (o menor node_key para determinismo), calcula os caminhos mínimos entre
+    todos os pares de representantes sobre full_edges (via shortest_path_between_nodes),
+    e monta uma Árvore Geradora Mínima (MST via Kruskal) para conectar todos os componentes.
+
+    Referência Bibliográfica da Técnica:
+        - Frederickson, G. N. (1979). Approximation algorithms for some postman problems.
+          Journal of the ACM, 26(3), 538-554.
+
+    Limite de Complexidade:
+        Complexidade de Tempo: O(C² log V + C² log C), onde C é o número de componentes
+        conexos do subgrafo obrigatório e V é o número de vértices em full_edges.
+        Testado com até ~5.000 trechos de via.
+
+    Args:
+        required_edges: Lista de trechos de via obrigatórios (ver formato do módulo).
+        full_edges: Lista de todos os trechos de via da rede (obrigatórios + opcionais).
+
+    Returns:
+        Lista com a união (sem duplicatas) dos identificadores (edge_id) dos trechos
+        que compõem os caminhos mínimos da MST para conectar os componentes.
+        Retorna lista vazia ([]) se o subgrafo obrigatório já for conexo (um único componente).
+
+    Raises:
+        ValueError: Se required_edges ou full_edges forem vazias ou inválidas, ou se
+            algum componente obrigatório não puder ser conectado a todos os demais
+            (rede desconexa em full_edges).
+    """
+    _validate_edges(required_edges)
+    _validate_edges(full_edges)
+
+    req_nodes = set()
+    req_adj: Dict[object, List[object]] = {}
+    for edge in required_edges:
+        u = edge["from_node"]
+        v = edge["to_node"]
+        req_nodes.add(u)
+        req_nodes.add(v)
+        if u not in req_adj:
+            req_adj[u] = []
+        if v not in req_adj:
+            req_adj[v] = []
+        req_adj[u].append(v)
+        if u != v:
+            req_adj[v].append(u)
+
+    visited = set()
+    components: List[List[object]] = []
+
+    sorted_nodes = sorted(req_nodes, key=_sort_key)
+    for node in sorted_nodes:
+        if node not in visited:
+            comp = []
+            queue = [node]
+            visited.add(node)
+            while queue:
+                curr = queue.pop(0)
+                comp.append(curr)
+                for nbr in req_adj[curr]:
+                    if nbr not in visited:
+                        visited.add(nbr)
+                        queue.append(nbr)
+            components.append(comp)
+
+    if len(components) <= 1:
+        return []
+
+    representatives: List[object] = []
+    for comp in components:
+        rep = min(comp, key=_sort_key)
+        representatives.append(rep)
+
+    c_count = len(components)
+    candidate_edges = []
+    for i in range(c_count):
+        for j in range(i + 1, c_count):
+            u = representatives[i]
+            v = representatives[j]
+            try:
+                dist, path_edge_ids = shortest_path_between_nodes(full_edges, u, v)
+                candidate_edges.append((dist, i, j, path_edge_ids))
+            except ValueError:
+                pass
+
+    candidate_edges.sort(key=lambda item: (item[0], item[1], item[2]))
+
+    parent = list(range(c_count))
+
+    def find(i: int) -> int:
+        if parent[i] == i:
+            return i
+        parent[i] = find(parent[i])
+        return parent[i]
+
+    def union(i: int, j: int) -> bool:
+        root_i = find(i)
+        root_j = find(j)
+        if root_i != root_j:
+            parent[root_i] = root_j
+            return True
+        return False
+
+    mst_paths: List[List[object]] = []
+    edges_count = 0
+
+    for dist, i, j, path_edge_ids in candidate_edges:
+        if union(i, j):
+            mst_paths.append(path_edge_ids)
+            edges_count += 1
+            if edges_count == c_count - 1:
+                break
+
+    if edges_count < c_count - 1:
+        raise ValueError(
+            "Não foi possível conectar todos os componentes obrigatórios: "
+            "a rede (full_edges) é desconexa entre os componentes."
+        )
+
+    connector_edge_ids: List[object] = []
+    seen = set()
+    for path in mst_paths:
+        for edge_id in path:
+            if edge_id not in seen:
+                seen.add(edge_id)
+                connector_edge_ids.append(edge_id)
+
+    return connector_edge_ids
+
 
 

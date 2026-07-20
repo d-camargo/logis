@@ -68,6 +68,17 @@ class TestWaste(unittest.TestCase):
             # Em ambiente sem QGIS C++ bindings completos, ignora instanciação
             pass
 
+    def test_waste_rpp_route_algorithm_metadata(self):
+        try:
+            from algorithms.waste_rpp_route import WasteRppRoute
+            alg = WasteRppRoute()
+            self.assertEqual(alg.name(), "waste_rpp_route")
+            self.assertEqual(alg.groupId(), "waste")
+            self.assertTrue(callable(alg.createInstance))
+            self.assertIsInstance(alg.createInstance(), WasteRppRoute)
+        except ImportError:
+            pass
+
 
 if __name__ == "__main__":
     unittest.main()

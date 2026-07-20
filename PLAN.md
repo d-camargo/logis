@@ -281,6 +281,27 @@ próximo trabalho real a executar.
       plano segue para a rodada seguinte do F6 sem esperar por ela. —
       arquivos: nenhum (revisão manual pelo Diego)
 
+**Rodada 4 (RPP — Rural Postman Problem):**
+
+- [x] 16. Adicionar `connect_required_components(required_edges, full_edges)`
+      em `core/routing/arc_routing.py` (conecta componentes obrigatórios
+      desconexos usando MST de caminhos mínimos sobre a rede completa). —
+      arquivos: `core/routing/arc_routing.py`
+
+- [x] 17. Criar `algorithms/waste_rpp_route.py` (`logis:waste_rpp_route`)
+      e registrar em `provider.py` (19 algorithms no total). — arquivos:
+      `algorithms/waste_rpp_route.py`, `provider.py`
+
+- [x] 18. **(Adiado a pedido do Diego — não bloqueia rodadas
+      seguintes.)** Diego revisa manualmente no QGIS: roda
+      `logis:waste_rpp_route` sobre subconjunto de vias obrigatórias,
+      confirma visualmente que a sequência de rota conecta os componentes
+      e cobre todas as vias obrigatórias do setor. Agrupado com os passos 7
+      e 15 para revisão em lote quando o Diego retomar os testes no QGIS —
+      até lá, a rodada 4 é considerada "código fechado, validação visual
+      pendente" e o plano segue para a rodada seguinte do F6 sem esperar
+      por ela. — arquivos: nenhum (revisão manual pelo Diego)
+
 ## Critério de aceite
 
 - `core/routing/arc_routing.py` existe com quatro funções puras

@@ -6,6 +6,7 @@ from core.routing.arc_routing import (
     shortest_path_between_nodes,
     match_odd_degree_nodes,
     build_eulerian_circuit,
+    connect_required_components,
 )
 
 
@@ -207,5 +208,59 @@ class TestBuildEulerianCircuit(unittest.TestCase):
             build_eulerian_circuit([])
 
 
+class TestConnectRequiredComponents(unittest.TestCase):
+
+    def test_single_component_returns_empty(self):
+        req = _simple_cycle_edges()
+        full = req
+        connectors = connect_required_components(req, full)
+        self.assertEqual(connectors, [])
+
+    def test_two_components_connected_via_mst(self):
+        req = [
+            {"id": "e1", "from_node": "N1", "to_node": "N1", "length": 1.0},
+            {"id": "e2", "from_node": "N2", "to_node": "N2", "length": 1.0},
+        ]
+        full = req + [
+            {"id": "e_conn", "from_node": "N1", "to_node": "N2", "length": 5.0},
+        ]
+        connectors = connect_required_components(req, full)
+        self.assertEqual(connectors, ["e_conn"])
+
+    def test_three_components_connected_via_mst(self):
+        req = [
+            {"id": "e1", "from_node": "N1", "to_node": "N1", "length": 1.0},
+            {"id": "e2", "from_node": "N2", "to_node": "N2", "length": 1.0},
+            {"id": "e3", "from_node": "N3", "to_node": "N3", "length": 1.0},
+        ]
+        full = req + [
+            {"id": "e12", "from_node": "N1", "to_node": "N2", "length": 2.0},
+            {"id": "e23", "from_node": "N2", "to_node": "N3", "length": 3.0},
+            {"id": "e13", "from_node": "N1", "to_node": "N3", "length": 10.0},
+        ]
+        connectors = connect_required_components(req, full)
+        self.assertEqual(set(connectors), {"e12", "e23"})
+
+    def test_disconnected_full_edges_raises(self):
+        req = [
+            {"id": "e1", "from_node": "A", "to_node": "B", "length": 1.0},
+            {"id": "e2", "from_node": "C", "to_node": "D", "length": 1.0},
+        ]
+        full = req
+        with self.assertRaises(ValueError):
+            connect_required_components(req, full)
+
+    def test_empty_required_edges_raises(self):
+        full = _simple_cycle_edges()
+        with self.assertRaises(ValueError):
+            connect_required_components([], full)
+
+    def test_empty_full_edges_raises(self):
+        req = _simple_cycle_edges()
+        with self.assertRaises(ValueError):
+            connect_required_components(req, [])
+
+
 if __name__ == "__main__":
     unittest.main()
+
