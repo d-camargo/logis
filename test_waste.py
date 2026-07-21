@@ -2,7 +2,8 @@
 import unittest
 from core.indicators.waste import (
     sector_waste_generation,
-    allocate_generation_by_street_length
+    allocate_generation_by_street_length,
+    estimate_fleet_size
 )
 
 try:
@@ -70,6 +71,41 @@ class TestWaste(unittest.TestCase):
             allocate_generation_by_street_length(900.0, [100.0, 0.0])
         with self.assertRaises(ValueError):
             allocate_generation_by_street_length(900.0, [100.0, -50.0])
+
+    def test_estimate_fleet_size(self):
+        # Caso 1: Rota única cabendo em 1 veículo
+        res = estimate_fleet_size([20.0], 10.0, 8.0, 0.5, 0.5)
+        self.assertEqual(res["fleet_size"], 1)
+        self.assertEqual(res["vehicle_assignments"], [[0]])
+        self.assertAlmostEqual(res["total_route_time_h"], 3.0)
+        self.assertAlmostEqual(res["avg_utilization"], 3.0 / 8.0)
+
+        # Caso 2: Múltiplas rotas distribuídas em múltiplos veículos (FFD Bin Packing)
+        res_multi = estimate_fleet_size([30.0, 30.0, 30.0], 10.0, 8.0, 0.5, 0.5)
+        self.assertEqual(res_multi["fleet_size"], 2)
+        self.assertEqual(len(res_multi["vehicle_assignments"]), 2)
+        self.assertAlmostEqual(res_multi["total_route_time_h"], 12.0)
+        self.assertAlmostEqual(res_multi["avg_utilization"], 12.0 / 16.0)
+
+        # Caso 3: Rota isolada excedendo a jornada máxima (ValueError)
+        with self.assertRaises(ValueError):
+            estimate_fleet_size([100.0], 10.0, 8.0, 0.5, 0.5)
+
+        # Caso 4: Parâmetros operacionais/temporais inválidos (ValueError)
+        with self.assertRaises(ValueError):
+            estimate_fleet_size([10.0], 0.0, 8.0, 0.5, 0.5)
+        with self.assertRaises(ValueError):
+            estimate_fleet_size([10.0], 10.0, -8.0, 0.5, 0.5)
+        with self.assertRaises(ValueError):
+            estimate_fleet_size([10.0], 10.0, 8.0, -0.5, 0.5)
+        with self.assertRaises(ValueError):
+            estimate_fleet_size([10.0], 10.0, 8.0, 0.5, -0.5)
+
+        # Caso 5: Lista de rotas vazia ou com distâncias inválidas (ValueError)
+        with self.assertRaises(ValueError):
+            estimate_fleet_size([], 10.0, 8.0, 0.5, 0.5)
+        with self.assertRaises(ValueError):
+            estimate_fleet_size([-10.0], 10.0, 8.0, 0.5, 0.5)
 
     def test_waste_cpp_route_algorithm_metadata(self):
         try:
@@ -205,7 +241,73 @@ class TestWaste(unittest.TestCase):
         route_ids = {feat.attribute(idx_route) for feat in out_layer.getFeatures()}
         self.assertEqual(len(route_ids), 2)
 
+    def test_waste_fleet_sizing_algorithm_metadata(self):
+        try:
+            from algorithms.waste_fleet_sizing import WasteFleetSizing
+            alg = WasteFleetSizing()
+            self.assertEqual(alg.name(), "waste_fleet_sizing")
+            self.assertEqual(alg.groupId(), "waste")
+            self.assertTrue(callable(alg.createInstance))
+            self.assertIsInstance(alg.createInstance(), WasteFleetSizing)
+        except ImportError:
+            pass
+
+    @unittest.skipUnless(_HAS_QGIS, "requer bindings QGIS completos")
+    def test_waste_fleet_sizing_assigns_vehicles(self):
+        from algorithms.waste_fleet_sizing import WasteFleetSizing
+
+        layer = QgsVectorLayer("LineString?crs=EPSG:3857", "routes", "memory")
+        provider = layer.dataProvider()
+        provider.addAttributes([
+            QgsField("route_id", QVariant.Int),
+            QgsField("route_sector_id", QVariant.Int)
+        ])
+        layer.updateFields()
+
+        # Rota 1: 30 km -> tempo = 30/10 + 0.5 + 0.5 = 4.0h
+        # Rota 2: 30 km -> tempo = 4.0h
+        # Rota 3: 30 km -> tempo = 4.0h
+        # Jornada de 8h: 3 rotas de 4h exigem 2 veículos (FFD).
+        def add_segment(route_id, sector_id, length_m):
+            feat = QgsFeature(layer.fields())
+            feat.setGeometry(QgsGeometry.fromPolylineXY([QgsPointXY(0, 0), QgsPointXY(length_m, 0)]))
+            feat.setAttributes([route_id, sector_id])
+            provider.addFeature(feat)
+
+        add_segment(1, 1, 30000.0)
+        add_segment(2, 1, 30000.0)
+        add_segment(3, 1, 30000.0)
+        layer.updateExtents()
+
+        alg = WasteFleetSizing()
+        alg.initAlgorithm()
+        context = QgsProcessingContext()
+        feedback = QgsProcessingFeedback()
+        params = {
+            alg.INPUT_ROUTES: layer,
+            alg.FIELD_ROUTE_ID: "route_id",
+            alg.FIELD_COLLECTION_SECTOR: "route_sector_id",
+            alg.AVG_SPEED: 10.0,
+            alg.SHIFT_DURATION: 8.0,
+            alg.UNLOAD_TIME: 0.5,
+            alg.TRAVEL_TIME: 0.5,
+            alg.OUTPUT: "memory:out",
+        }
+        result = alg.processAlgorithm(params, context, feedback)
+        out_layer = context.getMapLayer(result[alg.OUTPUT])
+
+        self.assertEqual(out_layer.featureCount(), 1)
+        feat = next(out_layer.getFeatures())
+        idx_sector = out_layer.fields().indexFromName("sector_id")
+        idx_fleet = out_layer.fields().indexFromName("fleet_size")
+        idx_routes = out_layer.fields().indexFromName("num_routes")
+
+        self.assertEqual(feat.attribute(idx_sector), 1)
+        self.assertEqual(feat.attribute(idx_fleet), 2)
+        self.assertEqual(feat.attribute(idx_routes), 3)
+
 
 if __name__ == "__main__":
     unittest.main()
+
 
