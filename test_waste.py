@@ -343,6 +343,16 @@ class TestWaste(unittest.TestCase):
         self.assertIn(True, deadhead_values)
         self.assertIn(False, deadhead_values)
 
+        idx_load = out_layer.fields().indexFromName("route_load_kg")
+        self.assertNotEqual(idx_load, -1)
+        idx_dist = out_layer.fields().indexFromName("route_distance_km")
+        self.assertNotEqual(idx_dist, -1)
+        load_values = [feat.attribute(idx_load) for feat in out_layer.getFeatures()]
+        self.assertTrue(all(v == 6.0 for v in load_values))
+        dist_values = [feat.attribute(idx_dist) for feat in out_layer.getFeatures()]
+        self.assertTrue(all(v > 0.0 for v in dist_values))
+
+
     def test_waste_fleet_sizing_algorithm_metadata(self):
         try:
             from algorithms.waste_fleet_sizing import WasteFleetSizing
@@ -418,6 +428,83 @@ class TestWaste(unittest.TestCase):
             self.assertIsInstance(alg.createInstance(), WasteDeadheadRatio)
         except ImportError:
             pass
+
+    def test_waste_sector_balance_algorithm_metadata(self):
+        try:
+            from algorithms.waste_sector_balance import WasteSectorBalance
+            alg = WasteSectorBalance()
+            self.assertEqual(alg.name(), "waste_sector_balance")
+            self.assertEqual(alg.groupId(), "waste")
+            self.assertTrue(callable(alg.createInstance))
+            self.assertIsInstance(alg.createInstance(), WasteSectorBalance)
+        except ImportError:
+            pass
+
+    @unittest.skipUnless(_HAS_QGIS, "requer bindings QGIS completos")
+    def test_waste_sector_balance_computes_stats_per_sector(self):
+        # Um setor com duas rotas (100 kg / 10 km e 300 kg / 30 km, cada uma
+        # com dois trechos repetindo o mesmo valor de rota, como o
+        # waste_carp_route grava): confirma agrupamento por route_id,
+        # deduplicação do valor repetido por rota e estatísticas de
+        # carga/tempo calculadas à mão.
+        from algorithms.waste_sector_balance import WasteSectorBalance
+
+        layer = QgsVectorLayer("LineString?crs=EPSG:3857", "routes", "memory")
+        provider = layer.dataProvider()
+        provider.addAttributes([
+            QgsField("route_id", QVariant.Int),
+            QgsField("route_sector_id", QVariant.Int),
+            QgsField("route_load_kg", QVariant.Double),
+            QgsField("route_distance_km", QVariant.Double),
+        ])
+        layer.updateFields()
+
+        def add_feature(coords, route_id, sector_id, load_kg, distance_km):
+            feat = QgsFeature(layer.fields())
+            feat.setGeometry(QgsGeometry.fromPolylineXY([QgsPointXY(*c) for c in coords]))
+            feat.setAttributes([route_id, sector_id, load_kg, distance_km])
+            provider.addFeature(feat)
+
+        add_feature([(0, 0), (1, 0)], 1, 1, 100.0, 10.0)
+        add_feature([(1, 0), (2, 0)], 1, 1, 100.0, 10.0)
+        add_feature([(0, 0), (0, 1)], 2, 1, 300.0, 30.0)
+        add_feature([(0, 1), (0, 2)], 2, 1, 300.0, 30.0)
+        layer.updateExtents()
+
+        alg = WasteSectorBalance()
+        alg.initAlgorithm()
+        context = QgsProcessingContext()
+        feedback = QgsProcessingFeedback()
+        params = {
+            alg.INPUT_ROUTES: layer,
+            alg.FIELD_LOAD: "route_load_kg",
+            alg.FIELD_DISTANCE: "route_distance_km",
+            alg.FIELD_ROUTE_ID: "route_id",
+            alg.FIELD_COLLECTION_SECTOR: "route_sector_id",
+            alg.AVG_SPEED: 10.0,
+            alg.UNLOAD_TIME: 0.0,
+            alg.TRAVEL_TIME: 0.0,
+            alg.OUTPUT: "memory:out",
+        }
+        result = alg.processAlgorithm(params, context, feedback)
+        out_layer = context.getMapLayer(result[alg.OUTPUT])
+
+        out_feats = list(out_layer.getFeatures())
+        self.assertEqual(len(out_feats), 1)
+        feat = out_feats[0]
+
+        idx = out_layer.fields().indexFromName
+        self.assertEqual(feat.attribute(idx("num_routes")), 2)
+        self.assertAlmostEqual(feat.attribute(idx("total_load_kg")), 400.0)
+        self.assertAlmostEqual(feat.attribute(idx("mean_load_kg")), 200.0)
+        self.assertAlmostEqual(feat.attribute(idx("min_load_kg")), 100.0)
+        self.assertAlmostEqual(feat.attribute(idx("max_load_kg")), 300.0)
+        self.assertAlmostEqual(feat.attribute(idx("std_dev_load_kg")), 100.0)
+        self.assertAlmostEqual(feat.attribute(idx("cv_load")), 0.5)
+
+        self.assertAlmostEqual(feat.attribute(idx("mean_time_h")), 2.0)
+        self.assertAlmostEqual(feat.attribute(idx("std_dev_time_h")), 1.0)
+        self.assertAlmostEqual(feat.attribute(idx("cv_time")), 0.5)
 
     @unittest.skipUnless(_HAS_QGIS, "requer bindings QGIS completos")
     def test_waste_deadhead_ratio_computes_ratios(self):
@@ -521,9 +608,106 @@ class TestWaste(unittest.TestCase):
         self.assertAlmostEqual(total_feat.attribute(idx_prod), 18.0)
         self.assertAlmostEqual(total_feat.attribute(idx_dh), 6.0)
 
+    def test_compute_route_balance_no_deviation_equal_routes(self):
+        from core.indicators.waste import compute_route_balance
+
+        loads = [500.0, 500.0, 500.0]
+        res = compute_route_balance(loads)
+
+        self.assertEqual(res["num_routes"], 3)
+        self.assertAlmostEqual(res["load"]["std_dev_kg"], 0.0)
+        self.assertAlmostEqual(res["load"]["cv"], 0.0)
+        for detail in res["route_details"]:
+            self.assertAlmostEqual(detail["load_dev_kg"], 0.0)
+
+    def test_compute_route_balance_known_deviation(self):
+        from core.indicators.waste import compute_route_balance
+
+        loads = [100.0, 200.0, 300.0]
+        res = compute_route_balance(loads)
+
+        self.assertEqual(res["num_routes"], 3)
+        self.assertAlmostEqual(res["load"]["total_kg"], 600.0)
+        self.assertAlmostEqual(res["load"]["mean_kg"], 200.0)
+        self.assertAlmostEqual(res["load"]["min_kg"], 100.0)
+        self.assertAlmostEqual(res["load"]["max_kg"], 300.0)
+        self.assertAlmostEqual(res["load"]["std_dev_kg"], (20000.0 / 3.0) ** 0.5)
+        self.assertAlmostEqual(res["load"]["cv"], ((20000.0 / 3.0) ** 0.5) / 200.0)
+        self.assertIsNone(res["time"])
+
+        self.assertEqual(len(res["route_details"]), 3)
+        self.assertAlmostEqual(res["route_details"][0]["load_dev_kg"], -100.0)
+        self.assertAlmostEqual(res["route_details"][1]["load_dev_kg"], 0.0)
+        self.assertAlmostEqual(res["route_details"][2]["load_dev_kg"], 100.0)
+
+    def test_compute_route_balance_derived_time_deviation(self):
+        from core.indicators.waste import compute_route_balance
+
+        loads = [500.0, 500.0]
+        distances = [10.0, 20.0]
+        res = compute_route_balance(
+            route_loads_kg=loads,
+            route_distances_km=distances,
+            avg_collection_speed_kmh=10.0,
+            unload_time_h=0.5,
+            travel_time_to_destination_h=0.5
+        )
+
+        self.assertEqual(res["num_routes"], 2)
+        self.assertIsNotNone(res["time"])
+        self.assertAlmostEqual(res["time"]["total_h"], 5.0)
+        self.assertAlmostEqual(res["time"]["mean_h"], 2.5)
+        self.assertAlmostEqual(res["time"]["min_h"], 2.0)
+        self.assertAlmostEqual(res["time"]["max_h"], 3.0)
+        self.assertAlmostEqual(res["time"]["std_dev_h"], 0.5)
+        self.assertAlmostEqual(res["time"]["cv"], 0.2)
+
+        self.assertAlmostEqual(res["route_details"][0]["time_h"], 2.0)
+        self.assertAlmostEqual(res["route_details"][0]["time_dev_h"], -0.5)
+        self.assertAlmostEqual(res["route_details"][1]["time_h"], 3.0)
+        self.assertAlmostEqual(res["route_details"][1]["time_dev_h"], 0.5)
+
+    def test_compute_route_balance_single_route(self):
+        from core.indicators.waste import compute_route_balance
+
+        loads = [250.0]
+        res = compute_route_balance(loads)
+
+        self.assertEqual(res["num_routes"], 1)
+        self.assertAlmostEqual(res["load"]["total_kg"], 250.0)
+        self.assertAlmostEqual(res["load"]["mean_kg"], 250.0)
+        self.assertAlmostEqual(res["load"]["std_dev_kg"], 0.0)
+        self.assertAlmostEqual(res["load"]["cv"], 0.0)
+        self.assertEqual(len(res["route_details"]), 1)
+        self.assertAlmostEqual(res["route_details"][0]["load_dev_kg"], 0.0)
+
+    def test_compute_route_balance_incompatible_list_lengths(self):
+        from core.indicators.waste import compute_route_balance
+
+        with self.assertRaises(ValueError):
+            compute_route_balance([100.0], route_distances_km=[10.0, 20.0])
+
+    def test_compute_route_balance_empty_input(self):
+        from core.indicators.waste import compute_route_balance
+
+        with self.assertRaises(ValueError):
+            compute_route_balance([])
+
+    def test_compute_route_balance_invalid_inputs(self):
+        from core.indicators.waste import compute_route_balance
+
+        with self.assertRaises(ValueError):
+            compute_route_balance([100.0, -10.0])
+
+        with self.assertRaises(ValueError):
+            compute_route_balance([100.0], unload_time_h=-1.0)
+
+        with self.assertRaises(ValueError):
+            compute_route_balance([100.0], route_distances_km=[10.0])  # falta speed
+
+        with self.assertRaises(ValueError):
+            compute_route_balance([100.0], route_distances_km=[10.0], avg_collection_speed_kmh=0.0)
+
 
 if __name__ == "__main__":
     unittest.main()
-
-
-

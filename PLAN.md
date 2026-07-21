@@ -613,6 +613,26 @@ Confirmado por leitura de código nesta revisão (não é suposição):
       7, 13, 18, 27 e 33 para a revisão em lote futura. — arquivos:
       nenhum (revisão manual pelo Diego)
 
+**Rodada 8 (Equilíbrio entre setores):**
+
+- [x] 42. Adicionar os campos numéricos `route_load_kg` e `route_distance_km` à camada de saída de `algorithms/waste_carp_route.py` (`logis:waste_carp_route`). — arquivos: `algorithms/waste_carp_route.py`
+
+- [x] 43. `test_waste.py`: caso de regressão confirmando que `route_load_kg` e `route_distance_km` são gravados na saída de `waste_carp_route.py` (valores válidos e campos existentes). — arquivos: `test_waste.py`
+
+- [x] 44. Adicionar `compute_route_balance(route_loads_kg, route_distances_km=None, avg_collection_speed_kmh=None, unload_time_h=0.0, travel_time_to_destination_h=0.0) -> Dict` a `core/indicators/waste.py`: função pura calculando desvios de carga e tempo entre rotas. — arquivos: `core/indicators/waste.py`, `test_waste.py`
+
+- [x] 45. Adicionar a `test_waste.py` os seis casos de `compute_route_balance` (sem desvio entre rotas iguais, com desvio conhecido, desvio de tempo derivado, rota isolada, listas de tamanho incompatível, entrada vazia). — arquivos: `test_waste.py`
+
+- [x] 46. Criar `algorithms/waste_sector_balance.py` (`logis:waste_sector_balance`): algoritmo QGIS Processing para cálculo de indicadores de equilíbrio de carga e tempo entre setores/rotas. — arquivos: `algorithms/waste_sector_balance.py`
+
+- [x] 47. Registrar `WasteSectorBalance` (import + `addAlgorithm`) em `provider.py`. Adicionar teste de metadata em `test_waste.py` (`test_waste_sector_balance_algorithm_metadata`). — arquivos: `provider.py`, `test_waste.py`
+
+- [x] 48. Rodar `make test` e `python3 -m unittest discover -s . -p "test_*.py"` para confirmar que a nova funcionalidade de equilíbrio entre setores e a suíte completa de testes passam sem regressões.
+
+- [x] 49. **(Adiado a pedido do Diego — mesma decisão das rodadas anteriores, não bloqueia rodadas seguintes.)** Diego revisa manualmente no QGIS: roda `logis:waste_sector_balance` sobre a saída de `logis:waste_carp_route` de um setor de teste, confirma que os indicadores de equilíbrio calculados fazem sentido para os parâmetros informados. Agrupado com os passos 7, 13, 18, 27, 33 e 41 para a revisão em lote futura. — arquivos: nenhum (revisão manual pelo Diego)
+
+
+
 ## Critério de aceite
 
 - **Passos 1-33 (F1-F6 completo, incluindo dimensionamento de frota):
@@ -647,7 +667,7 @@ Confirmado por leitura de código nesta revisão (não é suposição):
   distância média ao destino, cobertura por frequência) continuam
   explicitamente fora de escopo — ver "Fora de escopo" no Objetivo —
   e cada um vira sua própria rodada futura.
-- **A validação manual no QGIS (passos 7, 13, 18, 27, 33 e 41) NÃO é
+- **A validação manual no QGIS (passos 7, 13, 18, 27, 33, 41 e 49) NÃO é
   critério de fechamento desta rodada de código** — fica marcada como
   pendente e agrupada para revisão em lote posterior, por decisão
   explícita do Diego. O critério de "código fechado" desta rodada é

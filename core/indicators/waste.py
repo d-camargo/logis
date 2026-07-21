@@ -304,3 +304,148 @@ def compute_deadhead_ratio(
     }
 
 
+def compute_route_balance(
+    route_loads_kg: List[float],
+    route_distances_km: Optional[List[float]] = None,
+    avg_collection_speed_kmh: Optional[float] = None,
+    unload_time_h: float = 0.0,
+    travel_time_to_destination_h: float = 0.0
+) -> Dict[str, Any]:
+    """
+    Calcula os indicadores de equilíbrio (balanço) entre rotas de coleta de resíduos,
+    avaliando a média, o desvio padrão, o coeficiente de variação (CV) e os valores
+    mínimo/máximo para carga (kg) e, opcionalmente, tempo de operação (h).
+
+    Fórmula / Algoritmo:
+        Desvio Padrão Populacional (σ):
+            σ = sqrt( sum((x_i - μ)^2) / N )
+
+        Coeficiente de Variação (CV):
+            CV = σ / μ  (se μ > 0, senão 0.0)
+
+        Tempo da Rota i (h):
+            tempo_i = (distância_i / velocidade_média) + tempo_descarga + tempo_deslocamento
+
+    Referência Bibliográfica da Técnica:
+        Tchobanoglous, G., Theisen, H., & Vigil, S. A. (1993). Integrated Solid Waste
+        Management: Engineering Principles and Management Issues. McGraw-Hill.
+        Kim, B. I., Kim, S., & Sahoo, S. (2006). Waste collection vehicle routing with
+        time windows. Computers & Operations Research, 33(12), 3624-3642.
+
+    Limite de Complexidade:
+        Complexidade de Tempo: O(R), onde R é o número de rotas.
+        Complexidade de Espaço: O(R) para armazenar os desvios por rota.
+
+    Args:
+        route_loads_kg (List[float]): Cargas totais de cada rota em kg (não vazia, valores >= 0).
+        route_distances_km (Optional[List[float]]): Distâncias totais de cada rota em km.
+            Se fornecida, deve ter o mesmo tamanho de `route_loads_kg` (valores >= 0).
+        avg_collection_speed_kmh (Optional[float]): Velocidade média operacional durante a coleta
+            em km/h (estritamente > 0). Obrigatório se `route_distances_km` for fornecida.
+        unload_time_h (float): Tempo fixo de descarga por rota em horas (>= 0). Default: 0.0.
+        travel_time_to_destination_h (float): Tempo fixo de deslocamento até o destino em horas (>= 0). Default: 0.0.
+
+    Returns:
+        Dict[str, Any]: Dicionário com os indicadores de equilíbrio:
+            - "num_routes" (int): Número total de rotas avaliadas.
+            - "load" (Dict[str, float]): Estatísticas de carga em kg:
+                "total_kg", "mean_kg", "std_dev_kg", "min_kg", "max_kg", "cv".
+            - "time" (Optional[Dict[str, float]]): Estatísticas de tempo em horas (ou None se
+                distâncias/velocidade não forem fornecidas):
+                "total_h", "mean_h", "std_dev_h", "min_h", "max_h", "cv".
+            - "route_details" (List[Dict[str, Any]]): Lista com detalhes e desvios por rota.
+
+    Raises:
+        ValueError: Se route_loads_kg for vazia ou contiver valores inválidos/negativos;
+            se route_distances_km tiver tamanho incompatível ou valores negativos;
+            se route_distances_km for fornecida mas avg_collection_speed_kmh for None ou <= 0;
+            se unload_time_h ou travel_time_to_destination_h forem negativos.
+    """
+    if not isinstance(route_loads_kg, (list, tuple)) or not route_loads_kg:
+        raise ValueError("A lista de cargas por rota (route_loads_kg) não pode ser vazia.")
+
+    for i, load in enumerate(route_loads_kg):
+        if isinstance(load, bool) or not isinstance(load, (int, float)) or load < 0:
+            raise ValueError(f"A carga da rota {i} em route_loads_kg deve ser um número não-negativo.")
+
+    if isinstance(unload_time_h, bool) or not isinstance(unload_time_h, (int, float)) or unload_time_h < 0:
+        raise ValueError("O tempo de descarga (unload_time_h) não pode ser negativo.")
+
+    if isinstance(travel_time_to_destination_h, bool) or not isinstance(travel_time_to_destination_h, (int, float)) or travel_time_to_destination_h < 0:
+        raise ValueError("O tempo de deslocamento ao destino (travel_time_to_destination_h) não pode ser negativo.")
+
+    has_distances = route_distances_km is not None
+    if has_distances:
+        if not isinstance(route_distances_km, (list, tuple)) or len(route_distances_km) != len(route_loads_kg):
+            raise ValueError("A lista route_distances_km deve ter o mesmo tamanho de route_loads_kg quando fornecida.")
+        for i, dist in enumerate(route_distances_km):
+            if isinstance(dist, bool) or not isinstance(dist, (int, float)) or dist < 0:
+                raise ValueError(f"A distância da rota {i} em route_distances_km deve ser um número não-negativo.")
+
+        if isinstance(avg_collection_speed_kmh, bool) or not isinstance(avg_collection_speed_kmh, (int, float)) or avg_collection_speed_kmh <= 0:
+            raise ValueError("A velocidade média de coleta (avg_collection_speed_kmh) deve ser estritamente maior que zero quando route_distances_km for fornecida.")
+
+    num_routes = len(route_loads_kg)
+    loads = [float(x) for x in route_loads_kg]
+    total_load = sum(loads)
+    mean_load = total_load / num_routes
+    var_load = sum((x - mean_load) ** 2 for x in loads) / num_routes
+    std_load = var_load ** 0.5
+    min_load = min(loads)
+    max_load = max(loads)
+    cv_load = (std_load / mean_load) if mean_load > 0 else 0.0
+
+    load_stats = {
+        "total_kg": total_load,
+        "mean_kg": mean_load,
+        "std_dev_kg": std_load,
+        "min_kg": min_load,
+        "max_kg": max_load,
+        "cv": cv_load
+    }
+
+    time_stats = None
+    times = None
+    if has_distances:
+        times = [
+            (float(dist) / float(avg_collection_speed_kmh)) + float(unload_time_h) + float(travel_time_to_destination_h)
+            for dist in route_distances_km
+        ]
+        total_time = sum(times)
+        mean_time = total_time / num_routes
+        var_time = sum((t - mean_time) ** 2 for t in times) / num_routes
+        std_time = var_time ** 0.5
+        min_time = min(times)
+        max_time = max(times)
+        cv_time = (std_time / mean_time) if mean_time > 0 else 0.0
+
+        time_stats = {
+            "total_h": total_time,
+            "mean_h": mean_time,
+            "std_dev_h": std_time,
+            "min_h": min_time,
+            "max_h": max_time,
+            "cv": cv_time
+        }
+
+    route_details = []
+    for i in range(num_routes):
+        detail = {
+            "route_index": i,
+            "load_kg": loads[i],
+            "load_dev_kg": loads[i] - mean_load
+        }
+        if times is not None:
+            detail["time_h"] = times[i]
+            detail["time_dev_h"] = times[i] - mean_time
+        route_details.append(detail)
+
+    return {
+        "num_routes": num_routes,
+        "load": load_stats,
+        "time": time_stats,
+        "route_details": route_details
+    }
+
+
+

@@ -309,6 +309,8 @@ class WasteCarpRoute(QgsProcessingAlgorithm):
         else:
             out_fields.append(QgsField("route_sector_id", qgis_compat.field_type("int")))
         out_fields.append(QgsField("route_is_deadhead", qgis_compat.field_type("bool")))
+        out_fields.append(QgsField("route_load_kg", qgis_compat.field_type("double")))
+        out_fields.append(QgsField("route_distance_km", qgis_compat.field_type("double")))
 
         sink, dest_id = self.parameterAsSink(
             parameters, self.OUTPUT, context, out_fields,
@@ -378,7 +380,8 @@ class WasteCarpRoute(QgsProcessingAlgorithm):
 
             for route_idx, route in enumerate(routes, start=1):
                 route_edges = route["edges"]
-                load_kg = route["load_kg"]
+                load_kg = float(route["load_kg"])
+                route_distance_km = float(route["distance_m"]) / 1000.0
                 req_m = sum(
                     full_edge_by_id[e_id]["length"]
                     for e_id in route_edges if e_id in req_id_set
@@ -411,7 +414,9 @@ class WasteCarpRoute(QgsProcessingAlgorithm):
                     out_feat = QgsFeature(out_fields)
                     out_feat.setGeometry(orig_feat.geometry())
                     out_feat.setAttributes(
-                        orig_feat.attributes() + [route_idx, visit_idx, sec_val, is_deadhead]
+                        orig_feat.attributes() + [
+                            route_idx, visit_idx, sec_val, is_deadhead, load_kg, route_distance_km
+                        ]
                     )
                     sink.addFeature(out_feat, QgsFeatureSink.FastInsert)
 
@@ -454,8 +459,9 @@ class WasteCarpRoute(QgsProcessingAlgorithm):
             "Retorno:\n"
             "- Camada de linha com feições de vias e campos adicionais: 'route_id' (identificador da "
             "rota/viagem dentro do setor), 'route_visit_order' (ordem de visita na rota), "
-            "'route_sector_id' (setor de coleta) e 'route_is_deadhead' (booleano indicando passagem "
-            "duplicada/deslocamento deadhead)."
+            "'route_sector_id' (setor de coleta), 'route_is_deadhead' (booleano indicando passagem "
+            "duplicada/deslocamento deadhead), 'route_load_kg' (carga total da rota em kg) e "
+            "'route_distance_km' (distância total da rota em km)."
         )
 
     def createInstance(self):
