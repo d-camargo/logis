@@ -239,6 +239,7 @@ class WasteRppRoute(QgsProcessingAlgorithm):
             out_fields.append(QgsField("route_sector_id", sec_type))
         else:
             out_fields.append(QgsField("route_sector_id", qgis_compat.field_type("int")))
+        out_fields.append(QgsField("route_is_connector", qgis_compat.field_type("bool")))
 
         sink, dest_id = self.parameterAsSink(
             parameters, self.OUTPUT, context, out_fields,
@@ -279,6 +280,7 @@ class WasteRppRoute(QgsProcessingAlgorithm):
 
                 # Monta a base inicial do RPP com required + connectors
                 req_id_set = {e["id"] for e in req_edges}
+                original_req_ids = set(req_id_set)
                 full_by_id = {e["id"]: e for e in full_edges}
 
                 rpp_base_edges = list(req_edges)
@@ -335,7 +337,8 @@ class WasteRppRoute(QgsProcessingAlgorithm):
                 orig_feat = feature_map[edge_id]
                 out_feat = QgsFeature(out_fields)
                 out_feat.setGeometry(orig_feat.geometry())
-                out_feat.setAttributes(orig_feat.attributes() + [visit_idx, sec_val])
+                is_connector = edge_id not in original_req_ids
+                out_feat.setAttributes(orig_feat.attributes() + [visit_idx, sec_val, is_connector])
                 sink.addFeature(out_feat, QgsFeatureSink.FastInsert)
 
             completed_sectors += 1
@@ -367,9 +370,9 @@ class WasteRppRoute(QgsProcessingAlgorithm):
             "- Campo de setor de coleta (opcional): se informado, o RPP é resolvido separadamente por setor.\n"
             "- Tolerância de nó: distância em metros para conectar vértices das vias.\n\n"
             "Retorno:\n"
-            "- Camada de linha com feições duplicadas na sequência de travessia e dois campos "
-            "adicionais: 'route_visit_order' (posição sequencial no circuito) e "
-            "'route_sector_id' (setor de coleta)."
+            "- Camada de linha com feições duplicadas na sequência de travessia e três campos "
+            "adicionais: 'route_visit_order' (posição sequencial no circuito), "
+            "'route_sector_id' (setor de coleta) e 'route_is_connector' (booleano indicando via conetora)."
         )
 
     def createInstance(self):

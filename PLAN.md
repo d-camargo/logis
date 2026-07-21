@@ -302,6 +302,28 @@ próximo trabalho real a executar.
       pendente" e o plano segue para a rodada seguinte do F6 sem esperar
       por ela. — arquivos: nenhum (revisão manual pelo Diego)
 
+- [x] 19. Adicionar o campo booleano `route_is_connector` à saída de
+      `logis:waste_rpp_route` (`algorithms/waste_rpp_route.py`),
+      indicando se o trecho foi utilizado como via conetora entre
+      componentes obrigatórios. — arquivos: `algorithms/waste_rpp_route.py`
+
+- [x] 20. Adicionar `solve_carp_path_scanning(required_edges, full_edges, depot_node, vehicle_capacity) -> List[Dict]` em `core/routing/arc_routing.py` — versão simplificada de regra única (nearest-neighbor, sem as múltiplas regras de desempate do artigo original de Golden et al. 1983), chave de demanda `"load"` por trecho. — arquivos: `core/routing/arc_routing.py`
+
+- [x] 21. Ampliar `test_arc_routing.py` com os cinco casos previstos no plano: uma rota cobrindo toda a demanda, duas rotas forçadas por capacidade, trecho isolado excedendo a capacidade (`ValueError`), rota trivial de um único trecho, e `required_edges` vazio (`ValueError`). — arquivos: `test_arc_routing.py`
+
+- [x] 22. Criar `algorithms/waste_carp_route.py` (`logis:waste_carp_route`) e registrar em `provider.py` (20 algorithms no total). Campo de demanda obrigatório (não opcional); camada de depósito obrigatória, `TypeVectorPoint`, exatamente 1 feição. — arquivos: `algorithms/waste_carp_route.py`, `provider.py`
+
+- [x] 23. Validar a camada de ponto do depósito no `processAlgorithm` (exatamente 1 feição; `QgsProcessingException` caso contrário) e implementar o snap por distância euclidiana ao `node_key` mais próximo, mantendo o dict auxiliar `node_key -> (x, y)` durante a leitura das feições de via. — arquivos: `algorithms/waste_carp_route.py`
+
+- [x] 24. Reportar via `feedback.pushInfo`, por setor e por rota: carga (kg) e km de deadhead de cada rota, com aviso informativo quando uma rota usa menos de 50% da capacidade. — arquivos: `algorithms/waste_carp_route.py`
+
+- [x] 25. Registrar `WasteCarpRoute` (import + `addAlgorithm`) em `provider.py`. — arquivos: `provider.py`
+
+- [x] 26. Rodar `make test` e `python3 -m unittest discover -s . -p "test_*.py"` de novo para confirmar que o novo algorithm e o `provider.py` atualizado (20 algorithms no total) não quebram nada. — arquivos: nenhum (verificação)
+
+- [x] 27. **(Adiado a pedido do Diego — mesma decisão das rodadas 7, 15 e 18: não bloqueia rodadas seguintes.)** Diego revisa manualmente no QGIS: roda `logis:waste_carp_route` sobre a camada de vias e o ponto de depósito, confirma visualmente que as rotas respeitam a capacidade do caminhão e iniciam/terminam no depósito. Agrupado com os passos 7, 15 e 18 para revisão em lote quando o Diego retomar os testes no QGIS — até lá, a rodada CARP é considerada "código fechado, validação visual pendente" e o plano segue para as rodadas seguintes do F6 sem esperar por ela. — arquivos: nenhum (revisão manual pelo Diego)
+
+
 ## Critério de aceite
 
 - `core/routing/arc_routing.py` existe com quatro funções puras

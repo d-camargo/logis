@@ -7,6 +7,7 @@ from core.routing.arc_routing import (
     match_odd_degree_nodes,
     build_eulerian_circuit,
     connect_required_components,
+    solve_carp_path_scanning,
 )
 
 
@@ -261,6 +262,53 @@ class TestConnectRequiredComponents(unittest.TestCase):
             connect_required_components(req, [])
 
 
+class TestSolveCarpPathScanning(unittest.TestCase):
+
+    def test_single_route_covers_all_demand(self):
+        req = [
+            {"id": "e1", "from_node": "D", "to_node": "A", "length": 5.0, "load": 3.0},
+            {"id": "e2", "from_node": "A", "to_node": "B", "length": 5.0, "load": 4.0},
+        ]
+        routes = solve_carp_path_scanning(req, req, depot_node="D", vehicle_capacity=10.0)
+        self.assertEqual(len(routes), 1)
+        self.assertEqual(routes[0]["load_kg"], 7.0)
+        self.assertIn("e1", routes[0]["edges"])
+        self.assertIn("e2", routes[0]["edges"])
+
+    def test_capacity_forces_two_routes(self):
+        req = [
+            {"id": "e1", "from_node": "D", "to_node": "A", "length": 2.0, "load": 6.0},
+            {"id": "e2", "from_node": "D", "to_node": "B", "length": 3.0, "load": 6.0},
+        ]
+        routes = solve_carp_path_scanning(req, req, depot_node="D", vehicle_capacity=10.0)
+        self.assertEqual(len(routes), 2)
+        self.assertEqual(sorted(r["load_kg"] for r in routes), [6.0, 6.0])
+
+    def test_isolated_segment_exceeding_capacity_raises(self):
+        req = [
+            {"id": "e1", "from_node": "D", "to_node": "A", "length": 5.0, "load": 15.0},
+        ]
+        with self.assertRaises(ValueError):
+            solve_carp_path_scanning(req, req, depot_node="D", vehicle_capacity=10.0)
+
+    def test_single_required_edge_trivial_route(self):
+        req = [
+            {"id": "e1", "from_node": "D", "to_node": "A", "length": 4.0, "load": 2.0},
+        ]
+        routes = solve_carp_path_scanning(req, req, depot_node="D", vehicle_capacity=10.0)
+        self.assertEqual(len(routes), 1)
+        self.assertEqual(routes[0]["load_kg"], 2.0)
+        self.assertIn("e1", routes[0]["edges"])
+
+    def test_empty_required_edges_raises(self):
+        full = [
+            {"id": "e1", "from_node": "D", "to_node": "A", "length": 5.0},
+        ]
+        with self.assertRaises(ValueError):
+            solve_carp_path_scanning([], full, depot_node="D", vehicle_capacity=10.0)
+
+
 if __name__ == "__main__":
     unittest.main()
+
 

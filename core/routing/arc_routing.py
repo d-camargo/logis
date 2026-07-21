@@ -13,16 +13,19 @@
 """Arc Routing pure-Python heuristics module for the logis plugin.
 
 Provides pure Python implementations for the undirected Chinese Postman
-Problem (CPP) and Rural Postman Problem (RPP) component connection on
-edge-based network graphs (CARP is out of scope for this module — see CLAUDE.md section 6):
+Problem (CPP), Rural Postman Problem (RPP) component connection, and
+Capacitated Arc Routing Problem (CARP) path-scanning heuristic on edge-based network graphs:
 - Identification of odd-degree nodes in edge-based network graphs.
 - Shortest path computation between node keys weighted by length (Dijkstra).
 - Greedy matching of odd-degree nodes via shortest path search.
 - Eulerian circuit construction (Hierholzer) over the duplicated-edge multigraph.
 - Connecting required components for RPP via MST (Kruskal) over component representatives.
+- CARP Path-Scanning heuristic (Golden et al., 1983) for capacity-constrained arc routing.
 
 Edges are represented as dicts:
     {"id": edge_id, "from_node": node_key, "to_node": node_key, "length": float}
+Required edges passed to solve_carp_path_scanning carry one additional key:
+    {..., "load": float}  # kg of demand for the segment
 Two edges share a node if they have matching "from_node" or "to_node" values.
 `node_key` is computed by the caller (the Processing algorithm layer), not by this module.
 
@@ -33,13 +36,18 @@ References:
       und ohne Unterbrechung zu umfahren. Mathematische Annalen, 6(1), 30-32.
     - Frederickson, G. N. (1979). Approximation algorithms for some postman problems.
       Journal of the ACM, 26(3), 538-554.
+    - Golden, B. L., DeArmon, J. S., & Baker, E. K. (1983). Computational experiments with
+      algorithms for a class of routing problems. Computers & Operations Research, 10(1), 47-59.
 
 Complexity/Scale limits:
     - find_odd_degree_nodes: O(E), scans all edges and counts node degrees.
     - shortest_path_between_nodes: O(E log V), standard Dijkstra algorithm with priority queue.
     - match_odd_degree_nodes: O(K² log V), greedy pairing of K odd-degree nodes using Dijkstra.
     - connect_required_components: O(C² log V + C² log C), C components connected via Dijkstra + Kruskal.
-    - Tested scale: up to ~5,000 road segments (neighborhood/collection-district scale).
+    - solve_carp_path_scanning: O(R² · E log V), R = number of required edges per sector,
+      E = total edges, V = vertices. Tested scale: up to ~500 required edges per sector
+      (more conservative than the other functions — see its own docstring).
+    - Tested scale (other functions): up to ~5,000 road segments (neighborhood/collection-district scale).
 """
 
 import heapq
@@ -556,6 +564,168 @@ def connect_required_components(
                 connector_edge_ids.append(edge_id)
 
     return connector_edge_ids
+
+
+def solve_carp_path_scanning(
+    required_edges: List[Dict],
+    full_edges: List[Dict],
+    depot_node: object,
+    vehicle_capacity: float
+) -> List[Dict]:
+    """Resolve o CARP (Capacitated Arc Routing Problem) via a heurística Path-Scanning.
+
+    Constrói rotas de veículo com capacidade limitada a partir de um depósito, atendendo à
+    demanda de cada trecho de via obrigatório. A cada passo, escolhe (por nearest-neighbor,
+    via shortest_path_between_nodes sobre full_edges) o trecho obrigatório não servido mais
+    próximo da posição atual que ainda caiba na capacidade restante (compara chegada por
+    from_node e por to_node, escolhe a mais curta). Quando nenhum trecho remanescente couber
+    na capacidade restante (ou nenhum for alcançável), fecha a rota retornando ao depósito e
+    inicia a próxima. Versão simplificada de regra única de desempate (nearest-neighbor), não
+    a versão com múltiplas regras de seleção do artigo original — mesma decisão de
+    simplicidade já tomada para o matching guloso do CPP e o MST de representantes do RPP.
+
+    Referência Bibliográfica da Técnica:
+        - Golden, B. L., DeArmon, J. S., & Baker, E. K. (1983). Computational experiments
+          with algorithms for a class of routing problems. Computers & Operations Research, 10(1), 47-59.
+
+    Limite de Complexidade:
+        Complexidade de Tempo: O(R² · E log V) no pior caso agregado sobre todas as rotas de
+        um setor — R é o número de trechos obrigatórios, E é o número de trechos totais e V é
+        o número de vértices. Testado com até ~500 trechos obrigatórios por setor (limite mais
+        conservador que o das demais funções do módulo, coerente com o tamanho típico de um
+        setor de coleta).
+
+    Args:
+        required_edges: Subconjunto de full_edges com uma chave adicional obrigatória "load"
+            (float >= 0, kg de demanda do trecho).
+        full_edges: Lista de todos os trechos da rede, usada para calcular os deslocamentos
+            (deadhead) entre trechos obrigatórios e o depósito.
+        depot_node: Identificador (node_key) do nó de partida/retorno de cada rota.
+        vehicle_capacity: Capacidade máxima de carga do veículo, em kg (deve ser > 0).
+
+    Returns:
+        Lista de rotas, cada rota um dict:
+            {"edges": lista ordenada de edge_id percorridos (deadhead + trechos obrigatórios,
+                      na ordem de travessia), "load_kg": carga total da rota,
+             "distance_m": distância total percorrida pela rota (serviço + deadhead)}.
+
+    Raises:
+        ValueError: Se required_edges ou full_edges forem vazios/inválidos, se algum trecho
+            obrigatório não existir em full_edges ou não tiver a chave "load", se
+            vehicle_capacity for <= 0, se depot_node não pertencer ao grafo, se a demanda de
+            um trecho isolado exceder vehicle_capacity (sem split-delivery), ou se algum
+            trecho obrigatório remanescente não puder ser servido (rede desconexa).
+    """
+    _validate_edges(required_edges)
+    full_edge_by_id = _validate_edges(full_edges)
+
+    if not isinstance(vehicle_capacity, (int, float)) or vehicle_capacity <= 0:
+        raise ValueError("A capacidade do veículo (vehicle_capacity) deve ser estritamente maior que zero.")
+
+    full_nodes = set()
+    for edge in full_edge_by_id.values():
+        full_nodes.add(edge["from_node"])
+        full_nodes.add(edge["to_node"])
+
+    if depot_node not in full_nodes:
+        raise ValueError(f"Nó depósito '{depot_node}' não pertence ao grafo de trechos.")
+
+    unserved: Dict[object, Dict] = {}
+    for idx, edge in enumerate(required_edges):
+        edge_id = edge["id"]
+        if edge_id not in full_edge_by_id:
+            raise ValueError(f"Trecho obrigatório '{edge_id}' não existe em full_edges.")
+        if "load" not in edge:
+            raise ValueError(f"Trecho obrigatório no índice {idx} ({edge_id}) não possui a chave 'load'.")
+        load = edge["load"]
+        if not isinstance(load, (int, float)) or load < 0:
+            raise ValueError(f"Trecho obrigatório '{edge_id}' possui carga (load) inválida: {load}.")
+        if load > vehicle_capacity:
+            raise ValueError(
+                f"Demanda do trecho '{edge_id}' ({load}) excede a capacidade do veículo ({vehicle_capacity})."
+            )
+        unserved[edge_id] = edge
+
+    sp_cache: Dict[Tuple[object, object], Tuple[float, List[object]]] = {}
+
+    def get_sp(u: object, v: object) -> Tuple[float, List[object]]:
+        if u == v:
+            return 0.0, []
+        key = (u, v)
+        if key not in sp_cache:
+            try:
+                sp_cache[key] = shortest_path_between_nodes(full_edges, u, v)
+            except ValueError:
+                sp_cache[key] = (float("inf"), [])
+        return sp_cache[key]
+
+    routes: List[Dict] = []
+
+    while unserved:
+        curr_node = depot_node
+        curr_load = 0.0
+        route_edges: List[object] = []
+        route_dist = 0.0
+        served_any = False
+
+        while True:
+            best_edge_id = None
+            best_dist = float("inf")
+            best_path: List[object] = []
+            best_exit_node = None
+
+            for edge_id, edge in unserved.items():
+                load = float(edge["load"])
+                if curr_load + load > vehicle_capacity + 1e-9:
+                    continue
+
+                u = edge["from_node"]
+                v = edge["to_node"]
+
+                dist_u, path_u = get_sp(curr_node, u)
+                if dist_u < best_dist:
+                    best_dist = dist_u
+                    best_edge_id = edge_id
+                    best_path = path_u
+                    best_exit_node = v
+
+                if u != v:
+                    dist_v, path_v = get_sp(curr_node, v)
+                    if dist_v < best_dist:
+                        best_dist = dist_v
+                        best_edge_id = edge_id
+                        best_path = path_v
+                        best_exit_node = u
+
+            if best_edge_id is None:
+                break
+
+            edge = unserved.pop(best_edge_id)
+            route_edges.extend(best_path)
+            route_edges.append(best_edge_id)
+            route_dist += best_dist + float(edge["length"])
+            curr_load += float(edge["load"])
+            curr_node = best_exit_node
+            served_any = True
+
+        if not served_any:
+            raise ValueError(
+                f"Não foi possível atender os trechos remanescentes: {list(unserved.keys())}."
+            )
+
+        if curr_node != depot_node:
+            dist_back, path_back = get_sp(curr_node, depot_node)
+            route_edges.extend(path_back)
+            route_dist += dist_back
+
+        routes.append({
+            "edges": route_edges,
+            "load_kg": curr_load,
+            "distance_m": route_dist,
+        })
+
+    return routes
+
 
 
 
