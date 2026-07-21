@@ -440,6 +440,28 @@ class TestWaste(unittest.TestCase):
         except ImportError:
             pass
 
+    def test_waste_destination_distance_algorithm_metadata(self):
+        try:
+            from algorithms.waste_destination_distance import WasteDestinationDistance
+            alg = WasteDestinationDistance()
+            self.assertEqual(alg.name(), "waste_destination_distance")
+            self.assertEqual(alg.groupId(), "waste")
+            self.assertTrue(callable(alg.createInstance))
+            self.assertIsInstance(alg.createInstance(), WasteDestinationDistance)
+        except ImportError:
+            pass
+
+    def test_waste_collection_coverage_algorithm_metadata(self):
+        try:
+            from algorithms.waste_collection_coverage import WasteCollectionCoverage
+            alg = WasteCollectionCoverage()
+            self.assertEqual(alg.name(), "waste_collection_coverage")
+            self.assertEqual(alg.groupId(), "waste")
+            self.assertTrue(callable(alg.createInstance))
+            self.assertIsInstance(alg.createInstance(), WasteCollectionCoverage)
+        except ImportError:
+            pass
+
     @unittest.skipUnless(_HAS_QGIS, "requer bindings QGIS completos")
     def test_waste_sector_balance_computes_stats_per_sector(self):
         # Um setor com duas rotas (100 kg / 10 km e 300 kg / 30 km, cada uma
@@ -708,6 +730,106 @@ class TestWaste(unittest.TestCase):
         with self.assertRaises(ValueError):
             compute_route_balance([100.0], route_distances_km=[10.0], avg_collection_speed_kmh=0.0)
 
+    def test_waste_destination_distance_function(self):
+        from core.indicators.waste import waste_destination_distance
+
+        # Matriz 2 destinos x 3 origens
+        # Destino 0: [10.0, 25.0, 5.0]
+        # Destino 1: [15.0, 20.0, 12.0]
+        od_matrix = [
+            [10.0, 25.0, 5.0],
+            [15.0, 20.0, 12.0]
+        ]
+        result = waste_destination_distance(od_matrix)
+        self.assertEqual(result, [10.0, 20.0, 5.0])
+
+        # Testes de erro
+        with self.assertRaises(TypeError):
+            waste_destination_distance(None)
+        with self.assertRaises(TypeError):
+            waste_destination_distance("invalid")
+        with self.assertRaises(ValueError):
+            waste_destination_distance([])
+        with self.assertRaises(ValueError):
+            waste_destination_distance([[10.0, 20.0], [5.0]])
+        with self.assertRaises(ValueError):
+            waste_destination_distance([[-5.0, 10.0]])
+        with self.assertRaises(TypeError):
+            waste_destination_distance([["abc", 10.0]])
+
+    def test_compute_collection_coverage_full_coverage(self):
+        from core.indicators.waste import compute_collection_coverage
+
+        res = compute_collection_coverage([10.0], [10.0])
+        self.assertAlmostEqual(res["total"]["required_km"], 10.0)
+        self.assertAlmostEqual(res["total"]["covered_km"], 10.0)
+        self.assertAlmostEqual(res["total"]["coverage_pct"], 1.0)
+        self.assertIn(None, res["by_sector"])
+        self.assertAlmostEqual(res["by_sector"][None]["coverage_pct"], 1.0)
+
+    def test_compute_collection_coverage_partial_coverage(self):
+        from core.indicators.waste import compute_collection_coverage
+
+        res = compute_collection_coverage([20.0], [15.0])
+        self.assertAlmostEqual(res["total"]["required_km"], 20.0)
+        self.assertAlmostEqual(res["total"]["covered_km"], 15.0)
+        self.assertAlmostEqual(res["total"]["coverage_pct"], 0.75)
+        self.assertAlmostEqual(res["by_sector"][None]["coverage_pct"], 0.75)
+
+    def test_compute_collection_coverage_multiple_sectors(self):
+        from core.indicators.waste import compute_collection_coverage
+
+        res = compute_collection_coverage(
+            required_km=[10.0, 30.0],
+            covered_km=[8.0, 15.0],
+            sector_ids=[1, 2]
+        )
+        self.assertAlmostEqual(res["by_sector"][1]["required_km"], 10.0)
+        self.assertAlmostEqual(res["by_sector"][1]["covered_km"], 8.0)
+        self.assertAlmostEqual(res["by_sector"][1]["coverage_pct"], 0.8)
+
+        self.assertAlmostEqual(res["by_sector"][2]["required_km"], 30.0)
+        self.assertAlmostEqual(res["by_sector"][2]["covered_km"], 15.0)
+        self.assertAlmostEqual(res["by_sector"][2]["coverage_pct"], 0.5)
+
+        self.assertAlmostEqual(res["total"]["required_km"], 40.0)
+        self.assertAlmostEqual(res["total"]["covered_km"], 23.0)
+        self.assertAlmostEqual(res["total"]["coverage_pct"], 0.575)
+
+    def test_compute_collection_coverage_zero_required(self):
+        from core.indicators.waste import compute_collection_coverage
+
+        res = compute_collection_coverage([0.0], [0.0])
+        self.assertAlmostEqual(res["total"]["required_km"], 0.0)
+        self.assertAlmostEqual(res["total"]["covered_km"], 0.0)
+        self.assertIsNone(res["total"]["coverage_pct"])
+        self.assertIsNone(res["by_sector"][None]["coverage_pct"])
+
+    def test_compute_collection_coverage_capped_above_100(self):
+        from core.indicators.waste import compute_collection_coverage
+
+        res = compute_collection_coverage([10.0], [15.0])
+        self.assertAlmostEqual(res["total"]["required_km"], 10.0)
+        self.assertAlmostEqual(res["total"]["covered_km"], 15.0)
+        self.assertAlmostEqual(res["total"]["coverage_pct"], 1.0)
+        self.assertAlmostEqual(res["by_sector"][None]["coverage_pct"], 1.0)
+
+    def test_compute_collection_coverage_incompatible_lengths(self):
+        from core.indicators.waste import compute_collection_coverage
+
+        with self.assertRaises(ValueError):
+            compute_collection_coverage([10.0, 20.0], [10.0])
+
+        with self.assertRaises(ValueError):
+            compute_collection_coverage([10.0], [10.0], sector_ids=[1, 2])
+
+    def test_compute_collection_coverage_empty_input(self):
+        from core.indicators.waste import compute_collection_coverage
+
+        with self.assertRaises(ValueError):
+            compute_collection_coverage([], [])
+
 
 if __name__ == "__main__":
     unittest.main()
+

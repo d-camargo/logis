@@ -448,4 +448,173 @@ def compute_route_balance(
     }
 
 
+def waste_destination_distance(
+    od_matrix: List[List[Union[int, float]]]
+) -> List[float]:
+    """
+    Calcula a menor distância ou tempo de viagem até o ponto de destino de resíduos
+    (aterro sanitário, estação de transbordo ou ecoponto) mais próximo para cada setor/origem
+    de coleta, a partir de uma matriz OD (Origem-Destino).
+
+    Fórmula:
+        Custo_j = Min(od_matrix[i][j]) para todo destino i
+
+    Referência Bibliográfica da Técnica:
+        Tchobanoglous, G., Theisen, H., & Vigil, S. A. (1993). Integrated Solid Waste
+        Management: Engineering Principles and Management Issues. McGraw-Hill.
+        Daskin, M. S. (1995). Network and Discrete Location: Models, Algorithms, and Applications.
+        John Wiley & Sons.
+
+    Limite de Complexidade:
+        Complexidade de Tempo: O(D * S) onde D é o número de destinos e S é o número de setores/origens.
+        Complexidade de Espaço: O(S) para a lista de distâncias/custos de retorno.
+
+    Args:
+        od_matrix (List[List[Union[int, float]]]): Matriz onde a linha i representa o destino i
+            e a coluna j representa o custo para a origem/setor j.
+
+    Returns:
+        List[float]: Lista contendo a menor distância ou tempo até o destino mais próximo para cada setor/origem.
+
+    Raises:
+        ValueError: Se a matriz OD for vazia, com linhas inconsistentes ou valores negativos.
+        TypeError: Se od_matrix ou seus elementos não forem do tipo correto.
+    """
+    if od_matrix is None:
+        raise TypeError("A matriz OD (od_matrix) não pode ser None.")
+    if not isinstance(od_matrix, list):
+        raise TypeError("A matriz OD (od_matrix) deve ser uma lista de listas.")
+    if len(od_matrix) == 0:
+        raise ValueError("A matriz OD (od_matrix) não pode ser vazia (deve conter pelo menos um destino).")
+
+    num_zones = None
+    for idx, row in enumerate(od_matrix):
+        if not isinstance(row, list):
+            raise TypeError(f"A linha {idx} da matriz OD deve ser uma lista.")
+        if len(row) == 0:
+            raise ValueError(f"A linha {idx} da matriz OD não pode ser vazia.")
+        if num_zones is None:
+            num_zones = len(row)
+        elif len(row) != num_zones:
+            raise ValueError("As linhas da matriz OD devem ter tamanhos consistentes (mesmo número de origens).")
+
+        for val in row:
+            if isinstance(val, bool) or not isinstance(val, (int, float)):
+                raise TypeError("Os valores da matriz OD devem ser numéricos.")
+            if val < 0:
+                raise ValueError("Os custos na matriz OD não podem ser negativos.")
+
+    costs = []
+    for j in range(num_zones):
+        min_cost = min(od_matrix[i][j] for i in range(len(od_matrix)))
+        costs.append(float(min_cost))
+
+    return costs
+
+
+def compute_collection_coverage(
+    required_km: List[float],
+    covered_km: List[float],
+    sector_ids: Optional[List[Any]] = None
+) -> Dict[str, Any]:
+    """
+    Calcula a extensão de via exigida (required_km), extensão efetivamente coberta (covered_km)
+    e a taxa de cobertura (coverage_pct = covered_km / required_km, capada em 1.0) por setor
+    e no total acumulado.
+
+    Fórmula:
+        coverage_pct = min(1.0, covered_km / required_km) (se required_km > 0, senão None)
+
+    Nota de Decisão:
+        A cobertura percentual é capada em 1.0 (100%) por setor e no total. Embora uma rota
+        possa realizar múltiplas passadas em um mesmo trecho (gerando covered_km > required_km),
+        o indicador mede a cobertura de extensão distinta da malha exigida, e não a intensidade de passadas.
+
+    Referência Bibliográfica da Técnica:
+        Toregas, C., Swain, R., ReVelle, C., & Bergman, L. (1971). The location of emergency
+        service facilities. Operations Research, 19(6), 1363-1373.
+        Tchobanoglous, G., Theisen, H., & Vigil, S. A. (1993). Integrated Solid Waste
+        Management: Engineering Principles and Management Issues. McGraw-Hill.
+
+    Limite de Complexidade:
+        Complexidade de Tempo: O(N), onde N é o número de entradas em required_km.
+        Complexidade de Espaço: O(N) para o agrupamento por setor.
+
+    Args:
+        required_km (List[float]): Lista de extensão de via exigida em km por setor (não vazia, valores >= 0).
+        covered_km (List[float]): Lista de extensão efetivamente coberta em km por setor (mesmo tamanho, valores >= 0).
+        sector_ids (Optional[List[Any]]): Identificador do setor para cada entrada. Se None, trata a entrada
+            como um único grupo/setor (chave None).
+
+    Returns:
+        Dict[str, Any]: Dicionário com os resultados:
+            - "by_sector" (Dict[Any, Dict[str, Optional[float]]]): Mapeamento de sector_id para dicionário
+              contendo "required_km", "covered_km" e "coverage_pct".
+            - "total" (Dict[str, Optional[float]]): Dicionário agregando todos os setores com
+              "required_km", "covered_km" e "coverage_pct".
+
+    Raises:
+        ValueError: Se required_km for vazia ou contiver elementos com valor negativo ou tipo inválido;
+            se covered_km não tiver o mesmo tamanho de required_km ou contiver valores inválidos/negativos;
+            se sector_ids for fornecida e não tiver o mesmo tamanho de required_km.
+    """
+    if not isinstance(required_km, (list, tuple)) or not required_km:
+        raise ValueError("A lista de extensão exigida (required_km) não pode ser vazia.")
+
+    if not isinstance(covered_km, (list, tuple)) or len(covered_km) != len(required_km):
+        raise ValueError("A lista covered_km deve ser fornecida e ter o mesmo tamanho de required_km.")
+
+    if sector_ids is not None:
+        if not isinstance(sector_ids, (list, tuple)) or len(sector_ids) != len(required_km):
+            raise ValueError("A lista sector_ids deve ter o mesmo tamanho de required_km quando fornecida.")
+
+    for req in required_km:
+        if isinstance(req, bool) or not isinstance(req, (int, float)) or req < 0:
+            raise ValueError("Todos os valores em required_km devem ser números não-negativos.")
+
+    for cov in covered_km:
+        if isinstance(cov, bool) or not isinstance(cov, (int, float)) or cov < 0:
+            raise ValueError("Todos os valores em covered_km devem ser números não-negativos.")
+
+    effective_sector_ids = sector_ids if sector_ids is not None else [None] * len(required_km)
+
+    by_sector_raw: Dict[Any, Dict[str, float]] = {}
+
+    for req, cov, sid in zip(required_km, covered_km, effective_sector_ids):
+        req_f = float(req)
+        cov_f = float(cov)
+        if sid not in by_sector_raw:
+            by_sector_raw[sid] = {"required_km": 0.0, "covered_km": 0.0}
+        by_sector_raw[sid]["required_km"] += req_f
+        by_sector_raw[sid]["covered_km"] += cov_f
+
+    by_sector: Dict[Any, Dict[str, Optional[float]]] = {}
+    for sid, data in by_sector_raw.items():
+        r = data["required_km"]
+        c = data["covered_km"]
+        pct = min(1.0, c / r) if r > 0 else None
+        by_sector[sid] = {
+            "required_km": r,
+            "covered_km": c,
+            "coverage_pct": pct
+        }
+
+    tot_req = sum(data["required_km"] for data in by_sector_raw.values())
+    tot_cov = sum(data["covered_km"] for data in by_sector_raw.values())
+    tot_pct = min(1.0, tot_cov / tot_req) if tot_req > 0 else None
+
+    total: Dict[str, Optional[float]] = {
+        "required_km": tot_req,
+        "covered_km": tot_cov,
+        "coverage_pct": tot_pct
+    }
+
+    return {
+        "by_sector": by_sector,
+        "total": total
+    }
+
+
+
+
 
