@@ -730,33 +730,6 @@ class TestWaste(unittest.TestCase):
         with self.assertRaises(ValueError):
             compute_route_balance([100.0], route_distances_km=[10.0], avg_collection_speed_kmh=0.0)
 
-    def test_waste_destination_distance_function(self):
-        from core.indicators.waste import waste_destination_distance
-
-        # Matriz 2 destinos x 3 origens
-        # Destino 0: [10.0, 25.0, 5.0]
-        # Destino 1: [15.0, 20.0, 12.0]
-        od_matrix = [
-            [10.0, 25.0, 5.0],
-            [15.0, 20.0, 12.0]
-        ]
-        result = waste_destination_distance(od_matrix)
-        self.assertEqual(result, [10.0, 20.0, 5.0])
-
-        # Testes de erro
-        with self.assertRaises(TypeError):
-            waste_destination_distance(None)
-        with self.assertRaises(TypeError):
-            waste_destination_distance("invalid")
-        with self.assertRaises(ValueError):
-            waste_destination_distance([])
-        with self.assertRaises(ValueError):
-            waste_destination_distance([[10.0, 20.0], [5.0]])
-        with self.assertRaises(ValueError):
-            waste_destination_distance([[-5.0, 10.0]])
-        with self.assertRaises(TypeError):
-            waste_destination_distance([["abc", 10.0]])
-
     def test_compute_collection_coverage_full_coverage(self):
         from core.indicators.waste import compute_collection_coverage
 

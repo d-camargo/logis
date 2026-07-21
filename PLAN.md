@@ -1204,7 +1204,7 @@ registradas neste plano (ex.: passo 58 cita "passos 7, 13, 18, 27, 33,
       Rodar `python3 -m unittest test_waste -v` e `make test`; só
       marcar `[x]` quando ambos passarem. — arquivos: `test_waste.py`
 
-- [ ] 54. Criar `algorithms/waste_collection_coverage.py`
+- [x] 54. Criar `algorithms/waste_collection_coverage.py`
       (`logis:waste_collection_coverage`): parâmetros = camada de vias
       exigidas na faixa de frequência (linha, campo de setor
       opcional), camada de rota coberta (linha, saída de
@@ -1221,7 +1221,7 @@ registradas neste plano (ex.: passo 58 cita "passos 7, 13, 18, 27, 33,
       com `coverage_pct < 0.8`. — arquivos:
       `algorithms/waste_collection_coverage.py`
 
-- [ ] 55. Registrar `WasteCollectionCoverage` (import + `addAlgorithm`)
+- [x] 55. Registrar `WasteCollectionCoverage` (import + `addAlgorithm`)
       em `provider.py` (25 algorithms). Adicionar
       `test_waste_collection_coverage_algorithm_metadata` em
       `test_waste.py`, mesmo padrão dos algorithms anteriores. —

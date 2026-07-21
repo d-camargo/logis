@@ -31,12 +31,12 @@ from qgis.core import (
 )
 
 try:
-    from ..core.indicators.waste import waste_destination_distance
+    from ..core.indicators.urban import nearest_depot_cost
     from ..core.network.graph_builder import build_graph
     from ..core.network.od_matrix import compute_od_matrix
     from ..core import qgis_compat
 except ImportError:
-    from core.indicators.waste import waste_destination_distance
+    from core.indicators.urban import nearest_depot_cost
     from core.network.graph_builder import build_graph
     from core.network.od_matrix import compute_od_matrix
     from core import qgis_compat
@@ -199,7 +199,7 @@ class WasteDestinationDistance(QgsProcessingAlgorithm):
 
         # 6) Calcular a menor distância ao destino mais próximo por setor
         try:
-            costs = waste_destination_distance(distances)
+            costs = nearest_depot_cost(distances)
         except ValueError as exc:
             raise QgsProcessingException(str(exc))
 
