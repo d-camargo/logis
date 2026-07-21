@@ -308,6 +308,7 @@ class WasteCarpRoute(QgsProcessingAlgorithm):
             out_fields.append(QgsField("route_sector_id", sec_type))
         else:
             out_fields.append(QgsField("route_sector_id", qgis_compat.field_type("int")))
+        out_fields.append(QgsField("route_is_deadhead", qgis_compat.field_type("bool")))
 
         sink, dest_id = self.parameterAsSink(
             parameters, self.OUTPUT, context, out_fields,
@@ -373,6 +374,7 @@ class WasteCarpRoute(QgsProcessingAlgorithm):
 
             req_id_set = {e["id"] for e in req_edges}
             full_edge_by_id = {e["id"]: e for e in full_edges}
+            served_req_in_sector = set()
 
             for route_idx, route in enumerate(routes, start=1):
                 route_edges = route["edges"]
@@ -400,12 +402,16 @@ class WasteCarpRoute(QgsProcessingAlgorithm):
                     if feedback.isCanceled():
                         return {}
 
+                    is_deadhead = (edge_id not in req_id_set) or (edge_id in served_req_in_sector)
+                    if edge_id in req_id_set:
+                        served_req_in_sector.add(edge_id)
+
                     orig_feat = feature_map[edge_id]
 
                     out_feat = QgsFeature(out_fields)
                     out_feat.setGeometry(orig_feat.geometry())
                     out_feat.setAttributes(
-                        orig_feat.attributes() + [route_idx, visit_idx, sec_val]
+                        orig_feat.attributes() + [route_idx, visit_idx, sec_val, is_deadhead]
                     )
                     sink.addFeature(out_feat, QgsFeatureSink.FastInsert)
 
@@ -447,8 +453,9 @@ class WasteCarpRoute(QgsProcessingAlgorithm):
             "em vez de ser dividido entre mais de uma viagem (sem split-delivery).\n\n"
             "Retorno:\n"
             "- Camada de linha com feições de vias e campos adicionais: 'route_id' (identificador da "
-            "rota/viagem dentro do setor), 'route_visit_order' (ordem de visita na rota) e "
-            "'route_sector_id' (setor de coleta)."
+            "rota/viagem dentro do setor), 'route_visit_order' (ordem de visita na rota), "
+            "'route_sector_id' (setor de coleta) e 'route_is_deadhead' (booleano indicando passagem "
+            "duplicada/deslocamento deadhead)."
         )
 
     def createInstance(self):

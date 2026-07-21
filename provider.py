@@ -27,6 +27,7 @@ from .algorithms.waste_cpp_route import WasteCppRoute
 from .algorithms.waste_rpp_route import WasteRppRoute
 from .algorithms.waste_carp_route import WasteCarpRoute
 from .algorithms.waste_fleet_sizing import WasteFleetSizing
+from .algorithms.waste_deadhead_ratio import WasteDeadheadRatio
 
 
 class LogisProvider(QgsProcessingProvider):
@@ -52,6 +53,7 @@ class LogisProvider(QgsProcessingProvider):
         self.addAlgorithm(WasteRppRoute())
         self.addAlgorithm(WasteCarpRoute())
         self.addAlgorithm(WasteFleetSizing())
+        self.addAlgorithm(WasteDeadheadRatio())
 
     def id(self):
         return 'logis'

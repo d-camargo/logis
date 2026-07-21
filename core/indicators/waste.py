@@ -2,7 +2,7 @@
 """
 Módulo de cálculo de indicadores de geração de resíduos sólidos (logística especializada).
 """
-from typing import Dict, List, Union
+from typing import Any, Dict, List, Optional, Union
 
 
 def sector_waste_generation(
@@ -204,4 +204,103 @@ def estimate_fleet_size(
         "total_route_time_h": total_route_time_h,
         "avg_utilization": avg_utilization
     }
+
+
+def compute_deadhead_ratio(
+    lengths_km: List[float],
+    deadhead_flags: List[bool],
+    route_ids: Optional[List[Any]] = None
+) -> Dict[str, Any]:
+    """
+    Calcula a extensão de deslocamento produtivo (coleta), improdutivo (deadhead/conector)
+    e a razão de deadhead (deadhead_km / productive_km) para cada rota e no total acumulado.
+
+    Fórmula:
+        productive_km = soma(lengths_km onde deadhead_flags é False)
+        deadhead_km = soma(lengths_km onde deadhead_flags é True)
+        deadhead_ratio = deadhead_km / productive_km (se productive_km > 0, senão None)
+
+    Referência Bibliográfica da Técnica:
+        Tchobanoglous, G., Theisen, H., & Vigil, S. A. (1993). Integrated Solid Waste
+        Management: Engineering Principles and Management Issues. McGraw-Hill.
+        Beltrami, E. J., & Bodin, L. D. (1974). Networks and vehicle routing for municipal
+        waste collection. Networks, 4(1), 65-94.
+
+    Limite de Complexidade:
+        Complexidade de Tempo: O(N), onde N é o número de trechos (feições) em lengths_km.
+        Complexidade de Espaço: O(N) para armazenar o agrupamento por rota.
+
+    Args:
+        lengths_km (List[float]): Comprimentos dos trechos de rota em km (não vazia, valores >= 0).
+        deadhead_flags (List[bool]): Indicadores se cada trecho é deadhead (True) ou produtivo (False).
+        route_ids (Optional[List[Any]]): Identificador da rota/setor para cada trecho. Se None,
+            trata toda a entrada como pertencente a uma única rota (chave None).
+
+    Returns:
+        Dict[str, Any]: Dicionário com o resultado:
+            - "routes" (Dict[Any, Dict[str, Optional[float]]]): Mapeamento de route_id para
+              dicionário contendo "productive_km", "deadhead_km" e "deadhead_ratio".
+            - "total" (Dict[str, Optional[float]]): Dicionário agregando todos os trechos com
+              "productive_km", "deadhead_km" e "deadhead_ratio".
+
+    Raises:
+        ValueError: Se lengths_km for vazia ou contiver elementos com valor negativo ou tipo inválido;
+            se deadhead_flags ou route_ids (quando fornecido) tiverem tamanho diferente de lengths_km.
+    """
+    if not isinstance(lengths_km, (list, tuple)) or not lengths_km:
+        raise ValueError("A lista de comprimentos (lengths_km) não pode ser vazia.")
+
+    if not isinstance(deadhead_flags, (list, tuple)) or len(deadhead_flags) != len(lengths_km):
+        raise ValueError("A lista deadhead_flags deve ser fornecida e ter o mesmo tamanho de lengths_km.")
+
+    if route_ids is not None:
+        if not isinstance(route_ids, (list, tuple)) or len(route_ids) != len(lengths_km):
+            raise ValueError("A lista route_ids deve ter o mesmo tamanho de lengths_km quando fornecida.")
+
+    for length in lengths_km:
+        if isinstance(length, bool) or not isinstance(length, (int, float)) or length < 0:
+            raise ValueError("Todos os comprimentos em lengths_km devem ser números não-negativos.")
+
+    effective_route_ids = route_ids if route_ids is not None else [None] * len(lengths_km)
+
+    routes_data: Dict[Any, Dict[str, float]] = {}
+
+    total_productive = 0.0
+    total_deadhead = 0.0
+
+    for length, is_dh, rid in zip(lengths_km, deadhead_flags, effective_route_ids):
+        l_float = float(length)
+        if rid not in routes_data:
+            routes_data[rid] = {"productive_km": 0.0, "deadhead_km": 0.0}
+
+        if is_dh:
+            routes_data[rid]["deadhead_km"] += l_float
+            total_deadhead += l_float
+        else:
+            routes_data[rid]["productive_km"] += l_float
+            total_productive += l_float
+
+    routes_result: Dict[Any, Dict[str, Optional[float]]] = {}
+    for rid, data in routes_data.items():
+        prod = data["productive_km"]
+        dh = data["deadhead_km"]
+        ratio = (dh / prod) if prod > 0 else None
+        routes_result[rid] = {
+            "productive_km": prod,
+            "deadhead_km": dh,
+            "deadhead_ratio": ratio
+        }
+
+    total_ratio = (total_deadhead / total_productive) if total_productive > 0 else None
+    total_result: Dict[str, Optional[float]] = {
+        "productive_km": total_productive,
+        "deadhead_km": total_deadhead,
+        "deadhead_ratio": total_ratio
+    }
+
+    return {
+        "routes": routes_result,
+        "total": total_result
+    }
+
 

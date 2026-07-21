@@ -3,13 +3,14 @@ import unittest
 from core.indicators.waste import (
     sector_waste_generation,
     allocate_generation_by_street_length,
-    estimate_fleet_size
+    estimate_fleet_size,
+    compute_deadhead_ratio
 )
 
 try:
     from qgis.core import (
         QgsApplication, QgsVectorLayer, QgsFeature, QgsGeometry, QgsPointXY,
-        QgsField, QgsProcessingContext, QgsProcessingFeedback
+        QgsField, QgsProcessingContext, QgsProcessingFeedback, NULL
     )
     from qgis.PyQt.QtCore import QVariant
 
@@ -107,6 +108,59 @@ class TestWaste(unittest.TestCase):
         with self.assertRaises(ValueError):
             estimate_fleet_size([-10.0], 10.0, 8.0, 0.5, 0.5)
 
+    def test_compute_deadhead_ratio(self):
+        # Caso 1: Rota única sem route_ids (chave None) com trechos produtivos e deadhead
+        res1 = compute_deadhead_ratio([10.0, 5.0, 5.0], [False, True, False])
+        self.assertAlmostEqual(res1["total"]["productive_km"], 15.0)
+        self.assertAlmostEqual(res1["total"]["deadhead_km"], 5.0)
+        self.assertAlmostEqual(res1["total"]["deadhead_ratio"], 5.0 / 15.0)
+        self.assertAlmostEqual(res1["routes"][None]["productive_km"], 15.0)
+        self.assertAlmostEqual(res1["routes"][None]["deadhead_km"], 5.0)
+
+        # Caso 2: Múltiplas rotas com route_ids explicitados (agrupamento por rota e total)
+        res2 = compute_deadhead_ratio(
+            [10.0, 2.0, 8.0, 4.0],
+            [False, True, False, True],
+            route_ids=[1, 1, 2, 2]
+        )
+        self.assertAlmostEqual(res2["routes"][1]["productive_km"], 10.0)
+        self.assertAlmostEqual(res2["routes"][1]["deadhead_km"], 2.0)
+        self.assertAlmostEqual(res2["routes"][1]["deadhead_ratio"], 0.2)
+        self.assertAlmostEqual(res2["routes"][2]["productive_km"], 8.0)
+        self.assertAlmostEqual(res2["routes"][2]["deadhead_km"], 4.0)
+        self.assertAlmostEqual(res2["routes"][2]["deadhead_ratio"], 0.5)
+        self.assertAlmostEqual(res2["total"]["productive_km"], 18.0)
+        self.assertAlmostEqual(res2["total"]["deadhead_km"], 6.0)
+        self.assertAlmostEqual(res2["total"]["deadhead_ratio"], 6.0 / 18.0)
+
+        # Caso 3: Rota sem nenhum trecho deadhead (deadhead_km = 0.0, ratio = 0.0)
+        res3 = compute_deadhead_ratio([5.0, 10.0], [False, False])
+        self.assertAlmostEqual(res3["total"]["productive_km"], 15.0)
+        self.assertAlmostEqual(res3["total"]["deadhead_km"], 0.0)
+        self.assertAlmostEqual(res3["total"]["deadhead_ratio"], 0.0)
+
+        # Caso 4: Rota com apenas trechos deadhead (productive_km = 0.0, ratio = None)
+        res4 = compute_deadhead_ratio([5.0, 5.0], [True, True])
+        self.assertAlmostEqual(res4["total"]["productive_km"], 0.0)
+        self.assertAlmostEqual(res4["total"]["deadhead_km"], 10.0)
+        self.assertIsNone(res4["total"]["deadhead_ratio"])
+
+        # Caso 5: Entradas com comprimentos inválidos/negativos ou lista vazia (ValueError)
+        with self.assertRaises(ValueError):
+            compute_deadhead_ratio([], [])
+        with self.assertRaises(ValueError):
+            compute_deadhead_ratio([-5.0], [False])
+        with self.assertRaises(ValueError):
+            compute_deadhead_ratio(["inválido"], [False])
+
+        # Caso 6: Listas com tamanhos incompatíveis entre si (ValueError)
+        with self.assertRaises(ValueError):
+            compute_deadhead_ratio([10.0], [False, True])
+        with self.assertRaises(ValueError):
+            compute_deadhead_ratio([10.0, 5.0], [False])
+        with self.assertRaises(ValueError):
+            compute_deadhead_ratio([10.0, 5.0], [False, True], route_ids=[1])
+
     def test_waste_cpp_route_algorithm_metadata(self):
         try:
             from algorithms.waste_cpp_route import WasteCppRoute
@@ -115,9 +169,50 @@ class TestWaste(unittest.TestCase):
             self.assertEqual(alg.groupId(), "waste")
             self.assertTrue(callable(alg.createInstance))
             self.assertIsInstance(alg.createInstance(), WasteCppRoute)
+            self.assertIn("route_is_deadhead", alg.shortHelpString())
         except ImportError:
             # Em ambiente sem QGIS C++ bindings completos, ignora instanciação
             pass
+
+    @unittest.skipUnless(_HAS_QGIS, "requer bindings QGIS completos")
+    def test_waste_cpp_route_marks_deadhead_edges(self):
+        # Grafo simples com 2 nós ímpares (A-B, B-C, C-D):
+        # O CPP emparelha A e D duplicando o caminho A-B-C-D.
+        # Assim, os 3 trechos serão percorridos 2 vezes (1ª passagem regular, 2ª passagem deadhead).
+        from algorithms.waste_cpp_route import WasteCppRoute
+
+        layer = QgsVectorLayer("LineString?crs=EPSG:3857", "streets", "memory")
+        provider = layer.dataProvider()
+        layer.updateFields()
+
+        def add_feature(coords):
+            feat = QgsFeature(layer.fields())
+            feat.setGeometry(QgsGeometry.fromPolylineXY([QgsPointXY(*c) for c in coords]))
+            provider.addFeature(feat)
+
+        add_feature([(0, 0), (10, 0)])   # A-B
+        add_feature([(10, 0), (20, 0)])  # B-C
+        add_feature([(20, 0), (30, 0)])  # C-D
+        layer.updateExtents()
+
+        alg = WasteCppRoute()
+        alg.initAlgorithm()
+        context = QgsProcessingContext()
+        feedback = QgsProcessingFeedback()
+        params = {
+            alg.INPUT_STREETS: layer,
+            alg.NODE_TOLERANCE: 0.01,
+            alg.OUTPUT: "memory:out",
+        }
+        result = alg.processAlgorithm(params, context, feedback)
+        out_layer = context.getMapLayer(result[alg.OUTPUT])
+
+        idx_deadhead = out_layer.fields().indexFromName("route_is_deadhead")
+        self.assertNotEqual(idx_deadhead, -1)
+
+        deadhead_values = [feat.attribute(idx_deadhead) for feat in out_layer.getFeatures()]
+        self.assertIn(True, deadhead_values)
+        self.assertIn(False, deadhead_values)
 
     def test_waste_rpp_route_algorithm_metadata(self):
         try:
@@ -190,6 +285,7 @@ class TestWaste(unittest.TestCase):
             self.assertEqual(alg.groupId(), "waste")
             self.assertTrue(callable(alg.createInstance))
             self.assertIsInstance(alg.createInstance(), WasteCarpRoute)
+            self.assertIn("route_is_deadhead", alg.shortHelpString())
         except ImportError:
             pass
 
@@ -240,6 +336,12 @@ class TestWaste(unittest.TestCase):
         idx_route = out_layer.fields().indexFromName("route_id")
         route_ids = {feat.attribute(idx_route) for feat in out_layer.getFeatures()}
         self.assertEqual(len(route_ids), 2)
+
+        idx_deadhead = out_layer.fields().indexFromName("route_is_deadhead")
+        self.assertNotEqual(idx_deadhead, -1)
+        deadhead_values = [feat.attribute(idx_deadhead) for feat in out_layer.getFeatures()]
+        self.assertIn(True, deadhead_values)
+        self.assertIn(False, deadhead_values)
 
     def test_waste_fleet_sizing_algorithm_metadata(self):
         try:
@@ -306,8 +408,122 @@ class TestWaste(unittest.TestCase):
         self.assertEqual(feat.attribute(idx_fleet), 2)
         self.assertEqual(feat.attribute(idx_routes), 3)
 
+    def test_waste_deadhead_ratio_algorithm_metadata(self):
+        try:
+            from algorithms.waste_deadhead_ratio import WasteDeadheadRatio
+            alg = WasteDeadheadRatio()
+            self.assertEqual(alg.name(), "waste_deadhead_ratio")
+            self.assertEqual(alg.groupId(), "waste")
+            self.assertTrue(callable(alg.createInstance))
+            self.assertIsInstance(alg.createInstance(), WasteDeadheadRatio)
+        except ImportError:
+            pass
+
+    @unittest.skipUnless(_HAS_QGIS, "requer bindings QGIS completos")
+    def test_waste_deadhead_ratio_computes_ratios(self):
+        from algorithms.waste_deadhead_ratio import WasteDeadheadRatio
+
+        layer = QgsVectorLayer("LineString?crs=EPSG:3857", "routes", "memory")
+        provider = layer.dataProvider()
+        provider.addAttributes([
+            QgsField("route_id", QVariant.Int),
+            QgsField("is_deadhead", QVariant.Bool)
+        ])
+        layer.updateFields()
+
+        # Rota 1: 10 km produtivos, 5 km deadhead
+        def add_segment(route_id, is_dh, length_m):
+            feat = QgsFeature(layer.fields())
+            feat.setGeometry(QgsGeometry.fromPolylineXY([QgsPointXY(0, 0), QgsPointXY(length_m, 0)]))
+            feat.setAttributes([route_id, is_dh])
+            provider.addFeature(feat)
+
+        add_segment(1, False, 10000.0)
+        add_segment(1, True, 5000.0)
+        layer.updateExtents()
+
+        alg = WasteDeadheadRatio()
+        alg.initAlgorithm()
+        context = QgsProcessingContext()
+        feedback = QgsProcessingFeedback()
+        params = {
+            alg.INPUT_ROUTES: layer,
+            alg.FIELD_DEADHEAD: "is_deadhead",
+            alg.FIELD_ROUTE_ID: "route_id",
+            alg.OUTPUT: "memory:out",
+        }
+        result = alg.processAlgorithm(params, context, feedback)
+        out_layer = context.getMapLayer(result[alg.OUTPUT])
+
+        self.assertEqual(out_layer.featureCount(), 1)
+        feat = next(out_layer.getFeatures())
+        idx_route = out_layer.fields().indexFromName("route_id")
+        idx_prod = out_layer.fields().indexFromName("productive_km")
+        idx_dh = out_layer.fields().indexFromName("deadhead_km")
+        idx_ratio = out_layer.fields().indexFromName("deadhead_ratio")
+
+        self.assertEqual(feat.attribute(idx_route), 1)
+        self.assertAlmostEqual(feat.attribute(idx_prod), 10.0)
+        self.assertAlmostEqual(feat.attribute(idx_dh), 5.0)
+        self.assertAlmostEqual(feat.attribute(idx_ratio), 0.5)
+
+    @unittest.skipUnless(_HAS_QGIS, "requer bindings QGIS completos")
+    def test_waste_deadhead_ratio_adds_total_row_for_multiple_routes(self):
+        from algorithms.waste_deadhead_ratio import WasteDeadheadRatio
+
+        layer = QgsVectorLayer("LineString?crs=EPSG:3857", "routes", "memory")
+        provider = layer.dataProvider()
+        provider.addAttributes([
+            QgsField("route_id", QVariant.Int),
+            QgsField("is_deadhead", QVariant.Bool)
+        ])
+        layer.updateFields()
+
+        def add_segment(route_id, is_dh, length_m):
+            feat = QgsFeature(layer.fields())
+            feat.setGeometry(QgsGeometry.fromPolylineXY([QgsPointXY(0, 0), QgsPointXY(length_m, 0)]))
+            feat.setAttributes([route_id, is_dh])
+            provider.addFeature(feat)
+
+        # Rota 1: 10 km produtivos, 2 km deadhead. Rota 2: 8 km produtivos, 4 km deadhead.
+        add_segment(1, False, 10000.0)
+        add_segment(1, True, 2000.0)
+        add_segment(2, False, 8000.0)
+        add_segment(2, True, 4000.0)
+        layer.updateExtents()
+
+        alg = WasteDeadheadRatio()
+        alg.initAlgorithm()
+        context = QgsProcessingContext()
+        feedback = QgsProcessingFeedback()
+        params = {
+            alg.INPUT_ROUTES: layer,
+            alg.FIELD_DEADHEAD: "is_deadhead",
+            alg.FIELD_ROUTE_ID: "route_id",
+            alg.OUTPUT: "memory:out",
+        }
+        result = alg.processAlgorithm(params, context, feedback)
+        out_layer = context.getMapLayer(result[alg.OUTPUT])
+
+        # 2 feições de rota + 1 feição de total agregado (route_id nulo).
+        self.assertEqual(out_layer.featureCount(), 3)
+
+        idx_route = out_layer.fields().indexFromName("route_id")
+        idx_prod = out_layer.fields().indexFromName("productive_km")
+        idx_dh = out_layer.fields().indexFromName("deadhead_km")
+
+        total_feats = [
+            feat for feat in out_layer.getFeatures()
+            if feat.attribute(idx_route) == NULL
+        ]
+        self.assertEqual(len(total_feats), 1)
+        total_feat = total_feats[0]
+        self.assertAlmostEqual(total_feat.attribute(idx_prod), 18.0)
+        self.assertAlmostEqual(total_feat.attribute(idx_dh), 6.0)
+
 
 if __name__ == "__main__":
     unittest.main()
+
 
 

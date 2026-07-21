@@ -199,6 +199,7 @@ class WasteCppRoute(QgsProcessingAlgorithm):
             out_fields.append(QgsField("route_sector_id", sec_type))
         else:
             out_fields.append(QgsField("route_sector_id", qgis_compat.field_type("int")))
+        out_fields.append(QgsField("route_is_deadhead", qgis_compat.field_type("bool")))
 
         sink, dest_id = self.parameterAsSink(
             parameters, self.OUTPUT, context, out_fields,
@@ -242,14 +243,18 @@ class WasteCppRoute(QgsProcessingAlgorithm):
                 )
             )
 
+            seen_in_sector = set()
             for visit_idx, edge_id in enumerate(circuit, start=1):
                 if feedback.isCanceled():
                     return {}
 
+                is_deadhead = edge_id in seen_in_sector
+                seen_in_sector.add(edge_id)
+
                 orig_feat = feature_map[edge_id]
                 out_feat = QgsFeature(out_fields)
                 out_feat.setGeometry(orig_feat.geometry())
-                out_feat.setAttributes(orig_feat.attributes() + [visit_idx, sec_val])
+                out_feat.setAttributes(orig_feat.attributes() + [visit_idx, sec_val, is_deadhead])
                 sink.addFeature(out_feat, QgsFeatureSink.FastInsert)
 
             completed_sectors += 1
@@ -281,9 +286,9 @@ class WasteCppRoute(QgsProcessingAlgorithm):
             "tratada como um único setor.\n"
             "- Tolerância de nó: distância em metros para conectar vértices das vias.\n\n"
             "Retorno:\n"
-            "- Camada de linha com feições duplicadas nos trechos de deadhead e dois campos "
-            "adicionais: 'route_visit_order' (posição sequencial no circuito) e "
-            "'route_sector_id' (setor de coleta)."
+            "- Camada de linha com feições duplicadas nos trechos de deadhead e campos "
+            "adicionais: 'route_visit_order' (posição sequencial no circuito), "
+            "'route_sector_id' (setor de coleta) e 'route_is_deadhead' (booleano indicando passagem duplicada/deadhead)."
         )
 
     def createInstance(self):
