@@ -33,6 +33,23 @@ Consequências práticas:
 - Otimização (VRP, facility location, arc routing): implementar **heurísticas clássicas em Python puro** (savings de Clarke-Wright, sweep, nearest neighbor, 2-opt/or-opt, Teitz-Bart para p-mediana, greedy para cobertura, matching guloso para CPP) como padrão obrigatório. OR-Tools é aceito como backend opcional de otimização (nunca obrigatório, com import lazy/guarded e fallback automático para a heurística pura em Python). Aceitar soluções boas, não ótimas — documentar isso na UI.
 - Matriz OD: pré-calcular com Dijkstra multi-origem sobre `QgsGraph` e cachear em disco (o custo dominante de tudo).
 
+### 2.1 OR-Tools — como instalar (e por que o comando cru quebra o QGIS)
+
+O OR-Tools é backend **opcional**. Quando o plugin oferecer ao usuário instalá-lo para obter a solução ótima, a instrução — na UI, no README ou em qualquer doc — **tem que ser esta**, nunca `pip install ortools` puro:
+
+```
+pip install ortools "pandas<3" "numpy<2" "typing_extensions==4.10.0"
+```
+
+(No Python do sistema em Debian/Ubuntu, acrescentar `--break-system-packages`. No Windows/macOS, usar o Python que o QGIS usa — no Windows, o *OSGeo4W Shell*.)
+
+As duas travas não são preciosismo; sem elas o pip danifica a instalação do QGIS do usuário:
+
+- **`pandas<3` / `numpy<2`** — o `pandas 3.x` exige `numpy>=2`, e o pip instala esse numpy num diretório que **tem precedência sobre o numpy do QGIS** no `sys.path`. O QGIS 3.34 vem com `numpy 1.26.4`; sobrepor por 2.x quebra o QGIS inteiro, não só o logis. Com a trava, o numpy existente satisfaz o requisito e não é tocado.
+- **`typing_extensions==4.10.0`** — sem o pin, o pip tenta desinstalar o `typing_extensions` empacotado pela distro, falha (`RECORD file not found`) e **aborta a instalação no meio**, deixando dependências órfãs. O pin resolve para `ortools 9.12`, que já tem o `pywrapcp`/CP-SAT usado aqui.
+
+Corolário para o código: como a instalação pode falhar, estar ausente ou estar quebrada na máquina do usuário, o import do `ortools` é **sempre lazy/guarded**, com fallback automático para a heurística Python — o plugin nunca pode deixar de funcionar porque o OR-Tools não está lá. Instalado e validado na VPS em 23/07 (`ortools 9.12.4544`); detalhes em `~/.hermes/DECISOES.md` D18.
+
 ## 3. Aproveitamento do GisBR (https://github.com/d-camargo/gisbr)
 
 O logis **reaproveita a lógica** do GisBR (cópia adaptada de módulos, não dependência de import). Chamar os algoritmos `gisbr:read_*` via `processing.run()` é a estratégia **preferencial** quando o plugin GisBR estiver instalado; caso contrário, as cópias adaptadas (downloader/catalog) servem como fallback secundário em vez do caminho primário.
