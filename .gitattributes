@@ -4,3 +4,6 @@ test_*.py export-ignore
 conftest.py export-ignore
 test/ export-ignore
 tests/ export-ignore
+CLAUDE.md export-ignore
+PLAN.md export-ignore
+docs/ export-ignore

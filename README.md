@@ -37,7 +37,7 @@ O plugin adota a filosofia de **zero dependências externas obrigatórias**:
   - `OR-Tools`: Backend opcional para otimização avançada, com importação *lazy* e fallback automático para as heurísticas em Python puro.
 - **Referencial Espacial:** Todos os dados são processados e entregues em SIRGAS 2000 / EPSG:4674, utilizando CRS métrico (UTM) apenas para computações intermediárias de distância e tempo.
 
-### Algoritmos de Processamento (11 registrados)
+### Algoritmos de Processamento (12 registrados)
 
 O plugin atua como um **Processing Provider** (`logis`), expondo os seguintes algoritmos na Caixa de Ferramentas do QGIS:
 
@@ -55,6 +55,10 @@ O plugin atua como um **Processing Provider** (`logis`), expondo os seguintes al
 - `logis:regional_network_density` — Densidade de rede rodoviária regional por estado/região.
 - `logis:regional_pavement_percentage` — Percentual de pavimentação da malha rodoviária.
 - `logis:regional_critical_links` — Identificação de arcos e conexões críticas na rede regional (*cut links*).
+
+#### Módulo Especializado — Coleta de Lixo
+- `logis:waste_districting` — Setorização: particiona a rede viária em setores de coleta contíguos e balanceados por carga (sementes farthest-first + crescimento de regiões + troca de trechos de fronteira).
+- `logis:waste_deadhead_ratio` — Razão de Deadhead: extensão produtiva (coleta) vs. improdutiva (deadhead/conector) e a razão deadhead_km / productive_km, por rota e no total.
 
 ### Interface com Usuário (GUI)
 
@@ -147,7 +151,7 @@ The plugin adopts a **zero mandatory external dependencies** philosophy:
   - `OR-Tools`: Optional backend for advanced optimization, with *lazy* import and automatic fallback to pure Python heuristics.
 - **Spatial Reference System:** All data is processed and delivered in SIRGAS 2000 / EPSG:4674, using a metric CRS (UTM) only for intermediate distance and time calculations.
 
-### Processing Algorithms (11 registered)
+### Processing Algorithms (12 registered)
 
 The plugin acts as a **Processing Provider** (`logis`), exposing the following algorithms in the QGIS Processing Toolbox:
 
@@ -165,6 +169,10 @@ The plugin acts as a **Processing Provider** (`logis`), exposing the following a
 - `logis:regional_network_density` — Regional road network density by state/region.
 - `logis:regional_pavement_percentage` — Pavement percentage of the road network.
 - `logis:regional_critical_links` — Identification of critical arcs and connections in the regional network (*cut links*).
+
+#### Specialized Module — Waste Collection
+- `logis:waste_districting` — Districting: partitions the road network into contiguous, load-balanced collection sectors (farthest-first seeds + region growing + boundary edge swapping).
+- `logis:waste_deadhead_ratio` — Deadhead Ratio: productive (collection) vs. unproductive (deadhead/connector) distance and the deadhead_km / productive_km ratio, per route and overall.
 
 ### User Interface (GUI)
 

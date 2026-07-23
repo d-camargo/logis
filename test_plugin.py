@@ -37,9 +37,11 @@ class TestLogisPlugin(unittest.TestCase):
         self.assertIsNone(self.plugin.action)
         self.assertIsNone(self.plugin.action_urban)
         self.assertIsNone(self.plugin.action_regional)
+        self.assertIsNone(self.plugin.action_waste)
         self.assertIsNone(self.plugin.dialog)
         self.assertIsNone(self.plugin.dock_urban)
         self.assertIsNone(self.plugin.dock_regional)
+        self.assertIsNone(self.plugin.dock_waste)
 
     def test_init_gui(self):
         try:
@@ -51,15 +53,17 @@ class TestLogisPlugin(unittest.TestCase):
         # Call initGui
         self.plugin.initGui()
 
-        # Check that action, action_urban and action_regional were created
+        # Check that action, action_urban, action_regional and action_waste were created
         self.assertIsNotNone(self.plugin.action)
         self.assertIsNotNone(self.plugin.action_urban)
         self.assertIsNotNone(self.plugin.action_regional)
+        self.assertIsNotNone(self.plugin.action_waste)
 
         # Check that they were added to menu "logis"
         self.mock_iface.addPluginToMenu.assert_any_call("logis", self.plugin.action)
         self.mock_iface.addPluginToMenu.assert_any_call("logis", self.plugin.action_urban)
         self.mock_iface.addPluginToMenu.assert_any_call("logis", self.plugin.action_regional)
+        self.mock_iface.addPluginToMenu.assert_any_call("logis", self.plugin.action_waste)
 
     def test_show_urban_dock(self):
         self.plugin.initGui()
@@ -93,17 +97,35 @@ class TestLogisPlugin(unittest.TestCase):
         self.plugin.show_regional_dock()
         self.assertEqual(self.plugin.dock_regional, dock_first)
 
+    def test_show_waste_dock(self):
+        self.plugin.initGui()
+        self.assertIsNone(self.plugin.dock_waste)
+
+        # Trigger show_waste_dock
+        self.plugin.show_waste_dock()
+
+        # Check that dock_waste was created
+        self.assertIsNotNone(self.plugin.dock_waste)
+        
+        # Call it again to make sure it is not recreated
+        dock_first = self.plugin.dock_waste
+        self.plugin.show_waste_dock()
+        self.assertEqual(self.plugin.dock_waste, dock_first)
+
     def test_unload(self):
         # Setup GUI
         self.plugin.initGui()
         self.plugin.show_urban_dock()
         self.plugin.show_regional_dock()
+        self.plugin.show_waste_dock()
 
         action = self.plugin.action
         action_urban = self.plugin.action_urban
         action_regional = self.plugin.action_regional
+        action_waste = self.plugin.action_waste
         dock_urban = self.plugin.dock_urban
         dock_regional = self.plugin.dock_regional
+        dock_waste = self.plugin.dock_waste
 
         # Unload plugin
         self.plugin.unload()
@@ -112,17 +134,21 @@ class TestLogisPlugin(unittest.TestCase):
         self.mock_iface.removePluginMenu.assert_any_call("logis", action)
         self.mock_iface.removePluginMenu.assert_any_call("logis", action_urban)
         self.mock_iface.removePluginMenu.assert_any_call("logis", action_regional)
+        self.mock_iface.removePluginMenu.assert_any_call("logis", action_waste)
         
         # Check that docks are removed
         self.mock_iface.removeDockWidget.assert_any_call(dock_urban)
         self.mock_iface.removeDockWidget.assert_any_call(dock_regional)
+        self.mock_iface.removeDockWidget.assert_any_call(dock_waste)
 
         # Check references are cleaned
         self.assertIsNone(self.plugin.action)
         self.assertIsNone(self.plugin.action_urban)
         self.assertIsNone(self.plugin.action_regional)
+        self.assertIsNone(self.plugin.action_waste)
         self.assertIsNone(self.plugin.dock_urban)
         self.assertIsNone(self.plugin.dock_regional)
+        self.assertIsNone(self.plugin.dock_waste)
 
     def test_urban_dock_delivery_distance_controls(self):
         self.plugin.initGui()

@@ -2,13 +2,14 @@
 # Deploy por symlink para o perfil default do QGIS.
 
 PLUGINNAME = logis
+VERSION = $(shell grep '^version=' metadata.txt | cut -d= -f2)
 QGIS_PLUGINS = $(HOME)/.local/share/QGIS/QGIS3/profiles/default/python/plugins
 FLATPAK_PLUGINS = $(HOME)/.var/app/org.qgis.qgis/data/QGIS/QGIS3/profiles/default/python/plugins
 TARGET = $(QGIS_PLUGINS)/$(PLUGINNAME)
 FLATPAK_TARGET = $(FLATPAK_PLUGINS)/$(PLUGINNAME)
 SRC = $(CURDIR)
 
-.PHONY: deploy deploy-flatpak undeploy undeploy-flatpak clean test help
+.PHONY: deploy deploy-flatpak undeploy undeploy-flatpak clean test package i18n transcompile help
 
 help:
 	@echo "make deploy          - symlink do plugin no perfil do QGIS do sistema"
@@ -17,6 +18,9 @@ help:
 	@echo "make undeploy-flatpak- remove o symlink (flatpak)"
 	@echo "make clean           - remove __pycache__"
 	@echo "make test            - smoke test de sintaxe (sem QGIS)"
+	@echo "make package         - gera o pacote zip para distribuicao em dist/logis-<version>.zip"
+	@echo "make i18n            - extrai strings self.tr(...) para i18n/logis_pt_BR.ts"
+	@echo "make transcompile    - compila i18n/*.ts para .qm (lrelease)"
 
 deploy:
 	@mkdir -p $(QGIS_PLUGINS)
@@ -53,3 +57,16 @@ clean:
 
 test:
 	@python3 -c "import ast,glob,sys; [ast.parse(open(f).read(), f) for f in glob.glob('**/*.py', recursive=True)]; print('sintaxe OK')"
+
+package:
+	@mkdir -p dist
+	@git archive --worktree-attributes --prefix=$(PLUGINNAME)/ -o dist/$(PLUGINNAME)-$(VERSION).zip HEAD
+	@echo "Pacote gerado em dist/$(PLUGINNAME)-$(VERSION).zip"
+
+i18n:
+	@mkdir -p i18n
+	@pylupdate5 provider.py logis_plugin.py gui/*.py algorithms/*.py -ts i18n/logis_pt_BR.ts i18n/logis_en.ts
+
+transcompile:
+	@lrelease i18n/*.ts
+

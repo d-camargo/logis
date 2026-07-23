@@ -19,9 +19,11 @@ class LogisPlugin:
         self.action = None
         self.action_urban = None
         self.action_regional = None
+        self.action_waste = None
         self.dialog = None
         self.dock_urban = None
         self.dock_regional = None
+        self.dock_waste = None
 
     def tr(self, s):
         return QCoreApplication.translate("LogisPlugin", s)
@@ -54,6 +56,13 @@ class LogisPlugin:
         # Registra a entrada no menu "logis"
         self.iface.addPluginToMenu("logis", self.action_regional)
 
+        # Cria a ação do menu "Coleta de Lixo"
+        self.action_waste = QAction(self.tr("Coleta de Lixo"), self.iface.mainWindow())
+        self.action_waste.triggered.connect(self.show_waste_dock)
+        
+        # Registra a entrada no menu "logis"
+        self.iface.addPluginToMenu("logis", self.action_waste)
+
     def show_dependencies(self):
         from .gui.dependencies_dialog import DependenciesDialog
         if self.dialog is None:
@@ -76,6 +85,14 @@ class LogisPlugin:
             self.dock_regional = RegionalDock(self.iface, self.iface.mainWindow())
             self.iface.addDockWidget(Qt.RightDockWidgetArea, self.dock_regional)
         self.dock_regional.show()
+
+    def show_waste_dock(self):
+        from qgis.PyQt.QtCore import Qt
+        from .gui.waste_dock import WasteDock
+        if self.dock_waste is None:
+            self.dock_waste = WasteDock(self.iface, self.iface.mainWindow())
+            self.iface.addDockWidget(Qt.RightDockWidgetArea, self.dock_waste)
+        self.dock_waste.show()
 
     def unload(self):
         # Desregistra o Processing Provider
@@ -100,6 +117,11 @@ class LogisPlugin:
             self.iface.removePluginMenu("logis", self.action_regional)
             self.action_regional = None
 
+        # Remove o item de Coleta de Lixo do menu
+        if self.action_waste is not None:
+            self.iface.removePluginMenu("logis", self.action_waste)
+            self.action_waste = None
+
         # Libera referência ao diálogo
         if self.dialog is not None:
             self.dialog = None
@@ -117,3 +139,10 @@ class LogisPlugin:
             if not sip.isdeleted(self.dock_regional):
                 self.iface.removeDockWidget(self.dock_regional)
             self.dock_regional = None
+
+        # Remove e libera o dock de coleta de lixo widget
+        if self.dock_waste is not None:
+            from qgis.PyQt import sip
+            if not sip.isdeleted(self.dock_waste):
+                self.iface.removeDockWidget(self.dock_waste)
+            self.dock_waste = None
