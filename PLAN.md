@@ -466,6 +466,24 @@ registradas neste plano (ex.: passo 58 cita "passos 7, 13, 18, 27, 33,
   fora de escopo** (nenhum `algorithms/*.py`/`provider.py` sobrescreve
   `icon()` hoje — mesma verificação já registrada no passo 88 original;
   não muda com esta entrega).
+- **Resultado da confirmação pedida no passo 88 (executado em
+  2026-07-23):** a documentação oficial do PyQGIS Developer Cookbook
+  (seção "Structuring Python Plugins", `docs.qgis.org`) descreve o
+  campo `icon` de `metadata.txt` como "a file name ... of a web
+  friendly image (**PNG, JPEG**)" — **SVG não é citado como formato
+  aceito**. Ou seja, `QSvgIconEngine` resolve o carregamento em tempo
+  de execução (não é limitação técnica), mas o requisito **formal** de
+  submissão ao repositório oficial de plugins aparenta exigir
+  PNG/JPEG. Conforme instruído, `icon.png` **não foi gerado** a partir
+  do SVG nesta rodada — decisão de como reconciliar `icon=icon.svg`
+  (gravado neste passo) com esse requisito fica para o Diego decidir
+  antes de qualquer submissão ao repositório oficial (opções em aberto:
+  gerar `icon.png` a partir do SVG mantendo `icon=icon.svg` para uso
+  interno, ou trocar `metadata.txt` de volta para `icon=icon.png`).
+  Nota à parte, fora do escopo desta confirmação: já existe um
+  `icon.png` (48×48 PNG) rastreado no repositório desde o commit
+  `6ecee4b` (rodada i18n do passo 87), aparentemente incluído ali sem
+  relação com i18n — não foi tocado nesta rodada.
 
 ### Herdadas das rodadas 2-6 — confirmadas corretas no código atual
 
@@ -1774,7 +1792,7 @@ i18n" acima para o desenho completo):**
 conteúdo exato em "Decisões de arquitetura — Ícone", fora da rodada
 i18n):**
 
-- [ ] 88. Gravar `icon.svg` na raiz do repositório com exatamente o
+- [x] 88. Gravar `icon.svg` na raiz do repositório com exatamente o
       conteúdo colado pelo Diego (ver "Decisões de arquitetura —
       Ícone" — não alterar traços/cores/pontos). Atualizar
       `metadata.txt` (`icon=icon.svg`, hoje aponta para `icon.png` que

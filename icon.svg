@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="100%" height="100%">
+  <!-- Fundo transparente implícito -->
+
+  <!-- Mapa do Brasil (Silhueta Geométrica/Flat baseada no padrão anterior) -->
+  <polygon
+    points="22,6 28,7 32,10 42,16 40,24 36,30 31,34 27,43 24,43 21,38 18,34 15,31 17,27 7,23 5,19 11,16 16,10"
+    fill="#2E7D32"
+    stroke="#2E7D32"
+    stroke-width="2"
+    stroke-linejoin="round"
+  />
+
+  <!-- Fundo/Contorno Branco do Caminhão (Para separar visualmente do mapa de fundo) -->
+  <g fill="#FFFFFF" stroke="#FFFFFF" stroke-width="3" stroke-linejoin="round">
+    <!-- Silhueta geral do caminhão -->
+    <path d="M 12 18 H 26 V 22 H 31 L 34 26 V 30 H 12 Z" />
+    <!-- Silhueta das rodas -->
+    <circle cx="17" cy="30" r="3" />
+    <circle cx="29" cy="30" r="3" />
+  </g>
+
+  <!-- Caminhão de Logística (Cores e Detalhes) -->
+  <g>
+    <!-- Baú e Cabine (Amarelo) -->
+    <path
+      d="M 12 18 H 26 V 22 H 31 L 34 26 V 30 H 12 Z"
+      fill="#FFC107"
+    />
+
+    <!-- Janela da Cabine (Branco) -->
+    <polygon
+      points="27,23 30.5,23 32.5,26 27,26"
+      fill="#FFFFFF"
+    />
+
+    <!-- Rodas (Usando o Verde do mapa para manter o limite de 3 cores no design) -->
+    <circle cx="17" cy="30" r="2.5" fill="#2E7D32" />
+    <circle cx="29" cy="30" r="2.5" fill="#2E7D32" />
+  </g>
+</svg>
