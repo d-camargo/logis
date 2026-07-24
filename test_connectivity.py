@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import unittest
-from core.indicators.urban import network_connectivity
+from logis.core.indicators.urban import network_connectivity
 
 class TestNetworkConnectivity(unittest.TestCase):
     def test_empty_input(self):

@@ -14,7 +14,7 @@ try:
 except ImportError:
     pass
 
-from gui.waste_dock import WasteDock
+from logis.gui.waste_dock import WasteDock
 from logis.logis_plugin import LogisPlugin
 
 

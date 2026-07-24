@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import unittest
 import urllib.parse
-from core.connectors.wfs import build_url
+from logis.core.connectors.wfs import build_url
 
 class TestWFSConnector(unittest.TestCase):
     def test_build_url_simple(self):

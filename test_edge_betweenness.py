@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import unittest
-from core.indicators.urban import edge_betweenness
+from logis.core.indicators.urban import edge_betweenness
 
 class TestEdgeBetweenness(unittest.TestCase):
     def test_normal_case(self):

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import unittest
 from unittest.mock import patch
-from core.routing.vrp import (
+from logis.core.routing.vrp import (
     compute_route_distance,
     clarke_wright_savings,
     two_opt,
@@ -9,7 +9,7 @@ from core.routing.vrp import (
     solve_cvrp,
     solve_cvrp_ortools,
 )
-from core.optim_backend import has_ortools
+from logis.core.optim_backend import has_ortools
 
 
 
@@ -161,7 +161,7 @@ class TestVRP(unittest.TestCase):
             self.assertLessEqual(load, self.capacity)
 
     def test_vrp_cvrp_algorithm_metadata(self):
-        from algorithms.vrp_cvrp import VrpCvrp
+        from logis.algorithms.vrp_cvrp import VrpCvrp
         alg = VrpCvrp()
         self.assertEqual(alg.name(), "vrp_cvrp")
         self.assertEqual(alg.groupId(), "routing")

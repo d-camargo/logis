@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import unittest
-from core.indicators.regional import (
+from logis.core.indicators.regional import (
     road_density,
     paved_duplicated_share,
     find_critical_links

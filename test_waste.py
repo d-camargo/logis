@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import unittest
-from core.indicators.waste import (
+from logis.core.indicators.waste import (
     sector_waste_generation,
     allocate_generation_by_street_length,
     estimate_fleet_size,
@@ -163,7 +163,7 @@ class TestWaste(unittest.TestCase):
 
     def test_waste_cpp_route_algorithm_metadata(self):
         try:
-            from algorithms.waste_cpp_route import WasteCppRoute
+            from logis.algorithms.waste_cpp_route import WasteCppRoute
             alg = WasteCppRoute()
             self.assertEqual(alg.name(), "waste_cpp_route")
             self.assertEqual(alg.groupId(), "waste")
@@ -179,7 +179,7 @@ class TestWaste(unittest.TestCase):
         # Grafo simples com 2 nós ímpares (A-B, B-C, C-D):
         # O CPP emparelha A e D duplicando o caminho A-B-C-D.
         # Assim, os 3 trechos serão percorridos 2 vezes (1ª passagem regular, 2ª passagem deadhead).
-        from algorithms.waste_cpp_route import WasteCppRoute
+        from logis.algorithms.waste_cpp_route import WasteCppRoute
 
         layer = QgsVectorLayer("LineString?crs=EPSG:3857", "streets", "memory")
         provider = layer.dataProvider()
@@ -216,7 +216,7 @@ class TestWaste(unittest.TestCase):
 
     def test_waste_rpp_route_algorithm_metadata(self):
         try:
-            from algorithms.waste_rpp_route import WasteRppRoute
+            from logis.algorithms.waste_rpp_route import WasteRppRoute
             alg = WasteRppRoute()
             self.assertEqual(alg.name(), "waste_rpp_route")
             self.assertEqual(alg.groupId(), "waste")
@@ -231,7 +231,7 @@ class TestWaste(unittest.TestCase):
         # Dois componentes obrigatórios desconexos (A-B-C e D-E) ligados só por um
         # trecho opcional (C-D); reaproveita o mesmo cenário de componentes
         # desconexos usado nos testes de connect_required_components.
-        from algorithms.waste_rpp_route import WasteRppRoute
+        from logis.algorithms.waste_rpp_route import WasteRppRoute
 
         layer = QgsVectorLayer("LineString?crs=EPSG:3857", "streets", "memory")
         provider = layer.dataProvider()
@@ -279,7 +279,7 @@ class TestWaste(unittest.TestCase):
 
     def test_waste_carp_route_algorithm_metadata(self):
         try:
-            from algorithms.waste_carp_route import WasteCarpRoute
+            from logis.algorithms.waste_carp_route import WasteCarpRoute
             alg = WasteCarpRoute()
             self.assertEqual(alg.name(), "waste_carp_route")
             self.assertEqual(alg.groupId(), "waste")
@@ -294,7 +294,7 @@ class TestWaste(unittest.TestCase):
         # Depósito na origem, dois trechos obrigatórios de 6 kg cada e capacidade
         # de 10 kg: a soma (12 kg) excede a capacidade de uma única viagem, então
         # o algorithm deve gerar exatamente 2 rotas.
-        from algorithms.waste_carp_route import WasteCarpRoute
+        from logis.algorithms.waste_carp_route import WasteCarpRoute
 
         layer = QgsVectorLayer("LineString?crs=EPSG:3857", "streets", "memory")
         provider = layer.dataProvider()
@@ -355,7 +355,7 @@ class TestWaste(unittest.TestCase):
 
     def test_waste_fleet_sizing_algorithm_metadata(self):
         try:
-            from algorithms.waste_fleet_sizing import WasteFleetSizing
+            from logis.algorithms.waste_fleet_sizing import WasteFleetSizing
             alg = WasteFleetSizing()
             self.assertEqual(alg.name(), "waste_fleet_sizing")
             self.assertEqual(alg.groupId(), "waste")
@@ -366,7 +366,7 @@ class TestWaste(unittest.TestCase):
 
     @unittest.skipUnless(_HAS_QGIS, "requer bindings QGIS completos")
     def test_waste_fleet_sizing_assigns_vehicles(self):
-        from algorithms.waste_fleet_sizing import WasteFleetSizing
+        from logis.algorithms.waste_fleet_sizing import WasteFleetSizing
 
         layer = QgsVectorLayer("LineString?crs=EPSG:3857", "routes", "memory")
         provider = layer.dataProvider()
@@ -420,7 +420,7 @@ class TestWaste(unittest.TestCase):
 
     def test_waste_deadhead_ratio_algorithm_metadata(self):
         try:
-            from algorithms.waste_deadhead_ratio import WasteDeadheadRatio
+            from logis.algorithms.waste_deadhead_ratio import WasteDeadheadRatio
             alg = WasteDeadheadRatio()
             self.assertEqual(alg.name(), "waste_deadhead_ratio")
             self.assertEqual(alg.groupId(), "waste")
@@ -431,7 +431,7 @@ class TestWaste(unittest.TestCase):
 
     def test_waste_sector_balance_algorithm_metadata(self):
         try:
-            from algorithms.waste_sector_balance import WasteSectorBalance
+            from logis.algorithms.waste_sector_balance import WasteSectorBalance
             alg = WasteSectorBalance()
             self.assertEqual(alg.name(), "waste_sector_balance")
             self.assertEqual(alg.groupId(), "waste")
@@ -442,7 +442,7 @@ class TestWaste(unittest.TestCase):
 
     def test_waste_destination_distance_algorithm_metadata(self):
         try:
-            from algorithms.waste_destination_distance import WasteDestinationDistance
+            from logis.algorithms.waste_destination_distance import WasteDestinationDistance
             alg = WasteDestinationDistance()
             self.assertEqual(alg.name(), "waste_destination_distance")
             self.assertEqual(alg.groupId(), "waste")
@@ -453,7 +453,7 @@ class TestWaste(unittest.TestCase):
 
     def test_waste_collection_coverage_algorithm_metadata(self):
         try:
-            from algorithms.waste_collection_coverage import WasteCollectionCoverage
+            from logis.algorithms.waste_collection_coverage import WasteCollectionCoverage
             alg = WasteCollectionCoverage()
             self.assertEqual(alg.name(), "waste_collection_coverage")
             self.assertEqual(alg.groupId(), "waste")
@@ -469,7 +469,7 @@ class TestWaste(unittest.TestCase):
         # waste_carp_route grava): confirma agrupamento por route_id,
         # deduplicação do valor repetido por rota e estatísticas de
         # carga/tempo calculadas à mão.
-        from algorithms.waste_sector_balance import WasteSectorBalance
+        from logis.algorithms.waste_sector_balance import WasteSectorBalance
 
         layer = QgsVectorLayer("LineString?crs=EPSG:3857", "routes", "memory")
         provider = layer.dataProvider()
@@ -530,7 +530,7 @@ class TestWaste(unittest.TestCase):
 
     @unittest.skipUnless(_HAS_QGIS, "requer bindings QGIS completos")
     def test_waste_deadhead_ratio_computes_ratios(self):
-        from algorithms.waste_deadhead_ratio import WasteDeadheadRatio
+        from logis.algorithms.waste_deadhead_ratio import WasteDeadheadRatio
 
         layer = QgsVectorLayer("LineString?crs=EPSG:3857", "routes", "memory")
         provider = layer.dataProvider()
@@ -578,7 +578,7 @@ class TestWaste(unittest.TestCase):
 
     @unittest.skipUnless(_HAS_QGIS, "requer bindings QGIS completos")
     def test_waste_deadhead_ratio_adds_total_row_for_multiple_routes(self):
-        from algorithms.waste_deadhead_ratio import WasteDeadheadRatio
+        from logis.algorithms.waste_deadhead_ratio import WasteDeadheadRatio
 
         layer = QgsVectorLayer("LineString?crs=EPSG:3857", "routes", "memory")
         provider = layer.dataProvider()
@@ -631,7 +631,7 @@ class TestWaste(unittest.TestCase):
         self.assertAlmostEqual(total_feat.attribute(idx_dh), 6.0)
 
     def test_compute_route_balance_no_deviation_equal_routes(self):
-        from core.indicators.waste import compute_route_balance
+        from logis.core.indicators.waste import compute_route_balance
 
         loads = [500.0, 500.0, 500.0]
         res = compute_route_balance(loads)
@@ -643,7 +643,7 @@ class TestWaste(unittest.TestCase):
             self.assertAlmostEqual(detail["load_dev_kg"], 0.0)
 
     def test_compute_route_balance_known_deviation(self):
-        from core.indicators.waste import compute_route_balance
+        from logis.core.indicators.waste import compute_route_balance
 
         loads = [100.0, 200.0, 300.0]
         res = compute_route_balance(loads)
@@ -663,7 +663,7 @@ class TestWaste(unittest.TestCase):
         self.assertAlmostEqual(res["route_details"][2]["load_dev_kg"], 100.0)
 
     def test_compute_route_balance_derived_time_deviation(self):
-        from core.indicators.waste import compute_route_balance
+        from logis.core.indicators.waste import compute_route_balance
 
         loads = [500.0, 500.0]
         distances = [10.0, 20.0]
@@ -690,7 +690,7 @@ class TestWaste(unittest.TestCase):
         self.assertAlmostEqual(res["route_details"][1]["time_dev_h"], 0.5)
 
     def test_compute_route_balance_single_route(self):
-        from core.indicators.waste import compute_route_balance
+        from logis.core.indicators.waste import compute_route_balance
 
         loads = [250.0]
         res = compute_route_balance(loads)
@@ -704,19 +704,19 @@ class TestWaste(unittest.TestCase):
         self.assertAlmostEqual(res["route_details"][0]["load_dev_kg"], 0.0)
 
     def test_compute_route_balance_incompatible_list_lengths(self):
-        from core.indicators.waste import compute_route_balance
+        from logis.core.indicators.waste import compute_route_balance
 
         with self.assertRaises(ValueError):
             compute_route_balance([100.0], route_distances_km=[10.0, 20.0])
 
     def test_compute_route_balance_empty_input(self):
-        from core.indicators.waste import compute_route_balance
+        from logis.core.indicators.waste import compute_route_balance
 
         with self.assertRaises(ValueError):
             compute_route_balance([])
 
     def test_compute_route_balance_invalid_inputs(self):
-        from core.indicators.waste import compute_route_balance
+        from logis.core.indicators.waste import compute_route_balance
 
         with self.assertRaises(ValueError):
             compute_route_balance([100.0, -10.0])
@@ -731,7 +731,7 @@ class TestWaste(unittest.TestCase):
             compute_route_balance([100.0], route_distances_km=[10.0], avg_collection_speed_kmh=0.0)
 
     def test_compute_collection_coverage_full_coverage(self):
-        from core.indicators.waste import compute_collection_coverage
+        from logis.core.indicators.waste import compute_collection_coverage
 
         res = compute_collection_coverage([10.0], [10.0])
         self.assertAlmostEqual(res["total"]["required_km"], 10.0)
@@ -741,7 +741,7 @@ class TestWaste(unittest.TestCase):
         self.assertAlmostEqual(res["by_sector"][None]["coverage_pct"], 1.0)
 
     def test_compute_collection_coverage_partial_coverage(self):
-        from core.indicators.waste import compute_collection_coverage
+        from logis.core.indicators.waste import compute_collection_coverage
 
         res = compute_collection_coverage([20.0], [15.0])
         self.assertAlmostEqual(res["total"]["required_km"], 20.0)
@@ -750,7 +750,7 @@ class TestWaste(unittest.TestCase):
         self.assertAlmostEqual(res["by_sector"][None]["coverage_pct"], 0.75)
 
     def test_compute_collection_coverage_multiple_sectors(self):
-        from core.indicators.waste import compute_collection_coverage
+        from logis.core.indicators.waste import compute_collection_coverage
 
         res = compute_collection_coverage(
             required_km=[10.0, 30.0],
@@ -770,7 +770,7 @@ class TestWaste(unittest.TestCase):
         self.assertAlmostEqual(res["total"]["coverage_pct"], 0.575)
 
     def test_compute_collection_coverage_zero_required(self):
-        from core.indicators.waste import compute_collection_coverage
+        from logis.core.indicators.waste import compute_collection_coverage
 
         res = compute_collection_coverage([0.0], [0.0])
         self.assertAlmostEqual(res["total"]["required_km"], 0.0)
@@ -779,7 +779,7 @@ class TestWaste(unittest.TestCase):
         self.assertIsNone(res["by_sector"][None]["coverage_pct"])
 
     def test_compute_collection_coverage_capped_above_100(self):
-        from core.indicators.waste import compute_collection_coverage
+        from logis.core.indicators.waste import compute_collection_coverage
 
         res = compute_collection_coverage([10.0], [15.0])
         self.assertAlmostEqual(res["total"]["required_km"], 10.0)
@@ -788,7 +788,7 @@ class TestWaste(unittest.TestCase):
         self.assertAlmostEqual(res["by_sector"][None]["coverage_pct"], 1.0)
 
     def test_compute_collection_coverage_incompatible_lengths(self):
-        from core.indicators.waste import compute_collection_coverage
+        from logis.core.indicators.waste import compute_collection_coverage
 
         with self.assertRaises(ValueError):
             compute_collection_coverage([10.0, 20.0], [10.0])
@@ -797,7 +797,7 @@ class TestWaste(unittest.TestCase):
             compute_collection_coverage([10.0], [10.0], sector_ids=[1, 2])
 
     def test_compute_collection_coverage_empty_input(self):
-        from core.indicators.waste import compute_collection_coverage
+        from logis.core.indicators.waste import compute_collection_coverage
 
         with self.assertRaises(ValueError):
             compute_collection_coverage([], [])

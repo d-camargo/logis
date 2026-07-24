@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import unittest
-from core.indicators.urban import cargo_restriction_index
+from logis.core.indicators.urban import cargo_restriction_index
 
 class TestCargoRestrictionIndex(unittest.TestCase):
     def test_fully_accessible(self):

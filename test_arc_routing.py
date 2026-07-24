@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import unittest
 
-from core.routing.arc_routing import (
+from logis.core.routing.arc_routing import (
     find_odd_degree_nodes,
     shortest_path_between_nodes,
     match_odd_degree_nodes,

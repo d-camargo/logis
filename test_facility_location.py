@@ -2,7 +2,7 @@
 """Unit tests for facility location algorithms (p-median, p-center, MCLP, LSCP)."""
 
 import unittest
-from core.location.facility import (
+from logis.core.location.facility import (
     solve_p_median,
     solve_p_center,
     solve_mclp,
@@ -160,7 +160,7 @@ class TestFacilityLocation(unittest.TestCase):
             _validate_inputs(self.cost_matrix, self.demand_weights, candidate_indices=[99])
 
     def test_facility_p_median_algorithm_metadata(self):
-        from algorithms.facility_p_median import FacilityPMedian
+        from logis.algorithms.facility_p_median import FacilityPMedian
         alg = FacilityPMedian()
         self.assertEqual(alg.name(), "facility_p_median")
         self.assertEqual(alg.groupId(), "location")
@@ -168,7 +168,7 @@ class TestFacilityLocation(unittest.TestCase):
         self.assertIsNotNone(alg.shortHelpString())
 
     def test_facility_mclp_algorithm_metadata(self):
-        from algorithms.facility_mclp import FacilityMCLP
+        from logis.algorithms.facility_mclp import FacilityMCLP
         alg = FacilityMCLP()
         self.assertEqual(alg.name(), "facility_mclp")
         self.assertEqual(alg.groupId(), "location")
@@ -176,7 +176,7 @@ class TestFacilityLocation(unittest.TestCase):
         self.assertIsNotNone(alg.shortHelpString())
 
     def test_facility_lscp_algorithm_metadata(self):
-        from algorithms.facility_lscp import FacilityLSCP
+        from logis.algorithms.facility_lscp import FacilityLSCP
         alg = FacilityLSCP()
         self.assertEqual(alg.name(), "facility_lscp")
         self.assertEqual(alg.groupId(), "location")

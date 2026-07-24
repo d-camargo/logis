@@ -13,7 +13,7 @@ if not qgs:
     qgs = QgsApplication([], False)
     qgs.initQgis()
 
-from core.network.snv_pipeline import _parse_snv_speed, build_snv_state_network
+from logis.core.network.snv_pipeline import _parse_snv_speed, build_snv_state_network
 
 
 class TestSNVPipeline(unittest.TestCase):

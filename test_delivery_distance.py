@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import unittest
-from core.indicators.urban import nearest_depot_cost
+from logis.core.indicators.urban import nearest_depot_cost
 
 class TestNearestDepotCost(unittest.TestCase):
     def test_multiple_depots(self):

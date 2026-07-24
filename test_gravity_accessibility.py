@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import unittest
-from core.indicators.urban import gravity_accessibility
+from logis.core.indicators.urban import gravity_accessibility
 
 class TestGravityAccessibility(unittest.TestCase):
     def test_normal_case(self):
