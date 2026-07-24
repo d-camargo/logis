@@ -1816,7 +1816,7 @@ arquivo `vrp.py`, parâmetro `backend` em `solve_cvrp()`; ver "Decisões
 de arquitetura — Novas para o backend OR-Tools do CVRP" acima para o
 desenho completo):**
 
-- [ ] 64. Em `core/routing/vrp.py`, extrair de dentro de
+- [x] 64. Em `core/routing/vrp.py`, extrair de dentro de
       `clarke_wright_savings` um helper privado `_validate_demands(
       demands, capacity, num_nodes, depot)` com as checagens que já
       existem ali (tamanho de `demands` compatível com a matriz,

@@ -1,12 +1,16 @@
 # -*- coding: utf-8 -*-
 import unittest
+from unittest.mock import patch
 from core.routing.vrp import (
     compute_route_distance,
     clarke_wright_savings,
     two_opt,
     or_opt,
     solve_cvrp,
+    solve_cvrp_ortools,
 )
+from core.optim_backend import has_ortools
+
 
 
 class TestVRP(unittest.TestCase):
@@ -164,6 +168,97 @@ class TestVRP(unittest.TestCase):
         self.assertIsNotNone(alg.displayName())
         self.assertIsNotNone(alg.shortHelpString())
 
+    @unittest.skipUnless(has_ortools(), "OR-Tools não instalado")
+    def test_solve_cvrp_ortools(self):
+        expected_customers = [1, 2, 3]
+
+        for improve in [False, True]:
+            # Direct call to solve_cvrp_ortools
+            routes, total_dist, loads = solve_cvrp_ortools(
+                self.distance_matrix, self.demands, self.capacity, depot=0, improve=improve
+            )
+            self.assertIsInstance(routes, list)
+            self.assertIsInstance(total_dist, float)
+            self.assertIsInstance(loads, list)
+            self.assertEqual(len(routes), len(loads))
+            visited = []
+            for r, load in zip(routes, loads):
+                self.assertLessEqual(load, self.capacity)
+                self.assertAlmostEqual(load, sum(self.demands[c] for c in r))
+                visited.extend(r)
+            self.assertEqual(sorted(visited), expected_customers)
+
+            # Call via solve_cvrp(backend="ortools")
+            routes_b, total_dist_b, loads_b = solve_cvrp(
+                self.distance_matrix, self.demands, self.capacity, depot=0, improve=improve, backend="ortools"
+            )
+            self.assertIsInstance(routes_b, list)
+            self.assertIsInstance(total_dist_b, float)
+            self.assertIsInstance(loads_b, list)
+            self.assertEqual(len(routes_b), len(loads_b))
+            visited_b = []
+            for r, load in zip(routes_b, loads_b):
+                self.assertLessEqual(load, self.capacity)
+                self.assertAlmostEqual(load, sum(self.demands[c] for c in r))
+                visited_b.extend(r)
+            self.assertEqual(sorted(visited_b), expected_customers)
+
+    def test_solve_cvrp_ortools_fallback(self):
+        # Fallback silencioso: com OR-Tools ausente (mockado), backend="ortools"
+        # não deve levantar exceção e deve produzir o mesmo resultado que "python".
+        with patch("core.optim_backend.has_ortools", return_value=False):
+            routes_o, dist_o, loads_o = solve_cvrp(
+                self.distance_matrix, self.demands, self.capacity, depot=0, backend="ortools"
+            )
+        routes_p, dist_p, loads_p = solve_cvrp(
+            self.distance_matrix, self.demands, self.capacity, depot=0, backend="python"
+        )
+        self.assertEqual(routes_o, routes_p)
+        self.assertAlmostEqual(dist_o, dist_p)
+        self.assertEqual(loads_o, loads_p)
+
+    def test_solve_cvrp_default_backend_regression(self):
+        # O default (sem backend) deve ser idêntico a backend="python".
+        default_res = solve_cvrp(
+            self.distance_matrix, self.demands, self.capacity, depot=0
+        )
+        python_res = solve_cvrp(
+            self.distance_matrix, self.demands, self.capacity, depot=0, backend="python"
+        )
+        self.assertEqual(default_res[0], python_res[0])
+        self.assertAlmostEqual(default_res[1], python_res[1])
+        self.assertEqual(default_res[2], python_res[2])
+        # E continua com o resultado já coberto pelos testes de solve_cvrp.
+        self.assertEqual(len(default_res[0]), 2)
+        self.assertEqual(default_res[2], [10.0, 8.0])
+        self.assertAlmostEqual(default_res[1], 65.0)
+
+    def test_solve_cvrp_ortools_validation(self):
+        # Validação acontece antes do import lazy do OR-Tools, então roda sempre.
+        # Matriz vazia
+        with self.assertRaises(ValueError):
+            solve_cvrp_ortools([], self.demands, self.capacity)
+        # Demanda incompatível com a matriz
+        with self.assertRaises(ValueError):
+            solve_cvrp_ortools(self.distance_matrix, [0.0, 5.0], self.capacity)
+        # Demanda negativa
+        with self.assertRaises(ValueError):
+            solve_cvrp_ortools(self.distance_matrix, [0.0, -5.0, 5.0, 8.0], self.capacity)
+        # Demanda excede capacidade
+        with self.assertRaises(ValueError):
+            solve_cvrp_ortools(self.distance_matrix, self.demands, capacity=5.0)
+        # Depósito inválido
+        with self.assertRaises(ValueError):
+            solve_cvrp_ortools(self.distance_matrix, self.demands, self.capacity, depot=10)
+        # Sem clientes -> ([], 0.0, []) antes de tocar no OR-Tools
+        routes, total_dist, loads = solve_cvrp_ortools(
+            self.distance_matrix, [0.0, 0.0, 0.0, 0.0], self.capacity, depot=0
+        )
+        self.assertEqual(routes, [])
+        self.assertAlmostEqual(total_dist, 0.0)
+        self.assertEqual(loads, [])
+
 
 if __name__ == "__main__":
     unittest.main()
+

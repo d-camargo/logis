@@ -26,8 +26,15 @@ Complexity/Scale limits:
     - Clarke-Wright: O(N^2 log N), space O(N^2), tested up to 1,000 demand nodes.
     - 2-opt: O(k^2) per swap iteration (k customers in route), tested up to 500 stops per route.
 """
-
+import math
 from typing import List, Tuple, Optional
+
+try:
+    from ..optim_backend import pick_backend
+except ImportError:
+    from core.optim_backend import pick_backend
+
+_TIME_LIMIT_SECONDS: int = 10
 
 
 def _validate_matrix_and_depot(
@@ -61,6 +68,32 @@ def _validate_matrix_and_depot(
         )
 
     return num_nodes
+
+
+def _validate_demands(
+    demands: List[float],
+    capacity: float,
+    num_nodes: int,
+    depot: int = 0
+) -> None:
+    """Validates demands vector and vehicle capacity against matrix size and depot."""
+    if len(demands) != num_nodes:
+        raise ValueError(
+            f"O número de demandas ({len(demands)}) deve ser igual ao tamanho da matriz ({num_nodes})."
+        )
+
+    for i, d in enumerate(demands):
+        if d < 0:
+            raise ValueError(f"Demanda negativa encontrada no nó {i}: {d}.")
+
+    if capacity <= 0:
+        raise ValueError("A capacidade do veículo deve ser estritamente maior que zero.")
+
+    for i, d in enumerate(demands):
+        if i != depot and d > capacity:
+            raise ValueError(
+                f"A demanda do nó {i} ({d}) excede a capacidade máxima do veículo ({capacity})."
+            )
 
 
 def _validate_route(
@@ -123,25 +156,7 @@ def clarke_wright_savings(
         ValueError: Se entradas forem inválidas ou demanda exceder capacidade.
     """
     num_nodes = _validate_matrix_and_depot(distance_matrix, depot)
-
-    if len(demands) != num_nodes:
-        raise ValueError(
-            f"O número de demandas ({len(demands)}) deve ser igual ao tamanho da matriz ({num_nodes})."
-        )
-
-    for i, d in enumerate(demands):
-        if d < 0:
-            raise ValueError(f"Demanda negativa encontrada no nó {i}: {d}.")
-
-    if capacity <= 0:
-        raise ValueError("A capacidade do veículo deve ser estritamente maior que zero.")
-
-    # Check capacity constraints for each customer
-    for i, d in enumerate(demands):
-        if i != depot and d > capacity:
-            raise ValueError(
-                f"A demanda do nó {i} ({d}) excede a capacidade máxima do veículo ({capacity})."
-            )
+    _validate_demands(demands, capacity, num_nodes, depot)
 
     # Customers to route (ignoring depot and nodes with 0 demand if any)
     customers = [i for i in range(num_nodes) if i != depot and demands[i] > 0]
@@ -356,7 +371,8 @@ def solve_cvrp(
     demands: List[float],
     capacity: float,
     depot: int = 0,
-    improve: bool = True
+    improve: bool = True,
+    backend: str = "python"
 ) -> Tuple[List[List[int]], float, List[float]]:
     """Solves the Capacitated Vehicle Routing Problem (CVRP) using Savings and local search heuristics.
 
@@ -384,6 +400,10 @@ def solve_cvrp(
         capacity (float): Capacidade máxima do veículo (capacidade > 0).
         depot (int): Índice do nó de depósito (padrão: 0).
         improve (bool): Se True, aplica 2-opt e Or-opt até convergência em cada rota (padrão: True).
+        backend (str): Backend de otimização, `"python"` (heurística Clarke-Wright + 2-opt/Or-opt,
+            padrão) ou `"ortools"` (delega para `solve_cvrp_ortools`). Se `"ortools"` for pedido mas
+            o OR-Tools não estiver instalado, cai silenciosamente para `"python"` com um aviso de
+            log (ver `core.optim_backend.pick_backend`).
 
     Returns:
         Tuple[List[List[int]], float, List[float]]:
@@ -394,6 +414,12 @@ def solve_cvrp(
     Raises:
         ValueError: Se entradas forem inválidas ou demanda exceder capacidade.
     """
+    resolved = pick_backend(backend)
+    if resolved == "ortools":
+        return solve_cvrp_ortools(
+            distance_matrix, demands, capacity, depot=depot, improve=improve
+        )
+
     routes, _, route_loads = clarke_wright_savings(
         distance_matrix, demands, capacity, depot=depot
     )
@@ -417,6 +443,121 @@ def solve_cvrp(
     total_distance = sum(
         compute_route_distance(r, distance_matrix, depot) for r in routes
     )
+
+    return routes, total_distance, route_loads
+
+
+def solve_cvrp_ortools(
+    distance_matrix: List[List[float]],
+    demands: List[float],
+    capacity: float,
+    depot: int = 0,
+    improve: bool = True
+) -> Tuple[List[List[int]], float, List[float]]:
+    """Solves the Capacitated Vehicle Routing Problem (CVRP) using Google OR-Tools.
+
+    Uses OR-Tools Constraint Programming (CP-SAT/Routing) solver as an optimization backend.
+    Applies PATH_CHEAPEST_ARC for initial solution construction and, when improve is True,
+    GUIDED_LOCAL_SEARCH metaheuristic with a time limit of _TIME_LIMIT_SECONDS seconds.
+
+    Referência Bibliográfica da Técnica:
+        Perron, L., & Furnon, V. (2019). OR-Tools. Google.
+        https://developers.google.com/optimization/routing/cvrp
+
+    Limite de Complexidade:
+        Constraint Programming / Busca Local via Google OR-Tools.
+        Testado com até 1.000 nós de demanda.
+        Limite de tempo interno: _TIME_LIMIT_SECONDS segundos quando improve=True.
+
+    Args:
+        distance_matrix (List[List[float]]): Matriz N x N de custos/distâncias.
+        demands (List[float]): Vetor N com a demanda de cada nó (demanda do depósito deve ser 0).
+        capacity (float): Capacidade máxima do veículo (capacidade > 0).
+        depot (int): Índice do nó de depósito (padrão: 0).
+        improve (bool): Se True, ativa a metaheurística GUIDED_LOCAL_SEARCH (padrão: True).
+
+    Returns:
+        Tuple[List[List[int]], float, List[float]]:
+            - routes (List[List[int]]): Lista de rotas (cada rota é uma lista de índices de clientes).
+            - total_distance (float): Soma das distâncias de todas as rotas.
+            - route_loads (List[float]): Carga total transportada em cada rota.
+
+    Raises:
+        ValueError: Se entradas forem inválidas ou demanda exceder capacidade.
+        RuntimeError: Se o OR-Tools não estiver instalado ou se nenhuma solução for encontrada.
+    """
+    num_nodes = _validate_matrix_and_depot(distance_matrix, depot)
+    _validate_demands(demands, capacity, num_nodes, depot)
+
+    customers = [i for i in range(num_nodes) if i != depot and demands[i] > 0]
+    if not customers:
+        return [], 0.0, []
+
+    try:
+        from ortools.constraint_solver import pywrapcp, routing_enums_pb2
+    except ImportError as e:
+        raise RuntimeError(
+            "O backend OR-Tools não está instalado ou disponível no ambiente. "
+            "Instale-o via core/ortools_installer.py ou utilize a heurística pura em Python."
+        ) from e
+
+    num_vehicles = min(len(customers), max(1, math.ceil(sum(demands) / capacity)) + 2)
+
+    manager = pywrapcp.RoutingIndexManager(num_nodes, num_vehicles, depot)
+    routing = pywrapcp.RoutingModel(manager)
+
+    def distance_callback(from_index, to_index):
+        from_node = manager.IndexToNode(from_index)
+        to_node = manager.IndexToNode(to_index)
+        return int(round(distance_matrix[from_node][to_node] * 1000.0))
+
+    transit_callback_index = routing.RegisterTransitCallback(distance_callback)
+    routing.SetArcCostEvaluatorOfAllVehicles(transit_callback_index)
+
+    def demand_callback(from_index):
+        from_node = manager.IndexToNode(from_index)
+        return int(round(demands[from_node] * 1000.0))
+
+    demand_callback_index = routing.RegisterUnaryTransitCallback(demand_callback)
+
+    cap_int = int(round(capacity * 1000.0))
+    routing.AddDimensionWithVehicleCapacity(
+        demand_callback_index,
+        0,  # null capacity slack
+        [cap_int] * num_vehicles,  # vehicle maximum capacities
+        True,  # start cumul to zero
+        "Capacity"
+    )
+
+    search_parameters = pywrapcp.DefaultRoutingSearchParameters()
+    search_parameters.first_solution_strategy = (
+        routing_enums_pb2.FirstSolutionStrategy.PATH_CHEAPEST_ARC
+    )
+    if improve:
+        search_parameters.local_search_metaheuristic = (
+            routing_enums_pb2.LocalSearchMetaheuristic.GUIDED_LOCAL_SEARCH
+        )
+        search_parameters.time_limit.seconds = _TIME_LIMIT_SECONDS
+
+    solution = routing.SolveWithParameters(search_parameters)
+
+    if not solution:
+        raise RuntimeError("OR-Tools não encontrou solução para a instância de CVRP.")
+
+    routes: List[List[int]] = []
+    for vehicle_id in range(num_vehicles):
+        index = routing.Start(vehicle_id)
+        route: List[int] = []
+        while not routing.IsEnd(index):
+            node = manager.IndexToNode(index)
+            if node != depot:
+                route.append(node)
+            index = solution.Value(routing.NextVar(index))
+        if route:
+            routes.append(route)
+
+    route_loads = [sum(demands[c] for c in r) for r in routes]
+    total_distance = sum(compute_route_distance(r, distance_matrix, depot) for r in routes)
 
     return routes, total_distance, route_loads
 
