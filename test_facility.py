@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import unittest
-from core.location.facility import solve_p_median, solve_p_center, solve_mclp, solve_lscp
+from logis.core.location.facility import solve_p_median, solve_p_center, solve_mclp, solve_lscp
 
 
 class TestFacilityLocation(unittest.TestCase):

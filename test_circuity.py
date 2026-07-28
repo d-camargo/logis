@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import unittest
-from core.indicators.urban import mean_circuity
+from logis.core.indicators.urban import mean_circuity
 
 class TestMeanCircuity(unittest.TestCase):
     def test_normal_case(self):

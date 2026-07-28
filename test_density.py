@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import unittest
-from core.indicators.urban import network_density
+from logis.core.indicators.urban import network_density
 
 class TestNetworkDensity(unittest.TestCase):
     def test_normal_case(self):

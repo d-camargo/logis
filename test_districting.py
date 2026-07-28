@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import unittest
 
-from core.routing.districting import (
+from logis.core.routing.districting import (
     select_seed_edges_farthest_first,
     grow_sectors_from_seeds,
     rebalance_boundary_edges,
