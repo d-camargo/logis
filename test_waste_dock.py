@@ -60,6 +60,15 @@ class TestWasteDock(unittest.TestCase):
         self.assertTrue(hasattr(self.dock, 'spin_coverage'))
         self.assertTrue(hasattr(self.dock, 'btn_calculate_generation'))
         self.assertTrue(hasattr(self.dock, 'txt_results'))
+        self.assertTrue(hasattr(self.dock, 'tabs'))
+
+        # Componentes da seção Setorização
+        self.assertTrue(hasattr(self.dock, 'cmb_dist_streets'))
+        self.assertTrue(hasattr(self.dock, 'cmb_dist_field_load'))
+        self.assertTrue(hasattr(self.dock, 'spin_dist_num_sectors'))
+        self.assertTrue(hasattr(self.dock, 'spin_dist_node_tolerance'))
+        self.assertTrue(hasattr(self.dock, 'spin_dist_max_iterations'))
+        self.assertTrue(hasattr(self.dock, 'btn_run_districting'))
 
         # Componentes da seção Roteirização CPP
         self.assertTrue(hasattr(self.dock, 'cmb_cpp_streets'))
@@ -104,6 +113,12 @@ class TestWasteDock(unittest.TestCase):
         self.assertTrue(hasattr(self.dock, 'spin_balance_unload_time'))
         self.assertTrue(hasattr(self.dock, 'spin_balance_travel_time'))
         self.assertTrue(hasattr(self.dock, 'btn_run_sector_balance'))
+
+        # Componentes da seção Deadhead Ratio
+        self.assertTrue(hasattr(self.dock, 'cmb_deadhead_routes'))
+        self.assertTrue(hasattr(self.dock, 'cmb_deadhead_field'))
+        self.assertTrue(hasattr(self.dock, 'cmb_deadhead_route_id'))
+        self.assertTrue(hasattr(self.dock, 'btn_run_deadhead_ratio'))
 
         # Componentes da seção Distância ao Destino
         self.assertTrue(hasattr(self.dock, 'cmb_dest_network'))
@@ -184,6 +199,12 @@ class TestWasteDock(unittest.TestCase):
         """Verifica a validação de parâmetros incompletos ao clicar em executar cobertura por frequência."""
         with patch('logis.gui.waste_dock.QMessageBox.warning') as mock_warning:
             self.dock.run_collection_coverage()
+            mock_warning.assert_called_once()
+
+    def test_run_deadhead_ratio_missing_inputs(self):
+        """Verifica a validação de parâmetros incompletos ao clicar em executar razão de deadhead."""
+        with patch('logis.gui.waste_dock.QMessageBox.warning') as mock_warning:
+            self.dock.run_deadhead_ratio()
             mock_warning.assert_called_once()
 
 

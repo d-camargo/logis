@@ -20,7 +20,8 @@ try:
         QLineEdit,
         QDoubleSpinBox,
         QSpinBox,
-        QComboBox
+        QComboBox,
+        QScrollArea
     )
 except ImportError:
     # Mocks para quando rodado fora do QGIS (ex: smoke tests ou CLI)
@@ -148,6 +149,13 @@ except ImportError:
             pass
         def currentIndex(self):
             return 0
+    class QScrollArea:
+        def __init__(self, parent=None):
+            pass
+        def setWidgetResizable(self, resizable):
+            pass
+        def setWidget(self, widget):
+            pass
 
 
 class RegionalDock(QgsDockWidget):
@@ -165,6 +173,9 @@ class RegionalDock(QgsDockWidget):
         return QCoreApplication.translate("RegionalDock", string)
 
     def _build_ui(self):
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+
         central = QWidget()
         layout = QVBoxLayout(central)
         layout.setContentsMargins(10, 10, 10, 10)
@@ -234,7 +245,8 @@ class RegionalDock(QgsDockWidget):
 
         layout.addStretch()
 
-        self.setWidget(central)
+        scroll.setWidget(central)
+        self.setWidget(scroll)
 
     def calculate_road_density(self):
         """

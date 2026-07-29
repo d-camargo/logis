@@ -17,6 +17,8 @@ try:
         QTextEdit,
         QGroupBox,
         QMessageBox,
+        QScrollArea,
+        QWidget,
     )
     from qgis.utils import iface
 except ImportError:
@@ -132,6 +134,20 @@ except ImportError:
         def setStyleSheet(self, style):
             pass
 
+    class QWidget:
+        def __init__(self, parent=None):
+            pass
+        def setLayout(self, layout):
+            pass
+
+    class QScrollArea:
+        def __init__(self, parent=None):
+            pass
+        def setWidgetResizable(self, resizable):
+            pass
+        def setWidget(self, widget):
+            pass
+
     class QMessageBox:
         @staticmethod
         def information(parent, title, text):
@@ -162,8 +178,8 @@ class DependenciesDialog(QDialog):
             Qt.WindowType.WindowMinMaxButtonsHint | Qt.WindowType.WindowCloseButtonHint,
         )
         self.setWindowTitle("logis — Gerenciador de Dependências")
-        self.resize(550, 420)
-        self.setMinimumSize(500, 350)
+        self.resize(620, 560)
+        self.setMinimumSize(520, 420)
         
         self.install_task = None
         
@@ -171,10 +187,18 @@ class DependenciesDialog(QDialog):
         self.refresh_status()
 
     def init_ui(self):
-        layout = QVBoxLayout(self)
+        outer_layout = QVBoxLayout(self)
+        outer_layout.setContentsMargins(0, 0, 0, 0)
+        outer_layout.setSpacing(0)
+
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+
+        content = QWidget()
+        layout = QVBoxLayout(content)
         layout.setContentsMargins(15, 15, 15, 15)
         layout.setSpacing(12)
-        
+
         # Título principal
         title_label = QLabel("<b>Gerenciador de Dependências</b>")
         title_label.setStyleSheet("font-size: 16px; color: #2b6cb0; margin-bottom: 5px;")
@@ -190,7 +214,7 @@ class DependenciesDialog(QDialog):
         
         # --- SEÇÃO 1: GisBR ---
         self.gisbr_group = QGroupBox("GisBR (Fonte de Dados Viários)")
-        self.gisbr_group.setStyleSheet("font-weight: bold; padding: 10px;")
+        self.gisbr_group.setStyleSheet("QGroupBox::title { font-weight: bold; }")
         gisbr_layout = QVBoxLayout()
         gisbr_layout.setSpacing(8)
         
@@ -224,7 +248,7 @@ class DependenciesDialog(QDialog):
         
         # --- SEÇÃO 2: OR-Tools ---
         self.ortools_group = QGroupBox("Google OR-Tools (Otimização de Rotas e Instalações)")
-        self.ortools_group.setStyleSheet("font-weight: bold; padding: 10px;")
+        self.ortools_group.setStyleSheet("QGroupBox::title { font-weight: bold; }")
         ortools_layout = QVBoxLayout()
         ortools_layout.setSpacing(8)
         
@@ -280,14 +304,18 @@ class DependenciesDialog(QDialog):
         
         self.ortools_group.setLayout(ortools_layout)
         layout.addWidget(self.ortools_group)
-        
+
+        scroll.setWidget(content)
+        outer_layout.addWidget(scroll)
+
         # --- Botão Fechar no rodapé ---
         button_layout = QHBoxLayout()
+        button_layout.setContentsMargins(15, 10, 15, 15)
         button_layout.addStretch()
         self.btn_close = QPushButton("Fechar")
         self.btn_close.clicked.connect(self.close)
         button_layout.addWidget(self.btn_close)
-        layout.addLayout(button_layout)
+        outer_layout.addLayout(button_layout)
 
     def refresh_status(self):
         # 1. GisBR

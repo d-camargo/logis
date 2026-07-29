@@ -21,7 +21,8 @@ try:
         QDoubleSpinBox,
         QSpinBox,
         QComboBox,
-        QScrollArea
+        QScrollArea,
+        QTabWidget
     )
 except ImportError:
     # Mocks para quando rodado fora do QGIS (ex: smoke tests ou CLI)
@@ -160,6 +161,16 @@ except ImportError:
             pass
         def setWidget(self, widget):
             pass
+    class QTabWidget:
+        def __init__(self, parent=None):
+            self._tabs = []
+        def addTab(self, widget, title):
+            self._tabs.append(title)
+            return len(self._tabs) - 1
+        def count(self):
+            return len(self._tabs)
+        def tabText(self, index):
+            return self._tabs[index]
 
 
 class WasteDock(QgsDockWidget):
@@ -176,19 +187,35 @@ class WasteDock(QgsDockWidget):
     def tr(self, string):
         return QCoreApplication.translate("WasteDock", string)
 
+    def _new_tab(self, title):
+        """
+        Cria uma aba com rolagem própria e devolve o layout onde as seções entram.
+        """
+        page = QWidget()
+        page_layout = QVBoxLayout(page)
+        page_layout.setContentsMargins(10, 10, 10, 10)
+        page_layout.setSpacing(10)
+
+        tab_scroll = QScrollArea()
+        tab_scroll.setWidgetResizable(True)
+        tab_scroll.setWidget(page)
+
+        self.tabs.addTab(tab_scroll, title)
+        return page_layout
+
     def _build_ui(self):
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
 
         central = QWidget()
-        layout = QVBoxLayout(central)
-        layout.setContentsMargins(10, 10, 10, 10)
-        layout.setSpacing(10)
+        outer = QVBoxLayout(central)
+        outer.setContentsMargins(10, 10, 10, 10)
+        outer.setSpacing(10)
 
         # Título principal
         title_label = QLabel(self.tr("<b>Coleta de Lixo</b>"))
         title_label.setStyleSheet("font-size: 14px; color: #2b6cb0; margin-bottom: 2px;")
-        layout.addWidget(title_label)
+        outer.addWidget(title_label)
 
         desc_label = QLabel(
             self.tr(
@@ -198,7 +225,13 @@ class WasteDock(QgsDockWidget):
         )
         desc_label.setStyleSheet("color: #666; font-size: 11px; margin-bottom: 5px;")
         desc_label.setWordWrap(True)
-        layout.addWidget(desc_label)
+        outer.addWidget(desc_label)
+
+        self.tabs = QTabWidget()
+        outer.addWidget(self.tabs)
+
+        # Aba: Geração
+        layout = self._new_tab(self.tr("Geração"))
 
         # Seção: Estimativa de Geração
         gen_title = QLabel(self.tr("<b>Estimativa de Geração</b>"))
@@ -259,6 +292,59 @@ class WasteDock(QgsDockWidget):
         self.btn_calculate_generation.setStyleSheet("font-weight: bold; padding: 6px; font-size: 12px;")
         self.btn_calculate_generation.clicked.connect(self.calculate_waste_generation)
         layout.addWidget(self.btn_calculate_generation)
+
+        # Seção: Setorização
+        dist_title = QLabel(self.tr("<b>Setorização</b>"))
+        dist_title.setStyleSheet("font-size: 13px; color: #2b6cb0; margin-top: 12px;")
+        layout.addWidget(dist_title)
+
+        # Camada de Vias (Linhas)
+        layout.addWidget(QLabel(self.tr("Camada de trechos de via (Linhas):")))
+        self.cmb_dist_streets = QgsMapLayerComboBox()
+        self.cmb_dist_streets.setFilters(QgsMapLayerProxyModel.Filter.LineLayer)
+        layout.addWidget(self.cmb_dist_streets)
+
+        # Campo de carga (opcional)
+        layout.addWidget(QLabel(self.tr("Campo de carga (opcional):")))
+        self.cmb_dist_field_load = QgsFieldComboBox()
+        if hasattr(self.cmb_dist_field_load, 'setAllowEmptyFieldName'):
+            self.cmb_dist_field_load.setAllowEmptyFieldName(True)
+        self.cmb_dist_field_load.setLayer(self.cmb_dist_streets.currentLayer())
+        self.cmb_dist_streets.layerChanged.connect(self.cmb_dist_field_load.setLayer)
+        layout.addWidget(self.cmb_dist_field_load)
+
+        # Número de setores de coleta desejado
+        layout.addWidget(QLabel(self.tr("Número de setores de coleta desejado:")))
+        self.spin_dist_num_sectors = QSpinBox()
+        self.spin_dist_num_sectors.setRange(2, 10000)
+        self.spin_dist_num_sectors.setValue(2)
+        layout.addWidget(self.spin_dist_num_sectors)
+
+        # Tolerância de nó (m)
+        layout.addWidget(QLabel(self.tr("Tolerância de nó (m):")))
+        self.spin_dist_node_tolerance = QDoubleSpinBox()
+        self.spin_dist_node_tolerance.setRange(0.0001, 100.0)
+        self.spin_dist_node_tolerance.setSingleStep(0.01)
+        self.spin_dist_node_tolerance.setValue(0.01)
+        layout.addWidget(self.spin_dist_node_tolerance)
+
+        # Máximo de iterações de rebalanceamento
+        layout.addWidget(QLabel(self.tr("Máximo de iterações de rebalanceamento:")))
+        self.spin_dist_max_iterations = QSpinBox()
+        self.spin_dist_max_iterations.setRange(1, 1000)
+        self.spin_dist_max_iterations.setValue(50)
+        layout.addWidget(self.spin_dist_max_iterations)
+
+        # Botão Executar Setorização
+        self.btn_run_districting = QPushButton(self.tr("Executar Setorização"))
+        self.btn_run_districting.setStyleSheet("font-weight: bold; padding: 6px; font-size: 12px;")
+        self.btn_run_districting.clicked.connect(self.run_districting)
+        layout.addWidget(self.btn_run_districting)
+
+        layout.addStretch()
+
+        # Aba: Roteirização
+        layout = self._new_tab(self.tr("Roteirização"))
 
         # Seção: Roteirização CPP
         cpp_title = QLabel(self.tr("<b>Roteirização CPP</b>"))
@@ -401,6 +487,11 @@ class WasteDock(QgsDockWidget):
         self.btn_run_carp.clicked.connect(self.run_carp_route)
         layout.addWidget(self.btn_run_carp)
 
+        layout.addStretch()
+
+        # Aba: Frota
+        layout = self._new_tab(self.tr("Frota"))
+
         # Seção: Dimensionamento de Frota
         fleet_title = QLabel(self.tr("<b>Dimensionamento de Frota</b>"))
         fleet_title.setStyleSheet("font-size: 13px; color: #2b6cb0; margin-top: 12px;")
@@ -465,6 +556,44 @@ class WasteDock(QgsDockWidget):
         self.btn_run_fleet_sizing.setStyleSheet("font-weight: bold; padding: 6px; font-size: 12px;")
         self.btn_run_fleet_sizing.clicked.connect(self.run_fleet_sizing)
         layout.addWidget(self.btn_run_fleet_sizing)
+
+        layout.addStretch()
+
+        # Aba: Indicadores (Deadhead Ratio, Equilíbrio entre Setores, Distância ao Destino, Cobertura por Frequência)
+        layout = self._new_tab(self.tr("Indicadores"))
+
+        # Seção: Deadhead Ratio (Razão de Deadhead)
+        deadhead_title = QLabel(self.tr("<b>Deadhead Ratio (Razão de Deadhead)</b>"))
+        deadhead_title.setStyleSheet("font-size: 13px; color: #2b6cb0; margin-top: 12px;")
+        layout.addWidget(deadhead_title)
+
+        # Camada de Rotas/Vias (Linhas)
+        layout.addWidget(QLabel(self.tr("Camada de rotas/vias de coleta (Linhas):")))
+        self.cmb_deadhead_routes = QgsMapLayerComboBox()
+        self.cmb_deadhead_routes.setFilters(QgsMapLayerProxyModel.Filter.LineLayer)
+        layout.addWidget(self.cmb_deadhead_routes)
+
+        # Campo indicador de deadhead/improdutivo
+        layout.addWidget(QLabel(self.tr("Campo indicador de deadhead/improdutivo:")))
+        self.cmb_deadhead_field = QgsFieldComboBox()
+        self.cmb_deadhead_field.setLayer(self.cmb_deadhead_routes.currentLayer())
+        self.cmb_deadhead_routes.layerChanged.connect(self.cmb_deadhead_field.setLayer)
+        layout.addWidget(self.cmb_deadhead_field)
+
+        # Campo de identificação da rota/setor (opcional)
+        layout.addWidget(QLabel(self.tr("Campo de identificação da rota/setor (opcional):")))
+        self.cmb_deadhead_route_id = QgsFieldComboBox()
+        if hasattr(self.cmb_deadhead_route_id, 'setAllowEmptyFieldName'):
+            self.cmb_deadhead_route_id.setAllowEmptyFieldName(True)
+        self.cmb_deadhead_route_id.setLayer(self.cmb_deadhead_routes.currentLayer())
+        self.cmb_deadhead_routes.layerChanged.connect(self.cmb_deadhead_route_id.setLayer)
+        layout.addWidget(self.cmb_deadhead_route_id)
+
+        # Botão Executar Razão de Deadhead
+        self.btn_run_deadhead_ratio = QPushButton(self.tr("Executar Razão de Deadhead"))
+        self.btn_run_deadhead_ratio.setStyleSheet("font-weight: bold; padding: 6px; font-size: 12px;")
+        self.btn_run_deadhead_ratio.clicked.connect(self.run_deadhead_ratio)
+        layout.addWidget(self.btn_run_deadhead_ratio)
 
         # Seção: Equilíbrio entre Setores
         balance_title = QLabel(self.tr("<b>Equilíbrio entre Setores</b>"))
@@ -631,17 +760,18 @@ class WasteDock(QgsDockWidget):
         self.btn_run_coverage.clicked.connect(self.run_collection_coverage)
         layout.addWidget(self.btn_run_coverage)
 
-        # Painel de Resultados
-        layout.addWidget(QLabel(self.tr("Resultados:")))
+        layout.addStretch()
+
+        # Painel de Resultados (compartilhado, fora das abas)
+        outer.addWidget(QLabel(self.tr("Resultados:")))
         self.txt_results = QTextEdit()
         self.txt_results.setReadOnly(True)
         self.txt_results.setMinimumHeight(150)
         self.txt_results.setStyleSheet(
             "font-family: monospace; font-size: 11px; background-color: #2d3748; color: #edf2f7; padding: 5px;"
         )
-        layout.addWidget(self.txt_results)
+        outer.addWidget(self.txt_results)
 
-        layout.addStretch()
         scroll.setWidget(central)
         self.setWidget(scroll)
 
@@ -713,6 +843,72 @@ class WasteDock(QgsDockWidget):
 
         self.txt_results.append(self.tr("<b>=== CÁLCULO CONCLUÍDO ===</b>"))
         self.btn_calculate_generation.setEnabled(True)
+
+    def run_districting(self):
+        """
+        Executa o algoritmo logis:waste_districting com as entradas informadas na UI.
+        """
+        self.txt_results.clear()
+
+        streets_layer = self.cmb_dist_streets.currentLayer()
+        field_load = self.cmb_dist_field_load.currentField()
+        num_sectors = self.spin_dist_num_sectors.value()
+        tolerance = self.spin_dist_node_tolerance.value()
+        max_iterations = self.spin_dist_max_iterations.value()
+
+        if not streets_layer:
+            QMessageBox.warning(
+                self,
+                self.tr("Aviso"),
+                self.tr("Por favor, selecione a camada de vias para a setorização.")
+            )
+            self.txt_results.append(self.tr("<span style='color: #fc8181;'>Erro: Parâmetros incompletos.</span>"))
+            return
+
+        try:
+            import processing
+        except ImportError:
+            QMessageBox.critical(
+                self,
+                self.tr("Erro"),
+                self.tr("QGIS Processing não está disponível no ambiente atual.")
+            )
+            self.txt_results.append(self.tr("<span style='color: #fc8181;'>Erro: QGIS Processing não disponível.</span>"))
+            return
+
+        self.btn_run_districting.setEnabled(False)
+        self.txt_results.append(self.tr("<b>=== EXECUTANDO SETORIZAÇÃO ===</b><br>"))
+
+        try:
+            params = {
+                'INPUT_STREETS': streets_layer,
+                'FIELD_LOAD': field_load if field_load else None,
+                'NUM_SECTORS': num_sectors,
+                'NODE_TOLERANCE': tolerance,
+                'MAX_ITERATIONS': max_iterations,
+                'OUTPUT': 'memory:'
+            }
+            res = processing.run("logis:waste_districting", params)
+
+            out_layer = res.get('OUTPUT')
+            if out_layer is not None:
+                if QgsProject.instance():
+                    QgsProject.instance().addMapLayer(out_layer)
+
+                count = out_layer.featureCount() if hasattr(out_layer, 'featureCount') else 'OK'
+                self.txt_results.append(
+                    self.tr("-> <b>Setorização concluída com sucesso!</b> (Camada com {count} trechos viários)<br>").format(count=count)
+                )
+            else:
+                self.txt_results.append(self.tr("-> <b>Resultado da setorização retornou vazio.</b><br>"))
+
+        except Exception as e:
+            self.txt_results.append(
+                self.tr("<span style='color: #fc8181;'>Erro ao executar setorização: {error}</span><br>").format(error=str(e))
+            )
+
+        self.txt_results.append(self.tr("<b>=== EXECUÇÃO CONCLUÍDA ===</b>"))
+        self.btn_run_districting.setEnabled(True)
 
     def run_cpp_route(self):
         """
@@ -1183,3 +1379,65 @@ class WasteDock(QgsDockWidget):
 
         self.txt_results.append(self.tr("<b>=== CÁLCULO CONCLUÍDO ===</b>"))
         self.btn_run_coverage.setEnabled(True)
+
+    def run_deadhead_ratio(self):
+        """
+        Executa o algoritmo logis:waste_deadhead_ratio com as entradas informadas na UI.
+        """
+        self.txt_results.clear()
+
+        routes_layer = self.cmb_deadhead_routes.currentLayer()
+        field_deadhead = self.cmb_deadhead_field.currentField()
+        field_route_id = self.cmb_deadhead_route_id.currentField()
+
+        if not routes_layer or not field_deadhead:
+            QMessageBox.warning(
+                self,
+                self.tr("Aviso"),
+                self.tr("Por favor, selecione a camada de rotas e o campo indicador de deadhead para a análise.")
+            )
+            self.txt_results.append(self.tr("<span style='color: #fc8181;'>Erro: Parâmetros incompletos.</span>"))
+            return
+
+        try:
+            import processing
+        except ImportError:
+            QMessageBox.critical(
+                self,
+                self.tr("Erro"),
+                self.tr("QGIS Processing não está disponível no ambiente atual.")
+            )
+            self.txt_results.append(self.tr("<span style='color: #fc8181;'>Erro: QGIS Processing não disponível.</span>"))
+            return
+
+        self.btn_run_deadhead_ratio.setEnabled(False)
+        self.txt_results.append(self.tr("<b>=== EXECUTANDO RAZÃO DE DEADHEAD ===</b><br>"))
+
+        try:
+            params = {
+                'INPUT_ROUTES': routes_layer,
+                'FIELD_DEADHEAD': field_deadhead,
+                'FIELD_ROUTE_ID': field_route_id if field_route_id else None,
+                'OUTPUT': 'memory:'
+            }
+            res = processing.run("logis:waste_deadhead_ratio", params)
+
+            out_layer = res.get('OUTPUT')
+            if out_layer is not None:
+                if QgsProject.instance():
+                    QgsProject.instance().addMapLayer(out_layer)
+
+                count = out_layer.featureCount() if hasattr(out_layer, 'featureCount') else 'OK'
+                self.txt_results.append(
+                    self.tr("-> <b>Razão de deadhead calculada com sucesso!</b> (Camada com {count} registro(s))<br>").format(count=count)
+                )
+            else:
+                self.txt_results.append(self.tr("-> <b>Resultado da razão de deadhead retornou vazio.</b><br>"))
+
+        except Exception as e:
+            self.txt_results.append(
+                self.tr("<span style='color: #fc8181;'>Erro ao executar razão de deadhead: {error}</span><br>").format(error=str(e))
+            )
+
+        self.txt_results.append(self.tr("<b>=== CÁLCULO CONCLUÍDO ===</b>"))
+        self.btn_run_deadhead_ratio.setEnabled(True)

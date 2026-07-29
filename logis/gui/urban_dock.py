@@ -20,7 +20,8 @@ try:
         QLineEdit,
         QDoubleSpinBox,
         QSpinBox,
-        QComboBox
+        QComboBox,
+        QScrollArea
     )
 except ImportError:
     # Mocks para quando rodado fora do QGIS (ex: smoke tests ou CLI)
@@ -148,6 +149,13 @@ except ImportError:
             pass
         def currentIndex(self):
             return 0
+    class QScrollArea:
+        def __init__(self, parent=None):
+            pass
+        def setWidgetResizable(self, resizable):
+            pass
+        def setWidget(self, widget):
+            pass
 
 
 
@@ -166,6 +174,9 @@ class UrbanDock(QgsDockWidget):
         return QCoreApplication.translate("UrbanDock", string)
 
     def _build_ui(self):
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+
         central = QWidget()
         layout = QVBoxLayout(central)
         layout.setContentsMargins(10, 10, 10, 10)
@@ -302,7 +313,8 @@ class UrbanDock(QgsDockWidget):
         self.btn_calculate_delivery.clicked.connect(self.calculate_delivery_distance)
         layout.addWidget(self.btn_calculate_delivery)
 
-        self.setWidget(central)
+        scroll.setWidget(central)
+        self.setWidget(scroll)
 
     def calculate_indicators(self):
         """

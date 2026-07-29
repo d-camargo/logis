@@ -3612,6 +3612,131 @@ Output:
         <source>&lt;span style='color: #fc8181;'&gt;Erro ao executar cobertura por frequência: {error}&lt;/span&gt;&lt;br&gt;</source>
         <translation>&lt;span style='color: #fc8181;'&gt;Error executing frequency coverage: {error}&lt;/span&gt;&lt;br&gt;</translation>
     </message>
+    <message>
+        <location filename="../gui/waste_dock.py" line="234" />
+        <source>Geração</source>
+        <translation>Generation</translation>
+    </message>
+    <message>
+        <location filename="../gui/waste_dock.py" line="297" />
+        <source>&lt;b&gt;Setorização&lt;/b&gt;</source>
+        <translation>&lt;b&gt;Districting&lt;/b&gt;</translation>
+    </message>
+    <message>
+        <location filename="../gui/waste_dock.py" line="308" />
+        <source>Campo de carga (opcional):</source>
+        <translation>Load field (optional):</translation>
+    </message>
+    <message>
+        <location filename="../gui/waste_dock.py" line="317" />
+        <source>Número de setores de coleta desejado:</source>
+        <translation>Desired number of collection sectors:</translation>
+    </message>
+    <message>
+        <location filename="../gui/waste_dock.py" line="332" />
+        <source>Máximo de iterações de rebalanceamento:</source>
+        <translation>Maximum rebalancing iterations:</translation>
+    </message>
+    <message>
+        <location filename="../gui/waste_dock.py" line="339" />
+        <source>Executar Setorização</source>
+        <translation>Run Districting</translation>
+    </message>
+    <message>
+        <location filename="../gui/waste_dock.py" line="347" />
+        <source>Roteirização</source>
+        <translation>Routing</translation>
+    </message>
+    <message>
+        <location filename="../gui/waste_dock.py" line="493" />
+        <source>Frota</source>
+        <translation>Fleet</translation>
+    </message>
+    <message>
+        <location filename="../gui/waste_dock.py" line="563" />
+        <source>Indicadores</source>
+        <translation>Indicators</translation>
+    </message>
+    <message>
+        <location filename="../gui/waste_dock.py" line="566" />
+        <source>&lt;b&gt;Deadhead Ratio (Razão de Deadhead)&lt;/b&gt;</source>
+        <translation>&lt;b&gt;Deadhead Ratio&lt;/b&gt;</translation>
+    </message>
+    <message>
+        <location filename="../gui/waste_dock.py" line="571" />
+        <source>Camada de rotas/vias de coleta (Linhas):</source>
+        <translation>Collection routes/roads layer (Lines):</translation>
+    </message>
+    <message>
+        <location filename="../gui/waste_dock.py" line="577" />
+        <source>Campo indicador de deadhead/improdutivo:</source>
+        <translation>Deadhead/unproductive indicator field:</translation>
+    </message>
+    <message>
+        <location filename="../gui/waste_dock.py" line="584" />
+        <source>Campo de identificação da rota/setor (opcional):</source>
+        <translation>Route/sector identification field (optional):</translation>
+    </message>
+    <message>
+        <location filename="../gui/waste_dock.py" line="593" />
+        <source>Executar Razão de Deadhead</source>
+        <translation>Run Deadhead Ratio</translation>
+    </message>
+    <message>
+        <location filename="../gui/waste_dock.py" line="863" />
+        <source>Por favor, selecione a camada de vias para a setorização.</source>
+        <translation>Please select the roads layer for districting.</translation>
+    </message>
+    <message>
+        <location filename="../gui/waste_dock.py" line="880" />
+        <source>&lt;b&gt;=== EXECUTANDO SETORIZAÇÃO ===&lt;/b&gt;&lt;br&gt;</source>
+        <translation>&lt;b&gt;=== RUNNING DISTRICTING ===&lt;/b&gt;&lt;br&gt;</translation>
+    </message>
+    <message>
+        <location filename="../gui/waste_dock.py" line="900" />
+        <source>-&gt; &lt;b&gt;Setorização concluída com sucesso!&lt;/b&gt; (Camada com {count} trechos viários)&lt;br&gt;</source>
+        <translation>-&gt; &lt;b&gt;Districting completed successfully!&lt;/b&gt; (Layer with {count} road segments)&lt;br&gt;</translation>
+    </message>
+    <message>
+        <location filename="../gui/waste_dock.py" line="903" />
+        <source>-&gt; &lt;b&gt;Resultado da setorização retornou vazio.&lt;/b&gt;&lt;br&gt;</source>
+        <translation>-&gt; &lt;b&gt;Districting result returned empty.&lt;/b&gt;&lt;br&gt;</translation>
+    </message>
+    <message>
+        <location filename="../gui/waste_dock.py" line="907" />
+        <source>&lt;span style='color: #fc8181;'&gt;Erro ao executar setorização: {error}&lt;/span&gt;&lt;br&gt;</source>
+        <translation>&lt;span style='color: #fc8181;'&gt;Error executing districting: {error}&lt;/span&gt;&lt;br&gt;</translation>
+    </message>
+    <message>
+        <location filename="../gui/waste_dock.py" line="910" />
+        <source>&lt;b&gt;=== EXECUÇÃO CONCLUÍDA ===&lt;/b&gt;</source>
+        <translation>&lt;b&gt;=== EXECUTION COMPLETE ===&lt;/b&gt;</translation>
+    </message>
+    <message>
+        <location filename="../gui/waste_dock.py" line="1397" />
+        <source>Por favor, selecione a camada de rotas e o campo indicador de deadhead para a análise.</source>
+        <translation>Please select the routes layer and the deadhead indicator field for the analysis.</translation>
+    </message>
+    <message>
+        <location filename="../gui/waste_dock.py" line="1414" />
+        <source>&lt;b&gt;=== EXECUTANDO RAZÃO DE DEADHEAD ===&lt;/b&gt;&lt;br&gt;</source>
+        <translation>&lt;b&gt;=== RUNNING DEADHEAD RATIO ===&lt;/b&gt;&lt;br&gt;</translation>
+    </message>
+    <message>
+        <location filename="../gui/waste_dock.py" line="1432" />
+        <source>-&gt; &lt;b&gt;Razão de deadhead calculada com sucesso!&lt;/b&gt; (Camada com {count} registro(s))&lt;br&gt;</source>
+        <translation>-&gt; &lt;b&gt;Deadhead ratio calculated successfully!&lt;/b&gt; (Layer with {count} record(s))&lt;br&gt;</translation>
+    </message>
+    <message>
+        <location filename="../gui/waste_dock.py" line="1435" />
+        <source>-&gt; &lt;b&gt;Resultado da razão de deadhead retornou vazio.&lt;/b&gt;&lt;br&gt;</source>
+        <translation>-&gt; &lt;b&gt;Deadhead ratio result returned empty.&lt;/b&gt;&lt;br&gt;</translation>
+    </message>
+    <message>
+        <location filename="../gui/waste_dock.py" line="1439" />
+        <source>&lt;span style='color: #fc8181;'&gt;Erro ao executar razão de deadhead: {error}&lt;/span&gt;&lt;br&gt;</source>
+        <translation>&lt;span style='color: #fc8181;'&gt;Error executing deadhead ratio: {error}&lt;/span&gt;&lt;br&gt;</translation>
+    </message>
 </context>
 <context>
     <name>WasteFleetSizing</name>
