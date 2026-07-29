@@ -201,3 +201,4 @@ logis/
 - Reprojetar para CRS métrico antes de cálculos de custo; devolver saídas em EPSG:4674.
 - Cache: `QStandardPaths.CacheLocation` → `.../logis/`. Nunca gravar fora do cache ou do GPKG escolhido pelo usuário.
 - Licença: GPL-3.0 (herdada da lógica do GisBR).
+- Compatibilidade Qt6/QGIS 4: todo acesso a enum do Qt/QGIS deve ser escopado (`Qt.DockWidgetArea.RightDockWidgetArea`, `QgsProcessing.SourceType.TypeVectorLine`, `QgsProcessingParameterNumber.Type.Double`, `QgsWkbTypes.Type.*` / `QgsWkbTypes.GeometryType.*`, `QgsTask.Flag.*`), tipos de campo só se criam via `core.qgis_compat.field_type()` (nunca `QVariant.*` direto) e `exec_()` não pode ser usado (PyQt6/QGIS 4 removeram as formas soltas; as escopadas valem também no QGIS 3.16+; verificado por `test_qt6_compat.py`).

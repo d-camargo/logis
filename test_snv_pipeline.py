@@ -28,7 +28,7 @@ class TestSNVPipeline(unittest.TestCase):
         self.assertEqual(_parse_snv_speed(""), 60.0)
         self.assertEqual(_parse_snv_speed(None), 60.0)
 
-    @patch('core.connectors.wfs.fetch_layer')
+    @patch('logis.core.connectors.wfs.fetch_layer')
     def test_build_snv_state_network(self, mock_fetch_layer):
         # Create a mock source layer in memory representing WFS output
         mock_layer = QgsVectorLayer(

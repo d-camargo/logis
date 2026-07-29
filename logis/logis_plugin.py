@@ -68,14 +68,14 @@ class LogisPlugin:
         if self.dialog is None:
             self.dialog = DependenciesDialog(self.iface.mainWindow())
         self.dialog.refresh_status()
-        self.dialog.exec_()
+        self.dialog.exec()
 
     def show_urban_dock(self):
         from qgis.PyQt.QtCore import Qt
         from .gui.urban_dock import UrbanDock
         if self.dock_urban is None:
             self.dock_urban = UrbanDock(self.iface, self.iface.mainWindow())
-            self.iface.addDockWidget(Qt.RightDockWidgetArea, self.dock_urban)
+            self.iface.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.dock_urban)
         self.dock_urban.show()
 
     def show_regional_dock(self):
@@ -83,7 +83,7 @@ class LogisPlugin:
         from .gui.regional_dock import RegionalDock
         if self.dock_regional is None:
             self.dock_regional = RegionalDock(self.iface, self.iface.mainWindow())
-            self.iface.addDockWidget(Qt.RightDockWidgetArea, self.dock_regional)
+            self.iface.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.dock_regional)
         self.dock_regional.show()
 
     def show_waste_dock(self):
@@ -91,7 +91,7 @@ class LogisPlugin:
         from .gui.waste_dock import WasteDock
         if self.dock_waste is None:
             self.dock_waste = WasteDock(self.iface, self.iface.mainWindow())
-            self.iface.addDockWidget(Qt.RightDockWidgetArea, self.dock_waste)
+            self.iface.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.dock_waste)
         self.dock_waste.show()
 
     def unload(self):

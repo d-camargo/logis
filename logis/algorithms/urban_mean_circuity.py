@@ -49,14 +49,14 @@ class UrbanMeanCircuity(QgsProcessingAlgorithm):
             QgsProcessingParameterFeatureSource(
                 self.INPUT_NETWORK,
                 self.tr("Camada de rede viária (Linhas)"),
-                [QgsProcessing.TypeVectorLine]
+                [QgsProcessing.SourceType.TypeVectorLine]
             )
         )
         self.addParameter(
             QgsProcessingParameterNumber(
                 self.NUM_SAMPLES,
                 self.tr("Número de amostras (pares OD)"),
-                type=QgsProcessingParameterNumber.Integer,
+                type=QgsProcessingParameterNumber.Type.Integer,
                 defaultValue=1000,
                 minValue=1
             )
@@ -65,7 +65,7 @@ class UrbanMeanCircuity(QgsProcessingAlgorithm):
             QgsProcessingParameterNumber(
                 self.MIN_DISTANCE,
                 self.tr("Distância euclidiana mínima (metros)"),
-                type=QgsProcessingParameterNumber.Double,
+                type=QgsProcessingParameterNumber.Type.Double,
                 defaultValue=100.0,
                 minValue=0.0
             )

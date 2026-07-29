@@ -59,21 +59,21 @@ class UrbanGravityAccessibility(QgsProcessingAlgorithm):
             QgsProcessingParameterFeatureSource(
                 self.INPUT_NETWORK,
                 self.tr("Camada de rede viária (Linhas)"),
-                [QgsProcessing.TypeVectorLine]
+                [QgsProcessing.SourceType.TypeVectorLine]
             )
         )
         self.addParameter(
             QgsProcessingParameterFeatureSource(
                 self.INPUT_ORIGINS,
                 self.tr("Camada de origem (pontos/centroides)"),
-                [QgsProcessing.TypeVectorPoint]
+                [QgsProcessing.SourceType.TypeVectorPoint]
             )
         )
         self.addParameter(
             QgsProcessingParameterFeatureSource(
                 self.INPUT_DESTINATIONS,
                 self.tr("Camada de destinos (POIs)"),
-                [QgsProcessing.TypeVectorPoint]
+                [QgsProcessing.SourceType.TypeVectorPoint]
             )
         )
         self.addParameter(
@@ -89,7 +89,7 @@ class UrbanGravityAccessibility(QgsProcessingAlgorithm):
             QgsProcessingParameterNumber(
                 self.BETA,
                 self.tr("Parâmetro de decaimento por distância (beta)"),
-                type=QgsProcessingParameterNumber.Double,
+                type=QgsProcessingParameterNumber.Type.Double,
                 defaultValue=2.0,
                 minValue=0.0001
             )

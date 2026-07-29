@@ -70,7 +70,7 @@ class WasteFleetSizing(QgsProcessingAlgorithm):
             QgsProcessingParameterFeatureSource(
                 self.INPUT_ROUTES,
                 self.tr("Camada de rotas de coleta (saída de logis:waste_carp_route)"),
-                [QgsProcessing.TypeVectorLine]
+                [QgsProcessing.SourceType.TypeVectorLine]
             )
         )
         self.addParameter(
@@ -93,7 +93,7 @@ class WasteFleetSizing(QgsProcessingAlgorithm):
             QgsProcessingParameterNumber(
                 self.AVG_SPEED,
                 self.tr("Velocidade média de coleta (km/h)"),
-                type=QgsProcessingParameterNumber.Double,
+                type=QgsProcessingParameterNumber.Type.Double,
                 defaultValue=10.0,
                 minValue=0.0001
             )
@@ -102,7 +102,7 @@ class WasteFleetSizing(QgsProcessingAlgorithm):
             QgsProcessingParameterNumber(
                 self.SHIFT_DURATION,
                 self.tr("Duração da jornada de trabalho diária (horas)"),
-                type=QgsProcessingParameterNumber.Double,
+                type=QgsProcessingParameterNumber.Type.Double,
                 defaultValue=8.0,
                 minValue=0.0001
             )
@@ -111,7 +111,7 @@ class WasteFleetSizing(QgsProcessingAlgorithm):
             QgsProcessingParameterNumber(
                 self.UNLOAD_TIME,
                 self.tr("Tempo fixo de descarga por rota (horas)"),
-                type=QgsProcessingParameterNumber.Double,
+                type=QgsProcessingParameterNumber.Type.Double,
                 defaultValue=0.5,
                 minValue=0.0
             )
@@ -120,7 +120,7 @@ class WasteFleetSizing(QgsProcessingAlgorithm):
             QgsProcessingParameterNumber(
                 self.TRAVEL_TIME,
                 self.tr("Tempo fixo de deslocamento ao destino por rota (horas)"),
-                type=QgsProcessingParameterNumber.Double,
+                type=QgsProcessingParameterNumber.Type.Double,
                 defaultValue=0.5,
                 minValue=0.0
             )
@@ -193,7 +193,7 @@ class WasteFleetSizing(QgsProcessingAlgorithm):
 
         sink, dest_id = self.parameterAsSink(
             parameters, self.OUTPUT, context, out_fields,
-            QgsWkbTypes.NoGeometry, routes_source.sourceCrs()
+            QgsWkbTypes.Type.NoGeometry, routes_source.sourceCrs()
         )
         if sink is None:
             raise QgsProcessingException(self.tr("Não foi possível criar a camada de saída."))

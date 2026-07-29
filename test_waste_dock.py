@@ -140,49 +140,49 @@ class TestWasteDock(unittest.TestCase):
         """Verifica a validação de parâmetros incompletos ao clicar em calcular."""
         # Sem selecionar camadas/campos, a execução deve falhar graciosamente com mensagem de aviso
         # (QMessageBox.warning é mockado para não abrir um diálogo modal real durante o teste)
-        with patch('gui.waste_dock.QMessageBox.warning') as mock_warning:
+        with patch('logis.gui.waste_dock.QMessageBox.warning') as mock_warning:
             self.dock.calculate_waste_generation()
             mock_warning.assert_called_once()
 
     def test_run_cpp_route_missing_inputs(self):
         """Verifica a validação de parâmetros incompletos ao clicar em executar roteirização CPP."""
-        with patch('gui.waste_dock.QMessageBox.warning') as mock_warning:
+        with patch('logis.gui.waste_dock.QMessageBox.warning') as mock_warning:
             self.dock.run_cpp_route()
             mock_warning.assert_called_once()
 
     def test_run_rpp_route_missing_inputs(self):
         """Verifica a validação de parâmetros incompletos ao clicar em executar roteirização RPP."""
-        with patch('gui.waste_dock.QMessageBox.warning') as mock_warning:
+        with patch('logis.gui.waste_dock.QMessageBox.warning') as mock_warning:
             self.dock.run_rpp_route()
             mock_warning.assert_called_once()
 
     def test_run_carp_route_missing_inputs(self):
         """Verifica a validação de parâmetros incompletos ao clicar em executar roteirização CARP."""
-        with patch('gui.waste_dock.QMessageBox.warning') as mock_warning:
+        with patch('logis.gui.waste_dock.QMessageBox.warning') as mock_warning:
             self.dock.run_carp_route()
             mock_warning.assert_called_once()
 
     def test_run_fleet_sizing_missing_inputs(self):
         """Verifica a validação de parâmetros incompletos ao clicar em executar dimensionamento de frota."""
-        with patch('gui.waste_dock.QMessageBox.warning') as mock_warning:
+        with patch('logis.gui.waste_dock.QMessageBox.warning') as mock_warning:
             self.dock.run_fleet_sizing()
             mock_warning.assert_called_once()
 
     def test_run_sector_balance_missing_inputs(self):
         """Verifica a validação de parâmetros incompletos ao clicar em executar equilíbrio entre setores."""
-        with patch('gui.waste_dock.QMessageBox.warning') as mock_warning:
+        with patch('logis.gui.waste_dock.QMessageBox.warning') as mock_warning:
             self.dock.run_sector_balance()
             mock_warning.assert_called_once()
 
     def test_run_destination_distance_missing_inputs(self):
         """Verifica a validação de parâmetros incompletos ao clicar em executar distância ao destino."""
-        with patch('gui.waste_dock.QMessageBox.warning') as mock_warning:
+        with patch('logis.gui.waste_dock.QMessageBox.warning') as mock_warning:
             self.dock.run_destination_distance()
             mock_warning.assert_called_once()
 
     def test_run_collection_coverage_missing_inputs(self):
         """Verifica a validação de parâmetros incompletos ao clicar em executar cobertura por frequência."""
-        with patch('gui.waste_dock.QMessageBox.warning') as mock_warning:
+        with patch('logis.gui.waste_dock.QMessageBox.warning') as mock_warning:
             self.dock.run_collection_coverage()
             mock_warning.assert_called_once()
 

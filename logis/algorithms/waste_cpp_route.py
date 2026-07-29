@@ -92,7 +92,7 @@ class WasteCppRoute(QgsProcessingAlgorithm):
             QgsProcessingParameterFeatureSource(
                 self.INPUT_STREETS,
                 self.tr("Camada de vias"),
-                [QgsProcessing.TypeVectorLine]
+                [QgsProcessing.SourceType.TypeVectorLine]
             )
         )
         self.addParameter(
@@ -107,7 +107,7 @@ class WasteCppRoute(QgsProcessingAlgorithm):
             QgsProcessingParameterNumber(
                 self.NODE_TOLERANCE,
                 self.tr("Tolerância de nó em metros (requer CRS métrico)"),
-                type=QgsProcessingParameterNumber.Double,
+                type=QgsProcessingParameterNumber.Type.Double,
                 defaultValue=0.01,
                 minValue=0.0001
             )

@@ -75,7 +75,7 @@ class UrbanCargoRestriction(QgsProcessingAlgorithm):
             QgsProcessingParameterFeatureSource(
                 self.INPUT_NETWORK,
                 self.tr("Camada de rede viária (Linhas)"),
-                [QgsProcessing.TypeVectorLine]
+                [QgsProcessing.SourceType.TypeVectorLine]
             )
         )
         self.addParameter(

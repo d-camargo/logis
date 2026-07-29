@@ -106,7 +106,7 @@ class WasteCarpRoute(QgsProcessingAlgorithm):
             QgsProcessingParameterFeatureSource(
                 self.INPUT_STREETS,
                 self.tr("Camada de vias"),
-                [QgsProcessing.TypeVectorLine]
+                [QgsProcessing.SourceType.TypeVectorLine]
             )
         )
         self.addParameter(
@@ -138,7 +138,7 @@ class WasteCarpRoute(QgsProcessingAlgorithm):
             QgsProcessingParameterNumber(
                 self.CAPACITY,
                 self.tr("Capacidade do veículo (em toneladas ou kg)"),
-                type=QgsProcessingParameterNumber.Double,
+                type=QgsProcessingParameterNumber.Type.Double,
                 defaultValue=10.0,
                 minValue=0.0001
             )
@@ -147,14 +147,14 @@ class WasteCarpRoute(QgsProcessingAlgorithm):
             QgsProcessingParameterFeatureSource(
                 self.INPUT_DEPOT,
                 self.tr("Camada de ponto do depósito/aterro (exatamente 1 feição)"),
-                [QgsProcessing.TypeVectorPoint]
+                [QgsProcessing.SourceType.TypeVectorPoint]
             )
         )
         self.addParameter(
             QgsProcessingParameterNumber(
                 self.NODE_TOLERANCE,
                 self.tr("Tolerância de nó em metros (requer CRS métrico)"),
-                type=QgsProcessingParameterNumber.Double,
+                type=QgsProcessingParameterNumber.Type.Double,
                 defaultValue=0.01,
                 minValue=0.0001
             )

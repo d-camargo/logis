@@ -30,13 +30,13 @@ from qgis.core import (
     QgsFeatureSink,
     QgsWkbTypes
 )
-from qgis.PyQt.QtCore import QVariant
-
 try:
+    from ..core import qgis_compat
     from ..core.location.facility import solve_lscp
     from ..core.network.graph_builder import build_graph
     from ..core.network.od_matrix import compute_od_matrix
 except ImportError:
+    from core import qgis_compat
     from core.location.facility import solve_lscp
     from core.network.graph_builder import build_graph
     from core.network.od_matrix import compute_od_matrix
@@ -44,7 +44,7 @@ except ImportError:
 
 def _extract_point(geom):
     """Retorna um QgsPointXY representando a geometria (ponto ou centroide de polígono)."""
-    if geom.type() == QgsWkbTypes.PointGeometry:
+    if geom.type() == QgsWkbTypes.GeometryType.PointGeometry:
         return geom.asPoint()
     else:
         return geom.centroid().asPoint()
@@ -85,7 +85,7 @@ class FacilityLSCP(QgsProcessingAlgorithm):
             QgsProcessingParameterFeatureSource(
                 self.INPUT_DEMAND,
                 self.tr("Camada de demanda (Pontos/Polígonos)"),
-                [QgsProcessing.TypeVectorPoint, QgsProcessing.TypeVectorPolygon]
+                [QgsProcessing.SourceType.TypeVectorPoint, QgsProcessing.SourceType.TypeVectorPolygon]
             )
         )
         self.addParameter(
@@ -101,7 +101,7 @@ class FacilityLSCP(QgsProcessingAlgorithm):
             QgsProcessingParameterFeatureSource(
                 self.INPUT_CANDIDATES,
                 self.tr("Camada de instalações candidatas (Pontos/Polígonos) (opcional)"),
-                [QgsProcessing.TypeVectorPoint, QgsProcessing.TypeVectorPolygon],
+                [QgsProcessing.SourceType.TypeVectorPoint, QgsProcessing.SourceType.TypeVectorPolygon],
                 optional=True
             )
         )
@@ -109,7 +109,7 @@ class FacilityLSCP(QgsProcessingAlgorithm):
             QgsProcessingParameterFeatureSource(
                 self.INPUT_NETWORK,
                 self.tr("Camada de rede viária (Linhas) (opcional)"),
-                [QgsProcessing.TypeVectorLine],
+                [QgsProcessing.SourceType.TypeVectorLine],
                 optional=True
             )
         )
@@ -117,7 +117,7 @@ class FacilityLSCP(QgsProcessingAlgorithm):
             QgsProcessingParameterNumber(
                 self.MAX_DISTANCE,
                 self.tr("Distância/Tempo máximo de cobertura (max_distance)"),
-                type=QgsProcessingParameterNumber.Double,
+                type=QgsProcessingParameterNumber.Type.Double,
                 defaultValue=1000.0,
                 minValue=0.0001
             )
@@ -179,7 +179,7 @@ class FacilityLSCP(QgsProcessingAlgorithm):
             weight = 1.0
             if weight_field_idx != -1:
                 val = feat.attribute(weight_field_idx)
-                if val is not None and not QVariant(val).isNull():
+                if not qgis_compat.is_null(val):
                     try:
                         weight = float(val)
                     except (ValueError, TypeError):
@@ -310,9 +310,9 @@ class FacilityLSCP(QgsProcessingAlgorithm):
 
         fac_source = candidates_source if candidates_source is not None else demand_source
         fac_fields = fac_source.fields()
-        fac_fields.append(QgsField("facility_id", QVariant.Int))
-        fac_fields.append(QgsField("covered_count", QVariant.Int))
-        fac_fields.append(QgsField("covered_demand_sum", QVariant.Double))
+        fac_fields.append(QgsField("facility_id", qgis_compat.field_type("int")))
+        fac_fields.append(QgsField("covered_count", qgis_compat.field_type("int")))
+        fac_fields.append(QgsField("covered_demand_sum", qgis_compat.field_type("double")))
 
         (sink_fac, dest_fac) = self.parameterAsSink(
             parameters,
@@ -337,10 +337,10 @@ class FacilityLSCP(QgsProcessingAlgorithm):
                 sink_fac.addFeature(new_feat, QgsFeatureSink.FastInsert)
 
         ass_fields = demand_source.fields()
-        ass_fields.append(QgsField("is_covered", QVariant.Int))
-        ass_fields.append(QgsField("assigned_facility_id", QVariant.Int))
-        ass_fields.append(QgsField("cost_to_facility", QVariant.Double))
-        ass_fields.append(QgsField("weighted_cost", QVariant.Double))
+        ass_fields.append(QgsField("is_covered", qgis_compat.field_type("int")))
+        ass_fields.append(QgsField("assigned_facility_id", qgis_compat.field_type("int")))
+        ass_fields.append(QgsField("cost_to_facility", qgis_compat.field_type("double")))
+        ass_fields.append(QgsField("weighted_cost", qgis_compat.field_type("double")))
 
         (sink_ass, dest_ass) = self.parameterAsSink(
             parameters,

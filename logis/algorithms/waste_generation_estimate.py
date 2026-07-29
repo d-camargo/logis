@@ -62,7 +62,7 @@ class WasteGenerationEstimate(QgsProcessingAlgorithm):
             QgsProcessingParameterFeatureSource(
                 self.INPUT_SECTORS,
                 self.tr("Camada de setores (população)"),
-                [QgsProcessing.TypeVectorPolygon]
+                [QgsProcessing.SourceType.TypeVectorPolygon]
             )
         )
         self.addParameter(
@@ -85,7 +85,7 @@ class WasteGenerationEstimate(QgsProcessingAlgorithm):
             QgsProcessingParameterFeatureSource(
                 self.INPUT_STREETS,
                 self.tr("Camada de vias (com setor já associado)"),
-                [QgsProcessing.TypeVectorLine]
+                [QgsProcessing.SourceType.TypeVectorLine]
             )
         )
         self.addParameter(
@@ -100,7 +100,7 @@ class WasteGenerationEstimate(QgsProcessingAlgorithm):
             QgsProcessingParameterNumber(
                 self.PER_CAPITA_KG_DAY,
                 self.tr("Geração per capita (kg/hab/dia)"),
-                type=QgsProcessingParameterNumber.Double,
+                type=QgsProcessingParameterNumber.Type.Double,
                 defaultValue=0.9,
                 minValue=0.0001
             )
@@ -109,7 +109,7 @@ class WasteGenerationEstimate(QgsProcessingAlgorithm):
             QgsProcessingParameterNumber(
                 self.COVERAGE_FRACTION,
                 self.tr("Fração de cobertura da coleta (0 a 1)"),
-                type=QgsProcessingParameterNumber.Double,
+                type=QgsProcessingParameterNumber.Type.Double,
                 defaultValue=1.0,
                 minValue=0.0,
                 maxValue=1.0

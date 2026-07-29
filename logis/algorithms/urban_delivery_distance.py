@@ -57,21 +57,21 @@ class UrbanDeliveryDistance(QgsProcessingAlgorithm):
             QgsProcessingParameterFeatureSource(
                 self.INPUT_NETWORK,
                 self.tr("Camada de rede viária (Linhas)"),
-                [QgsProcessing.TypeVectorLine]
+                [QgsProcessing.SourceType.TypeVectorLine]
             )
         )
         self.addParameter(
             QgsProcessingParameterFeatureSource(
                 self.INPUT_DEPOTS,
                 self.tr("Camada de depósitos candidatos (Pontos)"),
-                [QgsProcessing.TypeVectorPoint]
+                [QgsProcessing.SourceType.TypeVectorPoint]
             )
         )
         self.addParameter(
             QgsProcessingParameterFeatureSource(
                 self.INPUT_ZONES,
                 self.tr("Camada de zonas/centroides (Pontos)"),
-                [QgsProcessing.TypeVectorPoint]
+                [QgsProcessing.SourceType.TypeVectorPoint]
             )
         )
         self.addParameter(

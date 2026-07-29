@@ -1810,6 +1810,97 @@ i18n):**
       de escopo até ele pedir). Rodar `make test` para confirmar que
       nada quebrou e commitar. — arquivos: `metadata.txt`, `icon.svg`
 
+- [x] 89. Consertar a suíte quebrada pelo commit `4c49617` (reestruturação
+      para subpasta `logis/`): atualizar alvos de `unittest.mock.patch`
+      (`logis.core...` e `logis.gui...`) em `test_snv_pipeline.py`,
+      `test_vrp.py` e `test_waste_dock.py`, e caminhos de arquivos de
+      tradução (`logis/i18n/...`) em `test_i18n.py`. Confirmar com
+      `python3 -m unittest discover -s . -p "test_*.py"` (211 testes OK)
+      e `make test` (sintaxe OK). — arquivos: `test_i18n.py`,
+      `test_snv_pipeline.py`, `test_vrp.py`, `test_waste_dock.py`
+
+- [x] 90. Corrigir a guarda de `field_type()` em
+      `core/qgis_compat.py`: trocar `if QVariant is not None` por
+      `if QVariant is not None and hasattr(QVariant, "Bool")`. Em
+      Qt6/PyQt6 a classe `QVariant` ainda pode importar, mas o enum
+      `QVariant.Type` foi removido — com a guarda antiga o acesso a
+      `QVariant.Bool` estouraria `AttributeError` em vez de cair no
+      fallback `QMetaType`. Confirmar com `make test` (sintaxe OK) e
+      `python3 -m unittest discover -s . -p "test_*.py"` (211 testes
+      OK). — arquivos: `core/qgis_compat.py`
+      Complemento: `test_qgis_compat.py` cobre os quatro casos —
+      `field_type()` constrói um `QgsField` de verdade para
+      int/double/string/bool, tipo desconhecido devolve o valor inválido
+      sem levantar, o PyQt6 é simulado com um `QVariant` sem membros
+      (cai em `QMetaType.Type.QString`) e sem nenhum dos dois devolve
+      `None`. — arquivos: `test_qgis_compat.py`
+
+- [x] 91. Corrigir os dois `AttributeError` relatados no QGIS 4: em
+      `logis/logis_plugin.py`, `Qt.RightDockWidgetArea` →
+      `Qt.DockWidgetArea.RightDockWidgetArea` (3 sítios) e
+      `self.dialog.exec_()` → `exec()`; em
+      `logis/gui/dependencies_dialog.py`, `Qt.WindowMinMaxButtonsHint |
+      Qt.WindowCloseButtonHint` → `Qt.WindowType.*`, com o mock da
+      `class Qt` do bloco `except ImportError` ganhando a classe
+      aninhada `WindowType`. — arquivos: `logis/logis_plugin.py`,
+      `logis/gui/dependencies_dialog.py`
+
+- [x] 92. Eliminar o uso direto de `QVariant` nos 7 algorithms,
+      trocando por `field_type()` e por `qgis_compat.is_null()` (helper
+      novo, para os `QVariant(val).isNull()` que existiam nos
+      algorithms). `grep -rn "QVariant" logis/` só retorna
+      `core/qgis_compat.py`. — arquivos: `waste_districting.py`,
+      `regional_critical_links.py`, `vrp_cvrp.py`, `facility_mclp.py`,
+      `facility_lscp.py`, `facility_p_median.py`,
+      `urban_edge_betweenness.py`, `core/qgis_compat.py`
+
+- [x] 93. Escopar os enums do Processing e do WKB em todos os arquivos
+      de `logis/`: `QgsProcessing.TypeVector*` →
+      `QgsProcessing.SourceType.*` (43 sítios),
+      `QgsProcessingParameterNumber.Double|Integer` →
+      `...Type.*` (28 sítios), `QgsWkbTypes.LineString|NoGeometry` →
+      `QgsWkbTypes.Type.*` e `QgsWkbTypes.PointGeometry` →
+      `QgsWkbTypes.GeometryType.PointGeometry`. — arquivos:
+      `logis/algorithms/*.py`, `logis/core/network/*.py`
+
+- [x] 94. Corrigir `logis/core/ortools_installer.py`: `QgsTask.CanCancel`
+      → `QgsTask.Flag.CanCancel` (com o mock expondo `Flag`); comando de
+      instalação exatamente o da seção 2.1 do CLAUDE.md (`ortools`,
+      `pandas<3`, `numpy<2`, `typing_extensions==4.10.0`), extraído para
+      `build_command()`, com **uma** repetição acrescentando
+      `--break-system-packages` quando a saída do pip contiver
+      `externally-managed-environment` (logada via `log_received`); o
+      `ortools_desc` do diálogo menciona as versões travadas.
+      `test_ortools_installer.py` afirma as três travas, a ausência do
+      `pip install ortools` puro e o retry. — arquivos:
+      `logis/core/ortools_installer.py`,
+      `logis/gui/dependencies_dialog.py`, `test_ortools_installer.py`
+
+- [x] 95. Criar `test_qt6_compat.py`: teste estático que lê como texto
+      todos os `.py` sob `logis/` e falha apontando arquivo:linha em
+      qualquer forma legada (enum solto do Qt/Processing/WKB/QgsTask,
+      `QVariant.` fora de `core/qgis_compat.py`, `.exec_(`). Ele existe
+      porque a suíte roda em PyQt5, onde a forma errada não falha em
+      runtime. — arquivos: `test_qt6_compat.py`
+
+- [x] 96. Registrar a regra do enum escopado na seção 9 do CLAUDE.md,
+      com a justificativa em uma linha e a menção de que
+      `test_qt6_compat.py` é quem faz cumprir. — arquivos: `CLAUDE.md`
+
+- [x] 97. Ajustar `metadata.txt` (`supportsQt6=True`, `version=0.1.1`,
+      mantendo `qgisMinimumVersion=3.16`/`qgisMaximumVersion=4.99`) e o
+      `Makefile` (`QGIS_MAJOR ?= 3` nos caminhos de perfil, mais os
+      alvos `deploy-qgis4`/`deploy-flatpak-qgis4` no `help` e no
+      `.PHONY`). — arquivos: `logis/metadata.txt`, `Makefile`
+
+- [x] 98. Criar `docs/qgis4_compat_check.py` (não empacotado): script
+      colável no console Python do QGIS 4 que imprime versões e, para
+      cada nome legado, se ele e a forma escopada existem
+      (`OK/AUSENTE`), incluindo se `QgsField("t", QMetaType.Type.QString)`
+      constrói. Roda sem exceção no QGIS 3.34 (relata as diferenças).
+      Documentado no `README.md`. — arquivos:
+      `docs/qgis4_compat_check.py`, `README.md`
+
 **Nova rodada — backend OR-Tools para o CVRP (prioritária, executar
 antes de retomar a rodada 9; desenho revisado nesta sessão — mesmo
 arquivo `vrp.py`, parâmetro `backend` em `solve_cvrp()`; ver "Decisões

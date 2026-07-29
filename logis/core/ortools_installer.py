@@ -13,7 +13,8 @@ try:
     from qgis.PyQt.QtCore import pyqtSignal
 except ImportError:
     class QgsTask:
-        CanCancel = 1
+        class Flag:
+            CanCancel = 1
         def __init__(self, *args, **kwargs):
             pass
         def isCanceled(self):
@@ -43,41 +44,80 @@ class ORToolsInstallTask(QgsTask):
     log_received = pyqtSignal(str)
 
     def __init__(self, on_finish=None):
-        super().__init__('Instalando Google OR-Tools', QgsTask.CanCancel)
+        super().__init__('Instalando Google OR-Tools', QgsTask.Flag.CanCancel)
         self.on_finish = on_finish
         self.error = None
         self.output = []
 
+    def build_command(self, break_system_packages=False):
+        """
+        Monta o comando pip da seção 2.1 do CLAUDE.md.
+
+        As travas de pandas/numpy/typing_extensions evitam que o pip danifique
+        a instalação do QGIS do usuário (numpy 2.x sobrepondo o 1.26.4 do QGIS
+        3.34, ou desinstalação órfã do typing_extensions da distro). Nunca usar
+        `pip install ortools` puro.
+        """
+        cmd = [
+            sys.executable, "-m", "pip", "install", "--user",
+            "ortools", "pandas<3", "numpy<2", "typing_extensions==4.10.0",
+        ]
+        if break_system_packages:
+            cmd.append("--break-system-packages")
+        return cmd
+
+    def _run_pip(self, cmd):
+        """
+        Executa o pip transmitindo a saída via log_received.
+
+        Returns:
+            int|None: código de retorno, ou None se a task foi cancelada.
+        """
+        # Inicia o subprocesso redirecionando stderr para stdout
+        process = subprocess.Popen(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            bufsize=1
+        )
+
+        while True:
+            if self.isCanceled():
+                process.terminate()
+                return None
+
+            line = process.stdout.readline()
+            if not line and process.poll() is not None:
+                break
+
+            if line:
+                stripped = line.strip()
+                self.output.append(stripped)
+                self.log_received.emit(stripped)
+
+        return process.poll()
+
     def run(self):
         try:
-            # Comando para instalar ortools no escopo de usuário
-            cmd = [sys.executable, "-m", "pip", "install", "--user", "ortools"]
-            
-            # Inicia o subprocesso redirecionando stderr para stdout
-            process = subprocess.Popen(
-                cmd,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                text=True,
-                bufsize=1
-            )
-            
-            while True:
-                if self.isCanceled():
-                    process.terminate()
+            returncode = self._run_pip(self.build_command())
+            if returncode is None:
+                self.error = "Instalação cancelada pelo usuário."
+                return False
+
+            # Distros com PEP 668 (Debian/Ubuntu) recusam o pip no Python do
+            # sistema; repetir uma única vez com --break-system-packages.
+            if returncode != 0 and any(
+                "externally-managed-environment" in line for line in self.output
+            ):
+                msg = "Ambiente gerenciado pela distro; repetindo com --break-system-packages."
+                self.output.append(msg)
+                self.log_received.emit(msg)
+                returncode = self._run_pip(self.build_command(break_system_packages=True))
+                if returncode is None:
                     self.error = "Instalação cancelada pelo usuário."
                     return False
-                
-                line = process.stdout.readline()
-                if not line and process.poll() is not None:
-                    break
-                
-                if line:
-                    stripped = line.strip()
-                    self.output.append(stripped)
-                    self.log_received.emit(stripped)
-            
-            returncode = process.poll()
+
             if returncode != 0:
                 output_str = "\n".join(self.output)
                 if "No module named pip" in output_str:

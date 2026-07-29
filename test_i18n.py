@@ -14,7 +14,7 @@ class TestI18n(unittest.TestCase):
             cls._app = QCoreApplication.instance()
 
     def test_logis_en_qm_translation(self):
-        qm_path = os.path.join(os.path.dirname(__file__), "i18n", "logis_en.qm")
+        qm_path = os.path.join(os.path.dirname(__file__), "logis", "i18n", "logis_en.qm")
         self.assertTrue(
             os.path.exists(qm_path),
             f"Arquivo de tradução {qm_path} não foi encontrado.",
@@ -33,11 +33,11 @@ class TestI18n(unittest.TestCase):
 
     def test_logis_pt_qm_does_not_exist(self):
         pt_qm_path = os.path.join(
-            os.path.dirname(__file__), "i18n", "logis_pt.qm"
+            os.path.dirname(__file__), "logis", "i18n", "logis_pt.qm"
         )
         self.assertFalse(
             os.path.exists(pt_qm_path),
-            "i18n/logis_pt.qm não deve existir (fallback PT-BR de origem é suficiente).",
+            "logis/i18n/logis_pt.qm não deve existir (fallback PT-BR de origem é suficiente).",
         )
 
 

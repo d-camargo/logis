@@ -17,7 +17,10 @@ from qgis.core import (
     QgsGeometry,
     QgsWkbTypes
 )
-from qgis.PyQt.QtCore import QVariant
+try:
+    from ..core import qgis_compat
+except ImportError:
+    from core import qgis_compat
 
 from ..core.network.graph_builder import build_graph
 from ..core.network.betweenness import compute_edge_betweenness
@@ -55,14 +58,14 @@ class UrbanEdgeBetweenness(QgsProcessingAlgorithm):
             QgsProcessingParameterFeatureSource(
                 self.INPUT_NETWORK,
                 self.tr("Camada de rede viária (Linhas)"),
-                [QgsProcessing.TypeVectorLine]
+                [QgsProcessing.SourceType.TypeVectorLine]
             )
         )
         self.addParameter(
             QgsProcessingParameterNumber(
                 self.NUM_SAMPLES,
                 self.tr("Número de amostras (pares OD)"),
-                type=QgsProcessingParameterNumber.Integer,
+                type=QgsProcessingParameterNumber.Type.Integer,
                 defaultValue=1000,
                 minValue=1
             )
@@ -70,7 +73,7 @@ class UrbanEdgeBetweenness(QgsProcessingAlgorithm):
         seed_param = QgsProcessingParameterNumber(
             self.SEED,
             self.tr("Semente aleatória (opcional, para reprodutibilidade)"),
-            type=QgsProcessingParameterNumber.Integer,
+            type=QgsProcessingParameterNumber.Type.Integer,
             optional=True
         )
         self.addParameter(seed_param)
@@ -120,10 +123,10 @@ class UrbanEdgeBetweenness(QgsProcessingAlgorithm):
             return {}
 
         fields = QgsFields()
-        fields.append(QgsField("betweenness", QVariant.Double))
+        fields.append(QgsField("betweenness", qgis_compat.field_type("double")))
 
         sink, dest_id = self.parameterAsSink(
-            parameters, self.OUTPUT, context, fields, QgsWkbTypes.LineString, crs
+            parameters, self.OUTPUT, context, fields, QgsWkbTypes.Type.LineString, crs
         )
         if sink is None:
             raise QgsProcessingException(self.tr("Não foi possível criar a camada de saída."))

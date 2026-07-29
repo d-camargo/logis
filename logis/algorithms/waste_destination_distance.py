@@ -75,21 +75,21 @@ class WasteDestinationDistance(QgsProcessingAlgorithm):
             QgsProcessingParameterFeatureSource(
                 self.INPUT_NETWORK,
                 self.tr("Camada de rede viária (Linhas)"),
-                [QgsProcessing.TypeVectorLine]
+                [QgsProcessing.SourceType.TypeVectorLine]
             )
         )
         self.addParameter(
             QgsProcessingParameterFeatureSource(
                 self.INPUT_DESTINATIONS,
                 self.tr("Camada de destinos de resíduos - aterro/transbordo/ecoponto (Pontos)"),
-                [QgsProcessing.TypeVectorPoint]
+                [QgsProcessing.SourceType.TypeVectorPoint]
             )
         )
         self.addParameter(
             QgsProcessingParameterFeatureSource(
                 self.INPUT_SECTORS,
                 self.tr("Camada de setores/origens de coleta (Pontos ou Polígonos)"),
-                [QgsProcessing.TypeVectorPoint, QgsProcessing.TypeVectorPolygon]
+                [QgsProcessing.SourceType.TypeVectorPoint, QgsProcessing.SourceType.TypeVectorPolygon]
             )
         )
         self.addParameter(
@@ -150,7 +150,7 @@ class WasteDestinationDistance(QgsProcessingAlgorithm):
             if geom is None or geom.isEmpty():
                 continue
             sector_features.append(feature)
-            if geom.type() == QgsWkbTypes.PointGeometry:
+            if geom.type() == QgsWkbTypes.GeometryType.PointGeometry:
                 pt = geom.asPoint()
             else:
                 pt = geom.centroid().asPoint()

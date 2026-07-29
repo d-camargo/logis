@@ -71,7 +71,7 @@ class WasteCollectionCoverage(QgsProcessingAlgorithm):
             QgsProcessingParameterFeatureSource(
                 self.INPUT_REQUIRED_ROADS,
                 self.tr("Camada de vias exigidas (faixa de frequência)"),
-                [QgsProcessing.TypeVectorLine]
+                [QgsProcessing.SourceType.TypeVectorLine]
             )
         )
         self.addParameter(
@@ -86,7 +86,7 @@ class WasteCollectionCoverage(QgsProcessingAlgorithm):
             QgsProcessingParameterFeatureSource(
                 self.INPUT_COVERED_ROUTES,
                 self.tr("Camada de rota coberta (vias percorridas)"),
-                [QgsProcessing.TypeVectorLine]
+                [QgsProcessing.SourceType.TypeVectorLine]
             )
         )
         self.addParameter(
@@ -244,7 +244,7 @@ class WasteCollectionCoverage(QgsProcessingAlgorithm):
 
         sink, dest_id = self.parameterAsSink(
             parameters, self.OUTPUT, context, out_fields,
-            QgsWkbTypes.NoGeometry, req_source.sourceCrs()
+            QgsWkbTypes.Type.NoGeometry, req_source.sourceCrs()
         )
         if sink is None:
             raise QgsProcessingException(self.tr("Não foi possível criar a camada de saída."))

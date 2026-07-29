@@ -33,13 +33,13 @@ from qgis.core import (
     QgsWkbTypes,
     QgsGeometry
 )
-from qgis.PyQt.QtCore import QVariant
-
 try:
+    from ..core import qgis_compat
     from ..core.routing.vrp import solve_cvrp, compute_route_distance
     from ..core.network.graph_builder import build_graph
     from ..core.network.od_matrix import compute_od_matrix
 except ImportError:
+    from core import qgis_compat
     from core.routing.vrp import solve_cvrp, compute_route_distance
     from core.network.graph_builder import build_graph
     from core.network.od_matrix import compute_od_matrix
@@ -47,7 +47,7 @@ except ImportError:
 
 def _extract_point(geom):
     """Retorna um QgsPointXY representando a geometria (ponto ou centroide de polígono)."""
-    if geom.type() == QgsWkbTypes.PointGeometry:
+    if geom.type() == QgsWkbTypes.GeometryType.PointGeometry:
         return geom.asPoint()
     else:
         return geom.centroid().asPoint()
@@ -93,14 +93,14 @@ class VrpCvrp(QgsProcessingAlgorithm):
             QgsProcessingParameterFeatureSource(
                 self.INPUT_DEPOT,
                 self.tr("Camada de depósito (Pontos/Polígonos)"),
-                [QgsProcessing.TypeVectorPoint, QgsProcessing.TypeVectorPolygon]
+                [QgsProcessing.SourceType.TypeVectorPoint, QgsProcessing.SourceType.TypeVectorPolygon]
             )
         )
         self.addParameter(
             QgsProcessingParameterFeatureSource(
                 self.INPUT_DEMAND,
                 self.tr("Camada de demanda / clientes (Pontos/Polígonos)"),
-                [QgsProcessing.TypeVectorPoint, QgsProcessing.TypeVectorPolygon]
+                [QgsProcessing.SourceType.TypeVectorPoint, QgsProcessing.SourceType.TypeVectorPolygon]
             )
         )
         self.addParameter(
@@ -116,7 +116,7 @@ class VrpCvrp(QgsProcessingAlgorithm):
             QgsProcessingParameterNumber(
                 self.CAPACITY,
                 self.tr("Capacidade do veículo"),
-                type=QgsProcessingParameterNumber.Double,
+                type=QgsProcessingParameterNumber.Type.Double,
                 defaultValue=100.0,
                 minValue=0.0001
             )
@@ -125,7 +125,7 @@ class VrpCvrp(QgsProcessingAlgorithm):
             QgsProcessingParameterFeatureSource(
                 self.INPUT_NETWORK,
                 self.tr("Camada de rede viária (Linhas) (opcional)"),
-                [QgsProcessing.TypeVectorLine],
+                [QgsProcessing.SourceType.TypeVectorLine],
                 optional=True
             )
         )
@@ -208,7 +208,7 @@ class VrpCvrp(QgsProcessingAlgorithm):
             weight = 1.0
             if demand_field_idx != -1:
                 val = feat.attribute(demand_field_idx)
-                if val is not None and not QVariant(val).isNull():
+                if not qgis_compat.is_null(val):
                     try:
                         weight = float(val)
                     except (ValueError, TypeError):
@@ -289,24 +289,24 @@ class VrpCvrp(QgsProcessingAlgorithm):
 
         # 6) Gravação dos resultados nas camadas de saída
         route_fields = QgsFields()
-        route_fields.append(QgsField("route_id", QVariant.Int))
-        route_fields.append(QgsField("stop_count", QVariant.Int))
-        route_fields.append(QgsField("route_load", QVariant.Double))
-        route_fields.append(QgsField("route_dist", QVariant.Double))
+        route_fields.append(QgsField("route_id", qgis_compat.field_type("int")))
+        route_fields.append(QgsField("stop_count", qgis_compat.field_type("int")))
+        route_fields.append(QgsField("route_load", qgis_compat.field_type("double")))
+        route_fields.append(QgsField("route_dist", qgis_compat.field_type("double")))
 
         (sink_routes, dest_routes) = self.parameterAsSink(
             parameters,
             self.OUTPUT_ROUTES,
             context,
             route_fields,
-            QgsWkbTypes.LineString,
+            QgsWkbTypes.Type.LineString,
             target_crs
         )
 
         stop_fields = demand_source.fields()
-        stop_fields.append(QgsField("route_id", QVariant.Int))
-        stop_fields.append(QgsField("stop_seq", QVariant.Int))
-        stop_fields.append(QgsField("cum_load", QVariant.Double))
+        stop_fields.append(QgsField("route_id", qgis_compat.field_type("int")))
+        stop_fields.append(QgsField("stop_seq", qgis_compat.field_type("int")))
+        stop_fields.append(QgsField("cum_load", qgis_compat.field_type("double")))
 
         (sink_stops, dest_stops) = self.parameterAsSink(
             parameters,

@@ -101,6 +101,7 @@ logis/
   ```bash
   make test          # Validação rápida de sintaxe em todos os arquivos .py
   ```
+- **Verificação de Compatibilidade QGIS 4 / Qt6:** Execute `python3 docs/qgis4_compat_check.py` (ou cole o conteúdo no Console Python do QGIS) para validar versões e a presença de símbolos legados/escopados.
 
 ### Uso no Console Python do QGIS
 
@@ -215,6 +216,7 @@ logis/
   ```bash
   make test          # Quick syntax validation across all .py files
   ```
+- **QGIS 4 / Qt6 Compatibility Check:** Run `python3 docs/qgis4_compat_check.py` (or paste its content into the QGIS Python Console) to inspect Qt6/QGIS 4 version details and legacy/scoped symbols.
 
 ### Usage in QGIS Python Console
 

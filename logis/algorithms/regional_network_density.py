@@ -47,21 +47,21 @@ class RegionalNetworkDensity(QgsProcessingAlgorithm):
             QgsProcessingParameterFeatureSource(
                 self.INPUT_NETWORK,
                 self.tr("Camada de malha rodoviária (Linhas)"),
-                [QgsProcessing.TypeVectorLine]
+                [QgsProcessing.SourceType.TypeVectorLine]
             )
         )
         self.addParameter(
             QgsProcessingParameterFeatureSource(
                 self.INPUT_AREA,
                 self.tr("Camada de área de referência (UF, mesorregião, etc.)"),
-                [QgsProcessing.TypeVectorPolygon]
+                [QgsProcessing.SourceType.TypeVectorPolygon]
             )
         )
         self.addParameter(
             QgsProcessingParameterNumber(
                 self.INPUT_POPULATION,
                 self.tr("População da área de referência (hab.)"),
-                type=QgsProcessingParameterNumber.Double,
+                type=QgsProcessingParameterNumber.Type.Double,
                 minValue=0.0000001
             )
         )

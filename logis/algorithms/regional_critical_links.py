@@ -17,7 +17,10 @@ from qgis.core import (
     QgsGeometry,
     QgsWkbTypes
 )
-from qgis.PyQt.QtCore import QVariant
+try:
+    from ..core import qgis_compat
+except ImportError:
+    from core import qgis_compat
 
 from ..core.network.graph_builder import build_graph
 from ..core.indicators.regional import find_critical_links
@@ -52,7 +55,7 @@ class RegionalCriticalLinks(QgsProcessingAlgorithm):
             QgsProcessingParameterFeatureSource(
                 self.INPUT_NETWORK,
                 self.tr("Camada de malha rodoviária (Linhas)"),
-                [QgsProcessing.TypeVectorLine]
+                [QgsProcessing.SourceType.TypeVectorLine]
             )
         )
         self.addParameter(
@@ -118,10 +121,10 @@ class RegionalCriticalLinks(QgsProcessingAlgorithm):
             raise QgsProcessingException(str(exc))
 
         fields = QgsFields()
-        fields.append(QgsField("is_critical_link", QVariant.Bool))
+        fields.append(QgsField("is_critical_link", qgis_compat.field_type("bool")))
 
         sink, dest_id = self.parameterAsSink(
-            parameters, self.OUTPUT, context, fields, QgsWkbTypes.LineString, crs
+            parameters, self.OUTPUT, context, fields, QgsWkbTypes.Type.LineString, crs
         )
         if sink is None:
             raise QgsProcessingException(self.tr("Não foi possível criar a camada de saída."))

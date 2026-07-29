@@ -206,7 +206,7 @@ class TestVRP(unittest.TestCase):
     def test_solve_cvrp_ortools_fallback(self):
         # Fallback silencioso: com OR-Tools ausente (mockado), backend="ortools"
         # não deve levantar exceção e deve produzir o mesmo resultado que "python".
-        with patch("core.optim_backend.has_ortools", return_value=False):
+        with patch("logis.core.optim_backend.has_ortools", return_value=False):
             routes_o, dist_o, loads_o = solve_cvrp(
                 self.distance_matrix, self.demands, self.capacity, depot=0, backend="ortools"
             )

@@ -23,8 +23,10 @@ except ImportError:
     # Mocks para quando rodado fora do QGIS (ex: smoke tests ou CLI)
     class Qt:
         Window = 0
-        WindowMinMaxButtonsHint = 0
-        WindowCloseButtonHint = 0
+
+        class WindowType:
+            WindowMinMaxButtonsHint = 0
+            WindowCloseButtonHint = 0
 
     class QDialog:
         def __init__(self, parent=None, flags=0):
@@ -155,7 +157,10 @@ class DependenciesDialog(QDialog):
     """
 
     def __init__(self, parent=None):
-        super().__init__(parent, Qt.WindowMinMaxButtonsHint | Qt.WindowCloseButtonHint)
+        super().__init__(
+            parent,
+            Qt.WindowType.WindowMinMaxButtonsHint | Qt.WindowType.WindowCloseButtonHint,
+        )
         self.setWindowTitle("logis — Gerenciador de Dependências")
         self.resize(550, 420)
         self.setMinimumSize(500, 350)
@@ -237,7 +242,9 @@ class DependenciesDialog(QDialog):
         ortools_desc = QLabel(
             "O OR-Tools é uma biblioteca do Google para resolver problemas complexos de otimização de rotas "
             "e localização de instalações. O logis possui heurísticas internas em Python puro, mas o "
-            "OR-Tools é recomendado para maior velocidade e precisão."
+            "OR-Tools é recomendado para maior velocidade e precisão. "
+            "A instalação usa versões travadas de numpy e pandas (numpy<2, pandas<3) "
+            "para não danificar a instalação do QGIS."
         )
         ortools_desc.setStyleSheet("font-weight: normal; color: #555; font-size: 11px;")
         ortools_desc.setWordWrap(True)

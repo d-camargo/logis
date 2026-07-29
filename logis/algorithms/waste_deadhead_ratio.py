@@ -67,7 +67,7 @@ class WasteDeadheadRatio(QgsProcessingAlgorithm):
             QgsProcessingParameterFeatureSource(
                 self.INPUT_ROUTES,
                 self.tr("Camada de rotas/vias de coleta"),
-                [QgsProcessing.TypeVectorLine]
+                [QgsProcessing.SourceType.TypeVectorLine]
             )
         )
         self.addParameter(
@@ -165,7 +165,7 @@ class WasteDeadheadRatio(QgsProcessingAlgorithm):
 
         sink, dest_id = self.parameterAsSink(
             parameters, self.OUTPUT, context, out_fields,
-            QgsWkbTypes.NoGeometry, routes_source.sourceCrs()
+            QgsWkbTypes.Type.NoGeometry, routes_source.sourceCrs()
         )
         if sink is None:
             raise QgsProcessingException(self.tr("Não foi possível criar a camada de saída."))

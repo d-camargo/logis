@@ -26,7 +26,10 @@ from qgis.core import (
     QgsFeature,
     QgsFeatureSink
 )
-from qgis.PyQt.QtCore import QVariant
+try:
+    from ..core import qgis_compat
+except ImportError:
+    from core import qgis_compat
 
 try:
     from ..core.routing.districting import (
@@ -95,7 +98,7 @@ class WasteDistricting(QgsProcessingAlgorithm):
             QgsProcessingParameterFeatureSource(
                 self.INPUT_STREETS,
                 self.tr("Camada de vias"),
-                [QgsProcessing.TypeVectorLine]
+                [QgsProcessing.SourceType.TypeVectorLine]
             )
         )
         self.addParameter(
@@ -111,7 +114,7 @@ class WasteDistricting(QgsProcessingAlgorithm):
             QgsProcessingParameterNumber(
                 self.NUM_SECTORS,
                 self.tr("Número de setores de coleta desejado"),
-                type=QgsProcessingParameterNumber.Integer,
+                type=QgsProcessingParameterNumber.Type.Integer,
                 defaultValue=2,
                 minValue=2
             )
@@ -120,7 +123,7 @@ class WasteDistricting(QgsProcessingAlgorithm):
             QgsProcessingParameterNumber(
                 self.NODE_TOLERANCE,
                 self.tr("Tolerância de nó em metros (requer CRS métrico)"),
-                type=QgsProcessingParameterNumber.Double,
+                type=QgsProcessingParameterNumber.Type.Double,
                 defaultValue=0.01,
                 minValue=0.0001
             )
@@ -129,7 +132,7 @@ class WasteDistricting(QgsProcessingAlgorithm):
             QgsProcessingParameterNumber(
                 self.MAX_ITERATIONS,
                 self.tr("Máximo de iterações de rebalanceamento de fronteira"),
-                type=QgsProcessingParameterNumber.Integer,
+                type=QgsProcessingParameterNumber.Type.Integer,
                 defaultValue=50,
                 minValue=1
             )
@@ -233,7 +236,7 @@ class WasteDistricting(QgsProcessingAlgorithm):
 
         # 4) Gravar a camada de vias de saída com o campo novo collection_sector_id
         out_fields = streets_source.fields()
-        out_fields.append(QgsField("collection_sector_id", QVariant.Int))
+        out_fields.append(QgsField("collection_sector_id", qgis_compat.field_type("int")))
 
         sink, dest_id = self.parameterAsSink(
             parameters, self.OUTPUT, context, out_fields,

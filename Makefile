@@ -3,17 +3,22 @@
 
 PLUGINNAME = logis
 VERSION = $(shell grep '^version=' $(PLUGINNAME)/metadata.txt | cut -d= -f2)
-QGIS_PLUGINS = $(HOME)/.local/share/QGIS/QGIS3/profiles/default/python/plugins
-FLATPAK_PLUGINS = $(HOME)/.var/app/org.qgis.qgis/data/QGIS/QGIS3/profiles/default/python/plugins
+# QGIS_MAJOR escolhe o perfil de destino: 3 (Qt5) ou 4 (Qt6).
+# metadata.txt aceita 3.16-4.99; use `make deploy-qgis4` para o perfil QGIS4.
+QGIS_MAJOR ?= 3
+QGIS_PLUGINS = $(HOME)/.local/share/QGIS/QGIS$(QGIS_MAJOR)/profiles/default/python/plugins
+FLATPAK_PLUGINS = $(HOME)/.var/app/org.qgis.qgis/data/QGIS/QGIS$(QGIS_MAJOR)/profiles/default/python/plugins
 TARGET = $(QGIS_PLUGINS)/$(PLUGINNAME)
 FLATPAK_TARGET = $(FLATPAK_PLUGINS)/$(PLUGINNAME)
 SRC = $(CURDIR)/$(PLUGINNAME)
 
-.PHONY: deploy deploy-flatpak undeploy undeploy-flatpak clean test package i18n transcompile help
+.PHONY: deploy deploy-flatpak deploy-qgis4 deploy-flatpak-qgis4 undeploy undeploy-flatpak clean test package i18n transcompile help
 
 help:
-	@echo "make deploy          - symlink do plugin no perfil do QGIS do sistema"
-	@echo "make deploy-flatpak  - symlink no perfil do QGIS Flatpak"
+	@echo "make deploy          - symlink do plugin no perfil QGIS3 do sistema"
+	@echo "make deploy-flatpak  - symlink no perfil QGIS3 do QGIS Flatpak"
+	@echo "make deploy-qgis4    - idem deploy, mas no perfil QGIS4 (Qt6)"
+	@echo "make deploy-flatpak-qgis4 - idem deploy-flatpak, mas no perfil QGIS4 (Qt6)"
 	@echo "make undeploy        - remove o symlink (sistema)"
 	@echo "make undeploy-flatpak- remove o symlink (flatpak)"
 	@echo "make clean           - remove __pycache__"
@@ -41,6 +46,12 @@ deploy-flatpak:
 	fi
 	@ln -sfn "$(SRC)" "$(FLATPAK_TARGET)"
 	@echo "symlink (flatpak): $(FLATPAK_TARGET) -> $(SRC)"
+
+deploy-qgis4:
+	@$(MAKE) QGIS_MAJOR=4 deploy
+
+deploy-flatpak-qgis4:
+	@$(MAKE) QGIS_MAJOR=4 deploy-flatpak
 
 undeploy:
 	@if [ -L "$(TARGET)" ]; then rm "$(TARGET)" && echo "removido $(TARGET)"; \

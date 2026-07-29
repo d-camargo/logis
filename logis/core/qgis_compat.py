@@ -27,7 +27,11 @@ def field_type(kind):
     kind_lower = str(kind).lower()
 
     # 1. Tentar usar QVariant primeiro (Qt5/PyQt5 / QGIS 3.x)
-    if QVariant is not None:
+    # A guarda checa um membro do enum, não só a classe: em Qt6/PyQt6 a
+    # classe QVariant ainda pode ser importada, mas o enum QVariant.Type
+    # foi removido — testar só `is not None` deixaria o acesso a
+    # QVariant.Bool estourar AttributeError em vez de cair no QMetaType.
+    if QVariant is not None and hasattr(QVariant, "Bool"):
         variant_map = {
             "bool": QVariant.Bool,
             "int": QVariant.LongLong,
@@ -53,3 +57,18 @@ def field_type(kind):
                 return getattr(type_enum, attr_name)
 
     return None
+
+
+def is_null(val):
+    """Verifica se val é nulo (None, QVariant nulo ou QPyNullVariant)."""
+    if val is None:
+        return True
+    if hasattr(val, "isNull") and callable(val.isNull):
+        return val.isNull()
+    if QVariant is not None:
+        try:
+            return QVariant(val).isNull()
+        except Exception:
+            pass
+    return False
+
