@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import inspect
 import unittest
 from unittest.mock import MagicMock
 import sys
@@ -163,9 +164,16 @@ class TestLogisPlugin(unittest.TestCase):
         self.assertTrue(hasattr(dock, 'cmb_delivery_criterion'))
         self.assertTrue(hasattr(dock, 'btn_calculate_delivery'))
         self.assertTrue(hasattr(dock, 'calculate_delivery_distance'))
+        self.assertTrue(hasattr(dock, 'spin_betweenness_samples'))
+        self.assertTrue(hasattr(dock, 'spin_betweenness_seed'))
         self.assertTrue(hasattr(dock, 'txt_cargo_expression'))
         self.assertTrue(hasattr(dock, 'btn_calculate_cargo'))
         self.assertTrue(hasattr(dock, 'calculate_cargo_restriction'))
+
+        # Static assertion that calculate_edge_betweenness checks spin_betweenness_seed and passes SEED
+        src = inspect.getsource(dock.calculate_edge_betweenness)
+        self.assertIn('spin_betweenness_seed', src)
+        self.assertIn("'SEED'", src)
 
 
 if __name__ == '__main__':

@@ -1259,262 +1259,262 @@ Returns:
 <context>
     <name>UrbanDock</name>
     <message>
-        <location filename="../gui/urban_dock.py" line="182"/>
+        <location filename="../gui/urban_dock.py" line="184"/>
         <source>logis — Indicadores Urbanos</source>
         <translation>logis — Urban Indicators</translation>
     </message>
     <message>
-        <location filename="../gui/urban_dock.py" line="215"/>
+        <location filename="../gui/urban_dock.py" line="217"/>
         <source>&lt;b&gt;Indicadores Urbanos&lt;/b&gt;</source>
         <translation>&lt;b&gt;Urban Indicators&lt;/b&gt;</translation>
     </message>
     <message>
         <location filename="../gui/urban_dock.py" line="219"/>
         <source>Selecione as camadas e clique no botão abaixo para calcular os indicadores de densidade, conectividade, circuidade e restrição de circulação de carga.</source>
-        <translation>Select the layers and click the button below to calculate density, connectivity, circuity, and freight traffic restriction indicators.</translation>
+        <translation type="obsolete">Select the layers and click the button below to calculate density, connectivity, circuity, and freight traffic restriction indicators.</translation>
     </message>
     <message>
         <location filename="../gui/urban_dock.py" line="230"/>
         <source>Camada de rede viária (Linhas):</source>
-        <translation>Road network layer (Lines):</translation>
+        <translation type="obsolete">Road network layer (Lines):</translation>
     </message>
     <message>
-        <location filename="../gui/urban_dock.py" line="252"/>
+        <location filename="../gui/urban_dock.py" line="254"/>
         <source>Camada de área de referência (Polígonos - para Densidade):</source>
         <translation>Reference area layer (Polygons - for Density):</translation>
     </message>
     <message>
-        <location filename="../gui/urban_dock.py" line="258"/>
+        <location filename="../gui/urban_dock.py" line="260"/>
         <source>Calcular Indicadores</source>
         <translation>Calculate Indicators</translation>
     </message>
     <message>
-        <location filename="../gui/urban_dock.py" line="239"/>
+        <location filename="../gui/urban_dock.py" line="241"/>
         <source>Resultados dos Indicadores:</source>
         <translation>Indicators Results:</translation>
     </message>
     <message>
-        <location filename="../gui/urban_dock.py" line="282"/>
+        <location filename="../gui/urban_dock.py" line="292"/>
         <source>&lt;b&gt;Densidade de Demanda&lt;/b&gt;</source>
         <translation>&lt;b&gt;Demand Density&lt;/b&gt;</translation>
     </message>
     <message>
-        <location filename="../gui/urban_dock.py" line="286"/>
+        <location filename="../gui/urban_dock.py" line="296"/>
         <source>Código IBGE do município (7 dígitos):</source>
         <translation>Municipal IBGE code (7 digits):</translation>
     </message>
     <message>
-        <location filename="../gui/urban_dock.py" line="290"/>
+        <location filename="../gui/urban_dock.py" line="300"/>
         <source>Campo de população (setor + censobr, requer GisBR):</source>
         <translation>Population field (sector + censobr, requires GisBR):</translation>
     </message>
     <message>
-        <location filename="../gui/urban_dock.py" line="294"/>
+        <location filename="../gui/urban_dock.py" line="304"/>
         <source>Calcular Densidade de Demanda</source>
         <translation>Calculate Demand Density</translation>
     </message>
     <message>
-        <location filename="../gui/urban_dock.py" line="299"/>
+        <location filename="../gui/urban_dock.py" line="309"/>
         <source>&lt;b&gt;Acessibilidade Gravitacional&lt;/b&gt;</source>
         <translation>&lt;b&gt;Gravitational Accessibility&lt;/b&gt;</translation>
     </message>
     <message>
-        <location filename="../gui/urban_dock.py" line="303"/>
+        <location filename="../gui/urban_dock.py" line="313"/>
         <source>Camada de origem (pontos/centroides):</source>
         <translation>Origin layer (points/centroids):</translation>
     </message>
     <message>
-        <location filename="../gui/urban_dock.py" line="308"/>
+        <location filename="../gui/urban_dock.py" line="318"/>
         <source>Camada de destinos (POIs):</source>
         <translation>Destinations layer (POIs):</translation>
     </message>
     <message>
-        <location filename="../gui/urban_dock.py" line="313"/>
+        <location filename="../gui/urban_dock.py" line="323"/>
         <source>Campo de peso do destino (opcional, default 1):</source>
         <translation>Destination weight field (optional, default 1):</translation>
     </message>
     <message>
-        <location filename="../gui/urban_dock.py" line="319"/>
+        <location filename="../gui/urban_dock.py" line="329"/>
         <source>Beta (decaimento por distância):</source>
         <translation>Beta (distance decay):</translation>
     </message>
     <message>
-        <location filename="../gui/urban_dock.py" line="326"/>
+        <location filename="../gui/urban_dock.py" line="336"/>
         <source>Calcular Acessibilidade Gravitacional</source>
         <translation>Calculate Gravitational Accessibility</translation>
     </message>
     <message>
-        <location filename="../gui/urban_dock.py" line="264"/>
+        <location filename="../gui/urban_dock.py" line="266"/>
         <source>&lt;b&gt;Centralidade de Intermediação (Betweenness)&lt;/b&gt;</source>
         <translation>&lt;b&gt;Betweenness Centrality&lt;/b&gt;</translation>
     </message>
     <message>
-        <location filename="../gui/urban_dock.py" line="268"/>
+        <location filename="../gui/urban_dock.py" line="270"/>
         <source>Número de amostras (pares OD):</source>
         <translation>Number of samples (OD pairs):</translation>
     </message>
     <message>
-        <location filename="../gui/urban_dock.py" line="274"/>
+        <location filename="../gui/urban_dock.py" line="283"/>
         <source>Calcular Centralidade de Intermediação</source>
         <translation>Calculate Betweenness Centrality</translation>
     </message>
     <message>
-        <location filename="../gui/urban_dock.py" line="350"/>
+        <location filename="../gui/urban_dock.py" line="361"/>
         <source>&lt;b&gt;Distância de Entrega&lt;/b&gt;</source>
         <translation>&lt;b&gt;Delivery Distance&lt;/b&gt;</translation>
     </message>
     <message>
-        <location filename="../gui/urban_dock.py" line="354"/>
+        <location filename="../gui/urban_dock.py" line="365"/>
         <source>Camada de depósitos candidatos (Pontos):</source>
         <translation>Candidate depots layer (Points):</translation>
     </message>
     <message>
-        <location filename="../gui/urban_dock.py" line="359"/>
+        <location filename="../gui/urban_dock.py" line="370"/>
         <source>Camada de zonas/centroides (Pontos):</source>
         <translation>Zones/centroids layer (Points):</translation>
     </message>
     <message>
-        <location filename="../gui/urban_dock.py" line="364"/>
+        <location filename="../gui/urban_dock.py" line="375"/>
         <source>Critério de custo:</source>
         <translation>Cost criterion:</translation>
     </message>
     <message>
-        <location filename="../gui/urban_dock.py" line="366"/>
+        <location filename="../gui/urban_dock.py" line="377"/>
         <source>Distância</source>
         <translation>Distance</translation>
     </message>
     <message>
-        <location filename="../gui/urban_dock.py" line="366"/>
+        <location filename="../gui/urban_dock.py" line="377"/>
         <source>Tempo de viagem</source>
         <translation>Travel time</translation>
     </message>
     <message>
-        <location filename="../gui/urban_dock.py" line="369"/>
+        <location filename="../gui/urban_dock.py" line="380"/>
         <source>Calcular Distância de Entrega</source>
         <translation>Calculate Delivery Distance</translation>
     </message>
     <message>
-        <location filename="../gui/urban_dock.py" line="724"/>
+        <location filename="../gui/urban_dock.py" line="740"/>
         <source>Aviso</source>
         <translation>Warning</translation>
     </message>
     <message>
-        <location filename="../gui/urban_dock.py" line="710"/>
+        <location filename="../gui/urban_dock.py" line="726"/>
         <source>Por favor, selecione uma camada de rede viária.</source>
         <translation>Please select a road network layer.</translation>
     </message>
     <message>
-        <location filename="../gui/urban_dock.py" line="392"/>
+        <location filename="../gui/urban_dock.py" line="404"/>
         <source>&lt;span style='color: #fc8181;'&gt;Erro: Camada de rede viária não selecionada.&lt;/span&gt;</source>
         <translation>&lt;span style='color: #fc8181;'&gt;Error: Road network layer not selected.&lt;/span&gt;</translation>
     </message>
     <message>
-        <location filename="../gui/urban_dock.py" line="734"/>
+        <location filename="../gui/urban_dock.py" line="750"/>
         <source>Erro</source>
         <translation>Error</translation>
     </message>
     <message>
-        <location filename="../gui/urban_dock.py" line="734"/>
+        <location filename="../gui/urban_dock.py" line="750"/>
         <source>QGIS Processing não está disponível no ambiente atual.</source>
         <translation>QGIS Processing is not available in the current environment.</translation>
     </message>
     <message>
-        <location filename="../gui/urban_dock.py" line="403"/>
+        <location filename="../gui/urban_dock.py" line="415"/>
         <source>&lt;span style='color: #fc8181;'&gt;Erro: QGIS Processing não disponível.&lt;/span&gt;</source>
         <translation>&lt;span style='color: #fc8181;'&gt;Error: QGIS Processing not available.&lt;/span&gt;</translation>
     </message>
     <message>
-        <location filename="../gui/urban_dock.py" line="407"/>
+        <location filename="../gui/urban_dock.py" line="419"/>
         <source>&lt;b&gt;=== INICIANDO CÁLCULO DOS INDICADORES ===&lt;/b&gt;&lt;br&gt;</source>
         <translation>&lt;b&gt;=== STARTING INDICATORS CALCULATION ===&lt;/b&gt;&lt;br&gt;</translation>
     </message>
     <message>
-        <location filename="../gui/urban_dock.py" line="411"/>
+        <location filename="../gui/urban_dock.py" line="423"/>
         <source>&lt;i&gt;1) Densidade viária: Pulado (camada de área não selecionada)&lt;/i&gt;&lt;br&gt;</source>
         <translation>&lt;i&gt;1) Road density: Skipped (unselected area layer)&lt;/i&gt;&lt;br&gt;</translation>
     </message>
     <message>
-        <location filename="../gui/urban_dock.py" line="413"/>
+        <location filename="../gui/urban_dock.py" line="425"/>
         <source>1) Calculando densidade viária...</source>
         <translation>1) Calculating road density...</translation>
     </message>
     <message>
-        <location filename="../gui/urban_dock.py" line="421"/>
+        <location filename="../gui/urban_dock.py" line="433"/>
         <source>   -&gt; &lt;b&gt;Densidade viária:&lt;/b&gt; {value:.4f} km/km²&lt;br&gt;</source>
         <translation>   -&gt; &lt;b&gt;Road density:&lt;/b&gt; {value:.4f} km/km²&lt;br&gt;</translation>
     </message>
     <message>
-        <location filename="../gui/urban_dock.py" line="425"/>
+        <location filename="../gui/urban_dock.py" line="437"/>
         <source>   -&gt; &lt;b&gt;Densidade viária:&lt;/b&gt; N/A (resultado vazio)&lt;br&gt;</source>
         <translation>   -&gt; &lt;b&gt;Road density:&lt;/b&gt; N/A (empty result)&lt;br&gt;</translation>
     </message>
     <message>
-        <location filename="../gui/urban_dock.py" line="427"/>
+        <location filename="../gui/urban_dock.py" line="439"/>
         <source>   -&gt; &lt;span style=&apos;color: #fc8181;&apos;&gt;Erro ao calcular densidade: {error}&lt;/span&gt;&lt;br&gt;</source>
         <translation>   -&gt; &lt;span style='color: #fc8181;'&gt;Error calculating density: {error}&lt;/span&gt;&lt;br&gt;</translation>
     </message>
     <message>
-        <location filename="../gui/urban_dock.py" line="432"/>
+        <location filename="../gui/urban_dock.py" line="444"/>
         <source>2) Calculando conectividade da rede...</source>
         <translation>2) Calculating network connectivity...</translation>
     </message>
     <message>
-        <location filename="../gui/urban_dock.py" line="445"/>
+        <location filename="../gui/urban_dock.py" line="457"/>
         <source>   -&gt; &lt;b&gt;Número de nós (v):&lt;/b&gt; {v}</source>
         <translation>   -&gt; &lt;b&gt;Number of nodes (v):&lt;/b&gt; {v}</translation>
     </message>
     <message>
-        <location filename="../gui/urban_dock.py" line="446"/>
+        <location filename="../gui/urban_dock.py" line="458"/>
         <source>   -&gt; &lt;b&gt;Número de arestas (e):&lt;/b&gt; {e}</source>
         <translation>   -&gt; &lt;b&gt;Number of edges (e):&lt;/b&gt; {e}</translation>
     </message>
     <message>
-        <location filename="../gui/urban_dock.py" line="448"/>
+        <location filename="../gui/urban_dock.py" line="460"/>
         <source>   -&gt; &lt;b&gt;Índice Alfa:&lt;/b&gt; {v:.4f}</source>
         <translation>   -&gt; &lt;b&gt;Alpha Index:&lt;/b&gt; {v:.4f}</translation>
     </message>
     <message>
-        <location filename="../gui/urban_dock.py" line="450"/>
+        <location filename="../gui/urban_dock.py" line="462"/>
         <source>   -&gt; &lt;b&gt;Índice Beta:&lt;/b&gt; {v:.4f}</source>
         <translation>   -&gt; &lt;b&gt;Beta Index:&lt;/b&gt; {v:.4f}</translation>
     </message>
     <message>
-        <location filename="../gui/urban_dock.py" line="452"/>
+        <location filename="../gui/urban_dock.py" line="464"/>
         <source>   -&gt; &lt;b&gt;Índice Gama:&lt;/b&gt; {v:.4f}</source>
         <translation>   -&gt; &lt;b&gt;Gamma Index:&lt;/b&gt; {v:.4f}</translation>
     </message>
     <message>
-        <location filename="../gui/urban_dock.py" line="454"/>
+        <location filename="../gui/urban_dock.py" line="466"/>
         <source>   -&gt; &lt;b&gt;Cruzamentos 4+ pernas:&lt;/b&gt; {v:.2f}%</source>
         <translation>   -&gt; &lt;b&gt;4+ leg intersections:&lt;/b&gt; {v:.2f}%</translation>
     </message>
     <message>
-        <location filename="../gui/urban_dock.py" line="456"/>
+        <location filename="../gui/urban_dock.py" line="468"/>
         <source>   -&gt; &lt;b&gt;Becos sem saída:&lt;/b&gt; {v:.2f}%&lt;br&gt;</source>
         <translation>   -&gt; &lt;b&gt;Dead-end streets:&lt;/b&gt; {v:.2f}%&lt;br&gt;</translation>
     </message>
     <message>
-        <location filename="../gui/urban_dock.py" line="458"/>
+        <location filename="../gui/urban_dock.py" line="470"/>
         <source>   -&gt; &lt;span style=&apos;color: #fc8181;&apos;&gt;Erro ao calcular conectividade: {error}&lt;/span&gt;&lt;br&gt;</source>
         <translation>   -&gt; &lt;span style='color: #fc8181;'&gt;Error calculating connectivity: {error}&lt;/span&gt;&lt;br&gt;</translation>
     </message>
     <message>
-        <location filename="../gui/urban_dock.py" line="463"/>
+        <location filename="../gui/urban_dock.py" line="475"/>
         <source>3) Calculando circuidade média (amostragem)...</source>
         <translation>3) Calculating average circuity (sampling)...</translation>
     </message>
     <message>
-        <location filename="../gui/urban_dock.py" line="472"/>
+        <location filename="../gui/urban_dock.py" line="484"/>
         <source>   -&gt; &lt;b&gt;Circuidade média:&lt;/b&gt; {value:.4f}&lt;br&gt;</source>
         <translation>   -&gt; &lt;b&gt;Average circuity:&lt;/b&gt; {value:.4f}&lt;br&gt;</translation>
     </message>
     <message>
-        <location filename="../gui/urban_dock.py" line="476"/>
+        <location filename="../gui/urban_dock.py" line="488"/>
         <source>   -&gt; &lt;b&gt;Circuidade média:&lt;/b&gt; N/A (resultado vazio)&lt;br&gt;</source>
         <translation>   -&gt; &lt;b&gt;Average circuity:&lt;/b&gt; N/A (empty result)&lt;br&gt;</translation>
     </message>
     <message>
-        <location filename="../gui/urban_dock.py" line="478"/>
+        <location filename="../gui/urban_dock.py" line="490"/>
         <source>   -&gt; &lt;span style=&apos;color: #fc8181;&apos;&gt;Erro ao calcular circuidade: {error}&lt;/span&gt;&lt;br&gt;</source>
         <translation>   -&gt; &lt;span style='color: #fc8181;'&gt;Error calculating circuity: {error}&lt;/span&gt;&lt;br&gt;</translation>
     </message>
@@ -1524,174 +1524,194 @@ Returns:
         <translation type="obsolete">4) Calculating freight accessibility/restriction...</translation>
     </message>
     <message>
-        <location filename="../gui/urban_dock.py" line="519"/>
+        <location filename="../gui/urban_dock.py" line="531"/>
         <source>   -&gt; &lt;b&gt;Acessibilidade de carga:&lt;/b&gt; {value:.2f}%&lt;br&gt;</source>
         <translation>   -&gt; &lt;b&gt;Freight accessibility:&lt;/b&gt; {value:.2f}%&lt;br&gt;</translation>
     </message>
     <message>
-        <location filename="../gui/urban_dock.py" line="523"/>
+        <location filename="../gui/urban_dock.py" line="535"/>
         <source>   -&gt; &lt;b&gt;Acessibilidade de carga:&lt;/b&gt; N/A (resultado vazio)&lt;br&gt;</source>
         <translation>   -&gt; &lt;b&gt;Freight accessibility:&lt;/b&gt; N/A (empty result)&lt;br&gt;</translation>
     </message>
     <message>
-        <location filename="../gui/urban_dock.py" line="525"/>
+        <location filename="../gui/urban_dock.py" line="537"/>
         <source>   -&gt; &lt;span style='color: #fc8181;'&gt;Erro ao calcular restrição: {error}&lt;/span&gt;&lt;br&gt;</source>
         <translation>   -&gt; &lt;span style='color: #fc8181;'&gt;Error calculating restriction: {error}&lt;/span&gt;&lt;br&gt;</translation>
     </message>
     <message>
-        <location filename="../gui/urban_dock.py" line="482"/>
+        <location filename="../gui/urban_dock.py" line="494"/>
         <source>&lt;b&gt;=== CÁLCULO CONCLUÍDO ===&lt;/b&gt;</source>
         <translation>&lt;b&gt;=== CALCULATION COMPLETED ===&lt;/b&gt;</translation>
     </message>
     <message>
-        <location filename="../gui/urban_dock.py" line="538"/>
+        <location filename="../gui/urban_dock.py" line="550"/>
         <source>Por favor, informe o código IBGE do município.</source>
         <translation>Please specify the municipal IBGE code.</translation>
     </message>
     <message>
-        <location filename="../gui/urban_dock.py" line="545"/>
+        <location filename="../gui/urban_dock.py" line="557"/>
         <source>Por favor, informe o campo de população.</source>
         <translation>Please specify the population field.</translation>
     </message>
     <message>
-        <location filename="../gui/urban_dock.py" line="562"/>
+        <location filename="../gui/urban_dock.py" line="574"/>
         <source>&lt;b&gt;Calculando densidade de demanda...&lt;/b&gt;</source>
         <translation>&lt;b&gt;Calculating demand density...&lt;/b&gt;</translation>
     </message>
     <message>
-        <location filename="../gui/urban_dock.py" line="573"/>
+        <location filename="../gui/urban_dock.py" line="585"/>
         <source>   -&gt; &lt;b&gt;Densidade de demanda:&lt;/b&gt; camada adicionada ao projeto com {count} setor(es).&lt;br&gt;</source>
         <translation>   -&gt; &lt;b&gt;Demand density:&lt;/b&gt; layer added to the project with {count} tract(s).&lt;br&gt;</translation>
     </message>
     <message>
-        <location filename="../gui/urban_dock.py" line="577"/>
+        <location filename="../gui/urban_dock.py" line="589"/>
         <source>   -&gt; &lt;b&gt;Densidade de demanda:&lt;/b&gt; N/A (resultado vazio)&lt;br&gt;</source>
         <translation>   -&gt; &lt;b&gt;Demand density:&lt;/b&gt; N/A (empty result)&lt;br&gt;</translation>
     </message>
     <message>
-        <location filename="../gui/urban_dock.py" line="579"/>
+        <location filename="../gui/urban_dock.py" line="591"/>
         <source>   -&gt; &lt;span style=&apos;color: #fc8181;&apos;&gt;Erro ao calcular densidade de demanda: {error}&lt;/span&gt;&lt;br&gt;</source>
         <translation>   -&gt; &lt;span style='color: #fc8181;'&gt;Error calculating demand density: {error}&lt;/span&gt;&lt;br&gt;</translation>
     </message>
     <message>
-        <location filename="../gui/urban_dock.py" line="602"/>
+        <location filename="../gui/urban_dock.py" line="614"/>
         <source>Por favor, selecione uma camada de origem.</source>
         <translation>Please select an origin layer.</translation>
     </message>
     <message>
-        <location filename="../gui/urban_dock.py" line="609"/>
+        <location filename="../gui/urban_dock.py" line="621"/>
         <source>Por favor, selecione uma camada de destinos.</source>
         <translation>Please select a destinations layer.</translation>
     </message>
     <message>
-        <location filename="../gui/urban_dock.py" line="626"/>
+        <location filename="../gui/urban_dock.py" line="638"/>
         <source>&lt;b&gt;Calculando acessibilidade gravitacional...&lt;/b&gt;</source>
         <translation>&lt;b&gt;Calculating gravitational accessibility...&lt;/b&gt;</translation>
     </message>
     <message>
-        <location filename="../gui/urban_dock.py" line="642"/>
+        <location filename="../gui/urban_dock.py" line="654"/>
         <source>   -&gt; &lt;b&gt;Acessibilidade gravitacional:&lt;/b&gt; camada adicionada ao projeto com {count} origem(ns).&lt;br&gt;</source>
         <translation>   -&gt; &lt;b&gt;Gravitational accessibility:&lt;/b&gt; layer added to the project with {count} origin(s).&lt;br&gt;</translation>
     </message>
     <message>
-        <location filename="../gui/urban_dock.py" line="646"/>
+        <location filename="../gui/urban_dock.py" line="658"/>
         <source>   -&gt; &lt;b&gt;Acessibilidade gravitacional:&lt;/b&gt; N/A (resultado vazio)&lt;br&gt;</source>
         <translation>   -&gt; &lt;b&gt;Gravitational accessibility:&lt;/b&gt; N/A (empty result)&lt;br&gt;</translation>
     </message>
     <message>
-        <location filename="../gui/urban_dock.py" line="648"/>
+        <location filename="../gui/urban_dock.py" line="660"/>
         <source>   -&gt; &lt;span style=&apos;color: #fc8181;&apos;&gt;Erro ao calcular acessibilidade gravitacional: {error}&lt;/span&gt;&lt;br&gt;</source>
         <translation>   -&gt; &lt;span style='color: #fc8181;'&gt;Error calculating gravitational accessibility: {error}&lt;/span&gt;&lt;br&gt;</translation>
     </message>
     <message>
-        <location filename="../gui/urban_dock.py" line="678"/>
+        <location filename="../gui/urban_dock.py" line="691"/>
         <source>&lt;b&gt;Calculando centralidade de intermediação...&lt;/b&gt;</source>
         <translation>&lt;b&gt;Calculating betweenness centrality...&lt;/b&gt;</translation>
     </message>
     <message>
-        <location filename="../gui/urban_dock.py" line="689"/>
+        <location filename="../gui/urban_dock.py" line="705"/>
         <source>   -&gt; &lt;b&gt;Centralidade de intermediação:&lt;/b&gt; camada adicionada ao projeto com {count} aresta(s).&lt;br&gt;</source>
         <translation>   -&gt; &lt;b&gt;Betweenness centrality:&lt;/b&gt; layer added to the project with {count} edge(s).&lt;br&gt;</translation>
     </message>
     <message>
-        <location filename="../gui/urban_dock.py" line="693"/>
+        <location filename="../gui/urban_dock.py" line="709"/>
         <source>   -&gt; &lt;b&gt;Centralidade de intermediação:&lt;/b&gt; N/A (resultado vazio)&lt;br&gt;</source>
         <translation>   -&gt; &lt;b&gt;Betweenness centrality:&lt;/b&gt; N/A (empty result)&lt;br&gt;</translation>
     </message>
     <message>
-        <location filename="../gui/urban_dock.py" line="695"/>
+        <location filename="../gui/urban_dock.py" line="711"/>
         <source>   -&gt; &lt;span style='color: #fc8181;'&gt;Erro ao calcular centralidade de intermediação: {error}&lt;/span&gt;&lt;br&gt;</source>
         <translation>   -&gt; &lt;span style='color: #fc8181;'&gt;Error calculating betweenness centrality: {error}&lt;/span&gt;&lt;br&gt;</translation>
     </message>
     <message>
-        <location filename="../gui/urban_dock.py" line="717"/>
+        <location filename="../gui/urban_dock.py" line="733"/>
         <source>Por favor, selecione uma camada de depósitos candidatos.</source>
         <translation>Please select a candidate depots layer.</translation>
     </message>
     <message>
-        <location filename="../gui/urban_dock.py" line="724"/>
+        <location filename="../gui/urban_dock.py" line="740"/>
         <source>Por favor, selecione uma camada de zonas/centroides.</source>
         <translation>Please select a zones/centroids layer.</translation>
     </message>
     <message>
-        <location filename="../gui/urban_dock.py" line="741"/>
+        <location filename="../gui/urban_dock.py" line="757"/>
         <source>&lt;b&gt;Calculando distância de entrega...&lt;/b&gt;</source>
         <translation>&lt;b&gt;Calculating delivery distance...&lt;/b&gt;</translation>
     </message>
     <message>
-        <location filename="../gui/urban_dock.py" line="754"/>
+        <location filename="../gui/urban_dock.py" line="770"/>
         <source>   -&gt; &lt;b&gt;Distância de entrega:&lt;/b&gt; camada adicionada ao projeto com {count} zona(s).&lt;br&gt;</source>
         <translation>   -&gt; &lt;b&gt;Delivery distance:&lt;/b&gt; layer added to the project with {count} zone(s).&lt;br&gt;</translation>
     </message>
     <message>
-        <location filename="../gui/urban_dock.py" line="758"/>
+        <location filename="../gui/urban_dock.py" line="774"/>
         <source>   -&gt; &lt;b&gt;Distância de entrega:&lt;/b&gt; N/A (resultado vazio)&lt;br&gt;</source>
         <translation>   -&gt; &lt;b&gt;Delivery distance:&lt;/b&gt; N/A (empty result)&lt;br&gt;</translation>
     </message>
     <message>
-        <location filename="../gui/urban_dock.py" line="760"/>
+        <location filename="../gui/urban_dock.py" line="776"/>
         <source>   -&gt; &lt;span style='color: #fc8181;'&gt;Erro ao calcular distância de entrega: {error}&lt;/span&gt;&lt;br&gt;</source>
         <translation>   -&gt; &lt;span style='color: #fc8181;'&gt;Error calculating delivery distance: {error}&lt;/span&gt;&lt;br&gt;</translation>
     </message>
     <message>
-        <location filename="../gui/urban_dock.py" line="249"/>
+        <location filename="../gui/urban_dock.py" line="251"/>
         <source>Rede</source>
         <translation>Network</translation>
     </message>
     <message>
-        <location filename="../gui/urban_dock.py" line="279"/>
+        <location filename="../gui/urban_dock.py" line="289"/>
         <source>Demanda</source>
         <translation>Demand</translation>
     </message>
     <message>
-        <location filename="../gui/urban_dock.py" line="331"/>
+        <location filename="../gui/urban_dock.py" line="342"/>
         <source>Carga</source>
         <translation>Cargo</translation>
     </message>
     <message>
-        <location filename="../gui/urban_dock.py" line="334"/>
+        <location filename="../gui/urban_dock.py" line="345"/>
         <source>&lt;b&gt;Restrição de Circulação de Carga&lt;/b&gt;</source>
         <translation>&lt;b&gt;Cargo Circulation Restriction&lt;/b&gt;</translation>
     </message>
     <message>
-        <location filename="../gui/urban_dock.py" line="338"/>
+        <location filename="../gui/urban_dock.py" line="349"/>
         <source>Expressão de restrição (opcional, ex: maxweight / highway):</source>
         <translation>Restriction expression (optional, e.g., maxweight / highway):</translation>
     </message>
     <message>
-        <location filename="../gui/urban_dock.py" line="340"/>
+        <location filename="../gui/urban_dock.py" line="351"/>
         <source>Ex: &quot;highway&quot; = &apos;residential&apos; OR &quot;maxweight&quot; &lt; 3.5</source>
-        <translation>E.g.: &quot;highway&quot; = &apos;residential&apos; OR &quot;maxweight&quot; &lt; 3.5</translation>
+        <translation>E.g.: &quot;highway&quot; = 'residential' OR &quot;maxweight&quot; &lt; 3.5</translation>
     </message>
     <message>
-        <location filename="../gui/urban_dock.py" line="345"/>
+        <location filename="../gui/urban_dock.py" line="356"/>
         <source>Calcular Restrição de Carga</source>
         <translation>Calculate Cargo Restriction</translation>
     </message>
     <message>
-        <location filename="../gui/urban_dock.py" line="511"/>
+        <location filename="../gui/urban_dock.py" line="523"/>
         <source>&lt;b&gt;Calculando restrição de circulação de carga...&lt;/b&gt;</source>
         <translation>&lt;b&gt;Calculating cargo circulation restriction...&lt;/b&gt;</translation>
+    </message>
+    <message>
+        <location filename="../gui/urban_dock.py" line="221"/>
+        <source>A camada de rede viária escolhida abaixo vale para as três abas (Rede, Demanda, Carga); cada aba tem seu próprio botão de cálculo.</source>
+        <translation>The road network layer selected below applies to all three tabs (Network, Demand, Cargo); each tab has its own calculation button.</translation>
+    </message>
+    <message>
+        <location filename="../gui/urban_dock.py" line="232"/>
+        <source>Camada de rede viária (Linhas) — usada por todas as abas:</source>
+        <translation>Road network layer (Lines) — used by all tabs:</translation>
+    </message>
+    <message>
+        <location filename="../gui/urban_dock.py" line="276"/>
+        <source>Semente da amostragem (opcional, 0 = aleatório):</source>
+        <translation>Sampling seed (optional, 0 = random):</translation>
+    </message>
+    <message>
+        <location filename="../gui/urban_dock.py" line="279"/>
+        <source>Aleatória</source>
+        <translation>Random</translation>
     </message>
 </context>
 <context>

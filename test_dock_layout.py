@@ -89,6 +89,17 @@ class TestDockLayout(unittest.TestCase):
             "fora de qualquer aba (painel de resultados compartilhado)."
         )
 
+    def test_urban_dock_tabs_end_with_stretch(self):
+        content = (pathlib.Path(__file__).parent / "logis/gui/urban_dock.py").read_text(
+            encoding="utf-8"
+        )
+
+        add_stretch_calls = len(re.findall(r"layout\.addStretch\(", content))
+        self.assertEqual(
+            add_stretch_calls, 3,
+            f"Esperado exatamente 3 chamadas de layout.addStretch() no painel Urbano (1 por aba), encontrado {add_stretch_calls}."
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

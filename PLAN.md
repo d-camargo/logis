@@ -2,6 +2,88 @@
 
 ## Objetivo
 
+**Nota (2026-07-30, segunda revisão do dia) — F11: README do painel de
+Coleta de Lixo + acabamento das abas do painel Urbano.** O Diego trouxe
+três pontos depois de usar a versão 0.1.3 (saída do F10). Os três foram
+verificados no código nesta revisão, e os três têm resposta diferente:
+
+1. **"Vamos atualizar o README no que diz respeito ao Painel de Coleta de
+   Lixo."** O README está desatualizado em quatro frentes, todas
+   confirmadas por leitura: (a) a seção "Interface com Usuário (GUI)"
+   lista Urbano, Regional e o diálogo de Dependências — **o Painel de
+   Coleta de Lixo não aparece**, embora `gui/waste_dock.py` exista (1443
+   linhas, quatro abas) e esteja registrado em `logis_plugin.py:61,89-93`
+   (`action_waste`, `show_waste_dock`); (b) o título diz "Algoritmos de
+   Processamento (**12** registrados)" enquanto `grep -c "addAlgorithm"
+   logis/provider.py` → **25**; (c) do módulo de coleta de lixo só dois
+   dos dez algorithms estão listados (`waste_districting`,
+   `waste_deadhead_ratio`) — faltam `waste_generation_estimate`,
+   `waste_cpp_route`, `waste_rpp_route`, `waste_carp_route`,
+   `waste_fleet_sizing`, `waste_sector_balance`,
+   `waste_destination_distance`, `waste_collection_coverage` — e os
+   módulos de **Facility Location** (3) e **Roteirização VRP** (1) não
+   aparecem em lugar nenhum, apesar de anunciados na "Visão Geral"; (d) a
+   árvore da estrutura do repositório diz `provider.py # (11 algoritmos)`
+   e `algorithms/ # (8 urbanos + 3 regionais)`, e não menciona
+   `core/routing/`, `core/location/`, `core/indicators/waste.py` nem
+   `i18n/`, que existem. **Tudo isso está duplicado na metade em inglês**
+   — as duas metades têm que ser corrigidas em espelho.
+
+2. **"Na aba 'Rede', em 'Centralidade de intermediação', tem um espaço
+   vazio abaixo — deveria ter uma caixa de escolha ou algum botão?"**
+   Resposta: **as duas coisas, e são causas independentes.**
+   - *O espaço vazio é bug de layout, não widget faltando.* As três abas
+     do `urban_dock.py` (linhas 249, 279, 331) terminam sem
+     `layout.addStretch()`. O `waste_dock.py` chama `addStretch()` no fim
+     das quatro abas (linhas 344, 490, 560, 763) e o `regional_dock.py`
+     na linha 246 — o Urbano foi o único que ficou sem, porque F10
+     montou as abas movendo blocos de uma coluna única que já tinha o
+     rodapé (`txt_results`) segurando o fundo. Sem o stretch final, o
+     `QVBoxLayout` distribui a sobra vertical entre os itens que aceitam
+     crescer, o que afasta os widgets e deixa a folga que o Diego viu
+     logo abaixo do último botão da aba mais curta.
+   - *Falta mesmo um controle nessa seção.* O algorithm
+     `logis:urban_edge_betweenness` tem **três** parâmetros de entrada
+     (`urban_edge_betweenness.py:56-85`): `INPUT_NETWORK`, `NUM_SAMPLES`
+     e **`SEED`** (semente aleatória opcional, "para
+     reprodutibilidade"). O painel só expõe `NUM_SAMPLES`
+     (`spin_betweenness_samples`) e `calculate_edge_betweenness` (linhas
+     652-697) nunca passa `SEED` — ou seja, **duas execuções do painel
+     sobre a mesma rede dão resultados diferentes e o usuário não tem
+     como fixar a amostragem**, que é justamente o ponto do parâmetro. É
+     a única lacuna de parâmetro do painel Urbano (conferido algorithm a
+     algorithm nesta revisão).
+
+3. **"A caixa de escolha de 'Camada de rede viária' está fora da aba
+   'Rede'. A proposta era essa mesmo?"** **Sim** — é decisão explícita
+   de F10 ("Decisões de arquitetura — F10"), e o código confirma o
+   motivo: quatro métodos leem `self.cmb_network.currentLayer()` —
+   `calculate_indicators` (383), `calculate_gravity_accessibility` (~597),
+   `calculate_edge_betweenness` (657) e `calculate_delivery_distance`
+   (704) —, distribuídos pelas **três** abas. Se o seletor entrasse na
+   aba "Rede", o usuário abriria "Carga" sem ter onde escolher a rede.
+   Nada a mudar de estrutura; o que **está** errado ali é o texto: a
+   descrição do cabeçalho (linhas 219-227) ainda é a de antes das abas —
+   "clique no botão abaixo para calcular os indicadores de densidade,
+   conectividade, circuidade **e restrição de circulação de carga**" —,
+   e a restrição de carga saiu do botão-pacote em F10 (passo 117) e hoje
+   vive na aba "Carga" com botão próprio. O rótulo do combo também não
+   diz que a escolha vale para todas as abas.
+
+**Estado verificado no início desta revisão** (execução real, não
+confiança no plano): `git log` em `470afa3` ("package: logis 0.1.3");
+`git status` com **`README.md` modificado e não commitado** (diff é só a
+troca de `versão 0.1.2` → `0.1.3` nos dois comentários da árvore de
+estrutura — resíduo do passo 120, que o motor ainda não commitou; F11
+edita o mesmo arquivo e a mudança entra junto); `python3 -m unittest
+discover -s . -p "test_*.py"` → **Ran 230 tests, OK**; `make test` →
+`sintaxe OK`. F10 está fechado no código: `grep -c "self._new_tab("
+logis/gui/urban_dock.py` → 3, `txt_cargo_expression`/`btn_calculate_cargo`
+presentes, `metadata.txt` em `version=0.1.3`.
+
+F11 é rodada de **documentação + acabamento de UI**: nenhum algorithm
+novo, nenhuma função de `core/`, nenhuma dependência.
+
 **Nota (2026-07-30) — F10: abas no painel de Indicadores Urbanos
 (pedido explícito do Diego).** Depois de ver as abas do painel de Coleta
 de Lixo funcionando (entrega do F9), o Diego pediu o mesmo tratamento
@@ -476,6 +558,67 @@ registradas neste plano (ex.: passo 58 cita "passos 7, 13, 18, 27, 33,
 41, 49").
 
 ## Decisões de arquitetura
+
+### Novas para F11 — README + acabamento das abas do Urbano (2026-07-30, segunda revisão)
+
+- **O espaço vazio se resolve com `layout.addStretch()` no fim de cada
+  aba, não com widget de enchimento.** É o que `waste_dock.py` e
+  `regional_dock.py` já fazem; o mock `QVBoxLayout` do `urban_dock.py` já
+  tem `addStretch` (linha 73), então não é preciso tocar no bloco de
+  mocks para isso. **Não** usar `setSizePolicy`, `setMinimumHeight` nem
+  espaçador explícito (`QSpacerItem`): seriam três padrões diferentes
+  para o mesmo problema em três docks irmãos.
+- **A semente do betweenness entra como `QSpinBox` com valor especial, e
+  o default preserva o comportamento de hoje.**
+  `self.spin_betweenness_seed`, `setRange(0, 2147483647)`,
+  `setSpecialValueText(self.tr("Aleatória"))`, valor inicial `0`. Em
+  `calculate_edge_betweenness`, `SEED` só entra no dicionário de
+  parâmetros **quando o valor é > 0** — com `0` a chamada fica idêntica à
+  atual (o parâmetro é `optional=True` no algorithm e o
+  `processAlgorithm` já trata `parameters.get(self.SEED) is None`).
+  Assim o passo é aditivo: nenhum resultado muda para quem não mexer no
+  campo.
+- **O mock `QSpinBox` do bloco `except ImportError` ganha
+  `setSpecialValueText`** (e nada mais). É a única mudança de mock da
+  rodada; sem ela o `import` do dock fora do QGIS quebra, e a suíte roda
+  fora do QGIS por construção em vários testes.
+- **`cmb_network` continua no cabeçalho, fora das abas — decisão de F10
+  reafirmada, não reaberta.** Quatro métodos o leem, das três abas
+  (383, ~597, 657, 704). Duplicá-lo por aba criaria três combos
+  independentes, obrigaria o usuário a escolher a mesma camada três
+  vezes e forçaria os quatro métodos a saber em qual aba estão. A
+  correção é de **texto**, não de estrutura: o rótulo passa a dizer que a
+  camada vale para todas as abas e a descrição do cabeçalho deixa de
+  citar a restrição de carga (que saiu do botão-pacote no passo 117).
+- **README: corrigir por inventário, não reescrever o arquivo.** O
+  formato atual (duas metades espelhadas PT/EN, listas por módulo) está
+  bom; o defeito é conteúdo velho. A regra desta rodada é que a lista de
+  algorithms do README seja **exatamente** o que `provider.py` registra —
+  25 itens, nas cinco famílias que o `provider.py` já ordena (Urbano 8,
+  Regional 3, Facility Location 3, Roteirização VRP 1, Coleta de Lixo
+  10). Conferência barata e repetível: `grep -c "addAlgorithm"
+  logis/provider.py` tem que bater com o número no título da seção.
+- **O Painel de Coleta de Lixo é descrito pelas suas quatro abas**
+  (Geração, Roteirização, Frota, Indicadores), no mesmo nível de detalhe
+  que o painel Urbano ganhou no passo 120 — inclusive o fato de o painel
+  de resultados ficar fora das abas. Nada de screenshot: o README é
+  texto, e imagem entraria no pacote do plugin.
+- **As duas metades do README mudam em espelho, mas em passos
+  separados** (PT primeiro, EN depois, ambos por seção). Um passo único
+  editando PT+EN em quatro seções seria um diff grande e difícil de
+  revisar; separados, cada um é conferível por leitura direta.
+- **F11 não toca `core/`, `algorithms/` nem `provider.py`.** Só
+  `logis/gui/urban_dock.py`, dois testes, i18n, `metadata.txt` e
+  `README.md`. Nenhuma dependência nova.
+- **Versão sobe para `0.1.4`** — o Diego reinstala o plugin para ver o
+  acabamento das abas, e número igual com conteúdo diferente confunde o
+  gerenciador de complementos (mesma razão de F8/F9/F10).
+- **`regional_dock.py` continua fora de escopo.** Ele já tem
+  `addStretch` e não foi objeto de nenhuma das três perguntas; agrupá-lo
+  em abas segue sendo rodada futura, quando o Diego pedir.
+- **A validação visual final é do Diego, no QGIS 4.2** — mesma decisão de
+  não-bloqueio de todas as rodadas anteriores (passo 58). Fechamento do
+  código de F11 = suíte verde + `make test` + `test_dock_layout.py`.
 
 ### Novas para F10 — abas no painel de Indicadores Urbanos (2026-07-30)
 
@@ -2773,7 +2916,173 @@ ordem: o passo 89 destrava todos os outros (a suíte está vermelha hoje).**
       indicadores de rede). Rodar `make test` e a suíte antes de marcar.
       — arquivos: `logis/metadata.txt`, `README.md`
 
+**Rodada F11 (README do painel de Coleta de Lixo + acabamento das abas
+do Urbano) — 2026-07-30, segunda revisão:**
+
+- [x] 121. [T02] Fechar o espaço vazio das abas do painel Urbano:
+      acrescentar `layout.addStretch()` como **última** chamada de cada
+      uma das três abas de `_build_ui` — no fim da aba "Rede" (depois de
+      `layout.addWidget(self.btn_calculate_betweenness)`, hoje linha
+      276), no fim da "Demanda" (depois de `btn_calculate_gravity`, hoje
+      328) e no fim da "Carga" (depois de `btn_calculate_delivery`, hoje
+      371) —, exatamente como `waste_dock.py` faz nas linhas 344, 490,
+      560 e 763. Não mexer em mais nada do layout. Rodar `make test` e a
+      suíte antes de marcar. — arquivos: `logis/gui/urban_dock.py`
+
+- [x] 122. [T02] Expor a semente da amostragem na seção "Centralidade de
+      Intermediação" (aba "Rede"): acrescentar, entre
+      `spin_betweenness_samples` e `btn_calculate_betweenness`, o rótulo
+      `self.tr("Semente aleatória (0 = aleatória, para reprodutibilidade):")`
+      e `self.spin_betweenness_seed = QSpinBox()` com
+      `setRange(0, 2147483647)`,
+      `setSpecialValueText(self.tr("Aleatória"))` e `setValue(0)`; e, em
+      `calculate_edge_betweenness`, montar `params` em variável e
+      acrescentar `params['SEED'] = seed` **somente** quando
+      `self.spin_betweenness_seed.value() > 0`, mantendo
+      `INPUT_NETWORK`/`NUM_SAMPLES`/`OUTPUT` como estão (com `0` a
+      chamada tem que ficar idêntica à de hoje). Acrescentar
+      `setSpecialValueText` ao mock `QSpinBox` do bloco `except
+      ImportError` (linhas 139-147). Rodar `make test` e a suíte antes de
+      marcar. — arquivos: `logis/gui/urban_dock.py`
+
+- [x] 123. [T02] Corrigir o texto do cabeçalho compartilhado (o seletor
+      de rede **continua** fora das abas — decisão de F10): trocar a
+      descrição das linhas 219-227 por um texto que diga que a camada de
+      rede viária escolhida ali vale para as três abas e que cada aba tem
+      seu próprio botão de cálculo, **sem** citar a restrição de
+      circulação de carga (que saiu do botão-pacote no passo 117); e
+      trocar o rótulo da linha 230 por
+      `self.tr("Camada de rede viária (Linhas) — usada por todas as abas:")`.
+      Só strings; nenhum widget criado, removido ou renomeado. Rodar
+      `make test` e a suíte antes de marcar. — arquivos:
+      `logis/gui/urban_dock.py`
+
+- [x] 124. [T02] Cobrir os passos 121-122 com teste estático: em
+      `test_dock_layout.py`, acrescentar
+      `test_urban_dock_tabs_end_with_stretch` afirmando que
+      `logis/gui/urban_dock.py` contém **três** ocorrências de
+      `layout.addStretch()` (uma por aba, mesmo estilo de leitura de
+      fonte de `test_urban_dock_has_three_tabs`); em `test_plugin.py`,
+      acrescentar ao teste de controles do dock urbano as asserções
+      `hasattr(dock, 'spin_betweenness_seed')` e a de que
+      `calculate_edge_betweenness` só passa `SEED` quando o valor é
+      positivo (basta afirmar a presença de `'SEED'` e de
+      `spin_betweenness_seed` no fonte do método, mesma técnica estática
+      já usada na suíte). Rodar `make test` e a suíte antes de marcar
+      (base: 230 testes). — arquivos: `test_dock_layout.py`,
+      `test_plugin.py`
+
+- [x] 125. [T02] README (metade PT) — GUI: acrescentar à seção
+      "Interface com Usuário (GUI)", entre o painel Regional e o diálogo
+      de Dependências, o **Painel de Coleta de Lixo**
+      (`gui/waste_dock.py`): dock em quatro abas — Geração (estimativa de
+      geração + setorização), Roteirização (CPP, RPP, CARP), Frota
+      (dimensionamento) e Indicadores (deadhead ratio, equilíbrio entre
+      setores, distância ao destino, cobertura por frequência) —, com
+      rolagem por aba e painel de resultados único no rodapé, fora das
+      abas; e completar a descrição do painel Regional na mesma linha de
+      detalhe. Atualizar também a menção ao painel Urbano para registrar
+      o seletor de rede compartilhado por todas as abas e a semente do
+      betweenness. Rodar `make test` e a suíte antes de marcar. —
+      arquivos: `README.md`
+
+- [x] 126. [T02] README (metade PT) — inventário de algorithms: trocar o
+      título "Algoritmos de Processamento (12 registrados)" por "(25
+      registrados)" e listar os 25 que `provider.py` registra, agrupados
+      em cinco blocos na ordem do `provider.py` — Urbano (8, já
+      listados), Regional (3, já listados), **Localização de Instalações**
+      (`facility_p_median`, `facility_mclp`, `facility_lscp`),
+      **Roteirização** (`vrp_cvrp`) e **Coleta de Lixo** (os 10:
+      `waste_generation_estimate`, `waste_districting`, `waste_cpp_route`,
+      `waste_rpp_route`, `waste_carp_route`, `waste_fleet_sizing`,
+      `waste_deadhead_ratio`, `waste_sector_balance`,
+      `waste_destination_distance`, `waste_collection_coverage`), cada um
+      com uma linha de descrição no estilo das existentes. Conferir com
+      `grep -c "addAlgorithm" logis/provider.py` → 25 antes de marcar.
+      Rodar `make test` e a suíte. — arquivos: `README.md`
+
+- [x] 127. [T02] README (metade PT) — árvore da estrutura: corrigir os
+      comentários desatualizados (`provider.py` passa a "Processing
+      Provider 'logis' (25 algoritmos)"; `algorithms/` passa a "8 urbanos
+      + 3 regionais + 3 de localização + 1 de roteirização + 10 de coleta
+      de lixo") e acrescentar as pastas que existem e não aparecem:
+      `core/routing/` (VRP, arc routing, setorização), `core/location/`
+      (facility location), `core/indicators/waste.py` e `i18n/`
+      (traduções PT-BR/EN). Conferir cada linha contra `ls` real antes de
+      marcar. Rodar `make test` e a suíte. — arquivos: `README.md`
+
+- [x] 128. [T02] README (metade EN) — espelhar em inglês os passos
+      125-127: seção "User Interface (GUI)" ganha o **Waste Collection
+      Panel** (quatro abas: Generation, Routing, Fleet, Indicators) e a
+      descrição ampliada dos painéis Regional e Urbano; "Processing
+      Algorithms (12 registered)" vira "(25 registered)" com os cinco
+      blocos (Facility Location, Routing e Waste Collection completos); a
+      árvore de estrutura recebe as mesmas correções de comentário e as
+      mesmas pastas. As duas metades têm que ficar com o mesmo conteúdo,
+      item a item. Rodar `make test` e a suíte antes de marcar. —
+      arquivos: `README.md`
+
+- [x] 129. [T02] Atualizar a tradução para inglês com as strings novas de
+      F11: rodar `make i18n`, preencher em inglês as entradas
+      `<translation type="unfinished">` criadas pelos passos 122-123
+      (rótulo e valor especial da semente, rótulo novo do seletor de rede
+      e descrição nova do cabeçalho), rodar `make transcompile` e
+      conferir que `test_i18n.py` continua passando. Não alterar nenhuma
+      string PT-BR já existente nem traduções já preenchidas. Rodar
+      `make test` e a suíte antes de marcar. — arquivos:
+      `logis/i18n/logis_en.ts`, `logis/i18n/logis_en.qm`
+
+- [ ] 130. [T02] Subir a versão da rodada: `metadata.txt` passa a
+      `version=0.1.4` e as duas menções a `versão 0.1.3` / `version
+      0.1.3` na árvore de estrutura do `README.md` (metades PT e EN)
+      acompanham, junto com a linha `**Versão:** 0.1.3` do topo. Rodar
+      `make test` e a suíte antes de marcar. — arquivos:
+      `logis/metadata.txt`, `README.md`
+
 ## Critério de aceite
+
+- **F11 — README do painel de Coleta de Lixo + acabamento das abas do
+  Urbano (passos 121-130, rodada 2026-07-30, segunda revisão):**
+  - As três abas do painel Urbano terminam com `addStretch()`:
+    `grep -c "layout.addStretch()" logis/gui/urban_dock.py` → 3, provado
+    estaticamente por `test_dock_layout.py` (sem QGIS) — é isso que
+    fecha o espaço vazio que o Diego viu abaixo da Centralidade de
+    Intermediação.
+  - A seção de Centralidade de Intermediação expõe a **semente**
+    (`spin_betweenness_seed`, `0` = aleatória) e
+    `calculate_edge_betweenness` passa `SEED` **somente** quando o valor
+    é positivo — com `0`, a chamada `processing.run` é byte a byte a de
+    hoje (nenhuma mudança de resultado para quem não usar o campo).
+    Depois disso, os três parâmetros de
+    `logis:urban_edge_betweenness` estão todos no painel.
+  - **`cmb_network` continua fora das abas** — a resposta à terceira
+    pergunta do Diego é "sim, era essa a proposta": quatro métodos das
+    três abas o leem. Só o rótulo e a descrição do cabeçalho mudam, e a
+    descrição deixa de citar a restrição de circulação de carga, que tem
+    botão próprio na aba "Carga" desde o passo 117.
+  - `README.md` descreve o **Painel de Coleta de Lixo** com as quatro
+    abas (Geração, Roteirização, Frota, Indicadores) e o painel de
+    resultados fora das abas — nas duas metades, PT e EN.
+  - `README.md` lista **os 25** algorithms que `provider.py` registra,
+    nos cinco blocos (8 urbanos, 3 regionais, 3 de facility location, 1
+    de VRP, 10 de coleta de lixo): o número no título da seção bate com
+    `grep -c "addAlgorithm" logis/provider.py` nas duas metades.
+  - A árvore de estrutura do README bate com o `ls` real: `core/routing/`,
+    `core/location/`, `core/indicators/waste.py` e `i18n/` presentes,
+    contagens de `provider.py`/`algorithms/` corrigidas.
+  - `make test` → `sintaxe OK` e `python3 -m unittest discover -s . -p
+    "test_*.py"` → OK ao fim de **cada** passo (base: 230 testes no
+    início da rodada).
+  - `make transcompile` regenera `logis/i18n/logis_en.qm` com as strings
+    novas; `test_i18n.py` continua passando.
+  - `metadata.txt` em `version=0.1.4`, e o README não menciona mais
+    0.1.3 em lugar nenhum.
+  - **Nada fora de `logis/gui/urban_dock.py`, dos dois testes, do i18n,
+    de `metadata.txt` e do `README.md`** — F11 não toca `core/`,
+    `algorithms/`, `provider.py` nem `regional_dock.py`, e não
+    acrescenta dependência.
+  - **A confirmação visual no QGIS 4.2 é do Diego e não bloqueia o
+    fechamento do código** (mesma decisão de não-bloqueio do passo 58).
 
 - **F10 — abas no painel de Indicadores Urbanos (passos 113-120, rodada
   2026-07-30):**

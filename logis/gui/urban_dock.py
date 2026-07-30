@@ -141,6 +141,8 @@ except ImportError:
             pass
         def setRange(self, minimum, maximum):
             pass
+        def setSpecialValueText(self, text):
+            pass
         def setValue(self, value):
             pass
         def value(self):
@@ -218,8 +220,8 @@ class UrbanDock(QgsDockWidget):
 
         desc_label = QLabel(
             self.tr(
-                "Selecione as camadas e clique no botão abaixo para calcular os indicadores "
-                "de densidade, conectividade, circuidade e restrição de circulação de carga."
+                "A camada de rede viária escolhida abaixo vale para as três abas "
+                "(Rede, Demanda, Carga); cada aba tem seu próprio botão de cálculo."
             )
         )
         desc_label.setStyleSheet("color: #666; font-size: 11px; margin-bottom: 5px;")
@@ -227,7 +229,7 @@ class UrbanDock(QgsDockWidget):
         outer.addWidget(desc_label)
 
         # Seletor de Camada de Rede (Linhas) — compartilhado por todas as abas
-        outer.addWidget(QLabel(self.tr("Camada de rede viária (Linhas):")))
+        outer.addWidget(QLabel(self.tr("Camada de rede viária (Linhas) — usada por todas as abas:")))
         self.cmb_network = QgsMapLayerComboBox()
         self.cmb_network.setFilters(QgsMapLayerProxyModel.Filter.LineLayer)
         outer.addWidget(self.cmb_network)
@@ -271,9 +273,17 @@ class UrbanDock(QgsDockWidget):
         self.spin_betweenness_samples.setValue(1000)
         layout.addWidget(self.spin_betweenness_samples)
 
+        layout.addWidget(QLabel(self.tr("Semente da amostragem (opcional, 0 = aleatório):")))
+        self.spin_betweenness_seed = QSpinBox()
+        self.spin_betweenness_seed.setRange(0, 2147483647)
+        self.spin_betweenness_seed.setSpecialValueText(self.tr("Aleatória"))
+        self.spin_betweenness_seed.setValue(0)
+        layout.addWidget(self.spin_betweenness_seed)
+
         self.btn_calculate_betweenness = QPushButton(self.tr("Calcular Centralidade de Intermediação"))
         self.btn_calculate_betweenness.clicked.connect(self.calculate_edge_betweenness)
         layout.addWidget(self.btn_calculate_betweenness)
+        layout.addStretch()
 
         # Aba: Demanda
         layout = self._new_tab(self.tr("Demanda"))
@@ -326,6 +336,7 @@ class UrbanDock(QgsDockWidget):
         self.btn_calculate_gravity = QPushButton(self.tr("Calcular Acessibilidade Gravitacional"))
         self.btn_calculate_gravity.clicked.connect(self.calculate_gravity_accessibility)
         layout.addWidget(self.btn_calculate_gravity)
+        layout.addStretch()
 
         # Aba: Carga
         layout = self._new_tab(self.tr("Carga"))
@@ -369,6 +380,7 @@ class UrbanDock(QgsDockWidget):
         self.btn_calculate_delivery = QPushButton(self.tr("Calcular Distância de Entrega"))
         self.btn_calculate_delivery.clicked.connect(self.calculate_delivery_distance)
         layout.addWidget(self.btn_calculate_delivery)
+        layout.addStretch()
 
         scroll.setWidget(central)
         self.setWidget(scroll)
@@ -656,6 +668,8 @@ class UrbanDock(QgsDockWidget):
         """
         network_layer = self.cmb_network.currentLayer()
         num_samples = self.spin_betweenness_samples.value()
+        seed_value = self.spin_betweenness_seed.value()
+        seed = seed_value if seed_value > 0 else None
 
         if not network_layer:
             QMessageBox.warning(
@@ -677,11 +691,14 @@ class UrbanDock(QgsDockWidget):
 
         self.txt_results.append(self.tr("<b>Calculando centralidade de intermediação...</b>"))
         try:
-            res = processing.run("logis:urban_edge_betweenness", {
+            params = {
                 'INPUT_NETWORK': network_layer,
                 'NUM_SAMPLES': num_samples,
                 'OUTPUT': 'memory:'
-            })
+            }
+            if seed is not None:
+                params['SEED'] = seed
+            res = processing.run("logis:urban_edge_betweenness", params)
             out_layer = res.get('OUTPUT')
             if out_layer is not None:
                 QgsProject.instance().addMapLayer(out_layer)
