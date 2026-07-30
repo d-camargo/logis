@@ -21,7 +21,8 @@ try:
         QDoubleSpinBox,
         QSpinBox,
         QComboBox,
-        QScrollArea
+        QScrollArea,
+        QTabWidget
     )
 except ImportError:
     # Mocks para quando rodado fora do QGIS (ex: smoke tests ou CLI)
@@ -122,6 +123,8 @@ except ImportError:
             pass
         def text(self):
             return ""
+        def setPlaceholderText(self, text):
+            pass
     class QDoubleSpinBox:
         def __init__(self, parent=None):
             pass
@@ -156,6 +159,16 @@ except ImportError:
             pass
         def setWidget(self, widget):
             pass
+    class QTabWidget:
+        def __init__(self, parent=None):
+            self._tabs = []
+        def addTab(self, widget, title):
+            self._tabs.append(title)
+            return len(self._tabs) - 1
+        def count(self):
+            return len(self._tabs)
+        def tabText(self, index):
+            return self._tabs[index]
 
 
 
@@ -173,19 +186,35 @@ class UrbanDock(QgsDockWidget):
     def tr(self, string):
         return QCoreApplication.translate("UrbanDock", string)
 
+    def _new_tab(self, title):
+        """
+        Cria uma aba com rolagem própria e devolve o layout onde as seções entram.
+        """
+        page = QWidget()
+        page_layout = QVBoxLayout(page)
+        page_layout.setContentsMargins(10, 10, 10, 10)
+        page_layout.setSpacing(10)
+
+        tab_scroll = QScrollArea()
+        tab_scroll.setWidgetResizable(True)
+        tab_scroll.setWidget(page)
+
+        self.tabs.addTab(tab_scroll, title)
+        return page_layout
+
     def _build_ui(self):
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
 
         central = QWidget()
-        layout = QVBoxLayout(central)
-        layout.setContentsMargins(10, 10, 10, 10)
-        layout.setSpacing(10)
+        outer = QVBoxLayout(central)
+        outer.setContentsMargins(10, 10, 10, 10)
+        outer.setSpacing(10)
 
         # Título principal
         title_label = QLabel(self.tr("<b>Indicadores Urbanos</b>"))
         title_label.setStyleSheet("font-size: 14px; color: #2b6cb0; margin-bottom: 2px;")
-        layout.addWidget(title_label)
+        outer.addWidget(title_label)
 
         desc_label = QLabel(
             self.tr(
@@ -195,13 +224,29 @@ class UrbanDock(QgsDockWidget):
         )
         desc_label.setStyleSheet("color: #666; font-size: 11px; margin-bottom: 5px;")
         desc_label.setWordWrap(True)
-        layout.addWidget(desc_label)
+        outer.addWidget(desc_label)
 
-        # Seletor de Camada de Rede (Linhas)
-        layout.addWidget(QLabel(self.tr("Camada de rede viária (Linhas):")))
+        # Seletor de Camada de Rede (Linhas) — compartilhado por todas as abas
+        outer.addWidget(QLabel(self.tr("Camada de rede viária (Linhas):")))
         self.cmb_network = QgsMapLayerComboBox()
         self.cmb_network.setFilters(QgsMapLayerProxyModel.Filter.LineLayer)
-        layout.addWidget(self.cmb_network)
+        outer.addWidget(self.cmb_network)
+
+        self.tabs = QTabWidget()
+        outer.addWidget(self.tabs)
+
+        # Painel de resultados (rodapé, fora das abas)
+        outer.addWidget(QLabel(self.tr("Resultados dos Indicadores:")))
+        self.txt_results = QTextEdit()
+        self.txt_results.setReadOnly(True)
+        self.txt_results.setMinimumHeight(150)
+        self.txt_results.setStyleSheet(
+            "font-family: monospace; font-size: 11px; background-color: #2d3748; color: #edf2f7; padding: 5px;"
+        )
+        outer.addWidget(self.txt_results)
+
+        # Aba: Rede
+        layout = self._new_tab(self.tr("Rede"))
 
         # Seletor de Camada de Área (Polígonos)
         layout.addWidget(QLabel(self.tr("Camada de área de referência (Polígonos - para Densidade):")))
@@ -215,15 +260,23 @@ class UrbanDock(QgsDockWidget):
         self.btn_calculate.clicked.connect(self.calculate_indicators)
         layout.addWidget(self.btn_calculate)
 
-        # Painel de resultados
-        layout.addWidget(QLabel(self.tr("Resultados dos Indicadores:")))
-        self.txt_results = QTextEdit()
-        self.txt_results.setReadOnly(True)
-        self.txt_results.setMinimumHeight(150)
-        self.txt_results.setStyleSheet(
-            "font-family: monospace; font-size: 11px; background-color: #2d3748; color: #edf2f7; padding: 5px;"
-        )
-        layout.addWidget(self.txt_results)
+        # Seção adicional: Centralidade de Intermediação (Betweenness)
+        betweenness_title = QLabel(self.tr("<b>Centralidade de Intermediação (Betweenness)</b>"))
+        betweenness_title.setStyleSheet("font-size: 13px; color: #2b6cb0; margin-top: 8px;")
+        layout.addWidget(betweenness_title)
+
+        layout.addWidget(QLabel(self.tr("Número de amostras (pares OD):")))
+        self.spin_betweenness_samples = QSpinBox()
+        self.spin_betweenness_samples.setRange(1, 1000000)
+        self.spin_betweenness_samples.setValue(1000)
+        layout.addWidget(self.spin_betweenness_samples)
+
+        self.btn_calculate_betweenness = QPushButton(self.tr("Calcular Centralidade de Intermediação"))
+        self.btn_calculate_betweenness.clicked.connect(self.calculate_edge_betweenness)
+        layout.addWidget(self.btn_calculate_betweenness)
+
+        # Aba: Demanda
+        layout = self._new_tab(self.tr("Demanda"))
 
         # Seção adicional: Densidade de Demanda
         demand_title = QLabel(self.tr("<b>Densidade de Demanda</b>"))
@@ -274,20 +327,24 @@ class UrbanDock(QgsDockWidget):
         self.btn_calculate_gravity.clicked.connect(self.calculate_gravity_accessibility)
         layout.addWidget(self.btn_calculate_gravity)
 
-        # Seção adicional: Centralidade de Intermediação (Betweenness)
-        betweenness_title = QLabel(self.tr("<b>Centralidade de Intermediação (Betweenness)</b>"))
-        betweenness_title.setStyleSheet("font-size: 13px; color: #2b6cb0; margin-top: 8px;")
-        layout.addWidget(betweenness_title)
+        # Aba: Carga
+        layout = self._new_tab(self.tr("Carga"))
 
-        layout.addWidget(QLabel(self.tr("Número de amostras (pares OD):")))
-        self.spin_betweenness_samples = QSpinBox()
-        self.spin_betweenness_samples.setRange(1, 1000000)
-        self.spin_betweenness_samples.setValue(1000)
-        layout.addWidget(self.spin_betweenness_samples)
+        # Seção: Restrição de Circulação de Carga
+        cargo_title = QLabel(self.tr("<b>Restrição de Circulação de Carga</b>"))
+        cargo_title.setStyleSheet("font-size: 13px; color: #2b6cb0; margin-top: 8px;")
+        layout.addWidget(cargo_title)
 
-        self.btn_calculate_betweenness = QPushButton(self.tr("Calcular Centralidade de Intermediação"))
-        self.btn_calculate_betweenness.clicked.connect(self.calculate_edge_betweenness)
-        layout.addWidget(self.btn_calculate_betweenness)
+        layout.addWidget(QLabel(self.tr("Expressão de restrição (opcional, ex: maxweight / highway):")))
+        self.txt_cargo_expression = QLineEdit()
+        self.txt_cargo_expression.setPlaceholderText(
+            self.tr("Ex: \"highway\" = 'residential' OR \"maxweight\" < 3.5")
+        )
+        layout.addWidget(self.txt_cargo_expression)
+
+        self.btn_calculate_cargo = QPushButton(self.tr("Calcular Restrição de Carga"))
+        self.btn_calculate_cargo.clicked.connect(self.calculate_cargo_restriction)
+        layout.addWidget(self.btn_calculate_cargo)
 
         # Seção adicional: Distância de Entrega
         delivery_title = QLabel(self.tr("<b>Distância de Entrega</b>"))
@@ -318,7 +375,7 @@ class UrbanDock(QgsDockWidget):
 
     def calculate_indicators(self):
         """
-        Executa os quatro algoritmos de indicadores urbanos em sequência e
+        Executa os três algoritmos de estrutura de rede em sequência e
         exibe os resultados no painel de texto.
         """
         self.txt_results.clear()
@@ -422,12 +479,40 @@ class UrbanDock(QgsDockWidget):
                 self.tr("   -> <span style='color: #fc8181;'>Erro ao calcular circuidade: {error}</span><br>").format(error=str(e))
             )
 
-        # 4) Restrição de Carga
-        self.txt_results.append(self.tr("4) Calculando acessibilidade/restrição de carga..."))
+        self.txt_results.append(self.tr("<b>=== CÁLCULO CONCLUÍDO ===</b>"))
+        self.btn_calculate.setEnabled(True)
+
+    def calculate_cargo_restriction(self):
+        """
+        Executa o algoritmo de acessibilidade e restrição de circulação de carga
+        sobre a rede viária selecionada.
+        """
+        network_layer = self.cmb_network.currentLayer()
+        expression = self.txt_cargo_expression.text().strip()
+
+        if not network_layer:
+            QMessageBox.warning(
+                self,
+                self.tr("Aviso"),
+                self.tr("Por favor, selecione uma camada de rede viária.")
+            )
+            return
+
+        try:
+            import processing
+        except ImportError:
+            QMessageBox.critical(
+                self,
+                self.tr("Erro"),
+                self.tr("QGIS Processing não está disponível no ambiente atual.")
+            )
+            return
+
+        self.txt_results.append(self.tr("<b>Calculando restrição de circulação de carga...</b>"))
         try:
             res_rest = processing.run("logis:urban_cargo_restriction", {
                 'INPUT_NETWORK': network_layer,
-                'RESTRICTION_EXPRESSION': ''
+                'RESTRICTION_EXPRESSION': expression
             })
             rest_val = res_rest.get('OUTPUT')
             if rest_val is not None:
@@ -440,9 +525,6 @@ class UrbanDock(QgsDockWidget):
             self.txt_results.append(
                 self.tr("   -> <span style='color: #fc8181;'>Erro ao calcular restrição: {error}</span><br>").format(error=str(e))
             )
-
-        self.txt_results.append(self.tr("<b>=== CÁLCULO CONCLUÍDO ===</b>"))
-        self.btn_calculate.setEnabled(True)
 
     def calculate_demand_density(self):
         """

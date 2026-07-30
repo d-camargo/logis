@@ -80,5 +80,5 @@ i18n:
 	@pylupdate5 $(PLUGINNAME)/provider.py $(PLUGINNAME)/logis_plugin.py $(PLUGINNAME)/gui/*.py $(PLUGINNAME)/algorithms/*.py -ts $(PLUGINNAME)/i18n/logis_pt_BR.ts $(PLUGINNAME)/i18n/logis_en.ts
 
 transcompile:
-	@lrelease i18n/*.ts
+	@lrelease $(PLUGINNAME)/i18n/*.ts
 

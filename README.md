@@ -2,7 +2,7 @@
 
 Complemento (plugin) do QGIS para apoiar projetos de logística no Brasil.
 
-**Versão:** 0.1.2 (`experimental`)  
+**Versão:** 0.1.3 (`experimental`)  
 **Licença:** GPL-3.0  
 **Idioma:** **Português** | [English](#english)
 
@@ -62,7 +62,7 @@ O plugin atua como um **Processing Provider** (`logis`), expondo os seguintes al
 
 ### Interface com Usuário (GUI)
 
-- **Painel de Logística Urbana** (`gui/urban_dock.py`): Interface dock interativa para configuração de parâmetros e execução de diagnósticos urbanos.
+- **Painel de Logística Urbana** (`gui/urban_dock.py`): Interface dock interativa em três abas — Rede, Demanda e Carga —, com o seletor de rede viária e o painel de resultados compartilhados fora das abas. A restrição de circulação de carga tem botão e campo de expressão próprios na aba Carga, executada de forma independente do pacote de indicadores de rede.
 - **Painel de Logística Regional** (`gui/regional_dock.py`): Interface dock dedicada a análises de redes rodoviárias estaduais e nacionais.
 - **Diálogo de Dependências** (`gui/dependencies_dialog.py`): Verificação e diagnóstico visual de pacotes opcionais (`OR-Tools`, `pyarrow`).
 
@@ -178,7 +178,7 @@ The plugin acts as a **Processing Provider** (`logis`), exposing the following a
 
 ### User Interface (GUI)
 
-- **Urban Logistics Panel** (`gui/urban_dock.py`): Interactive dock interface for parameter configuration and urban diagnostics execution.
+- **Urban Logistics Panel** (`gui/urban_dock.py`): Interactive dock interface with three tabs — Network, Demand, and Cargo —, with the road network selector and the results panel shared outside the tabs. Cargo circulation restriction has its own button and expression field in the Cargo tab, run independently of the network indicators batch.
 - **Regional Logistics Panel** (`gui/regional_dock.py`): Dedicated dock interface for state and national road network analyses.
 - **Dependencies Dialog** (`gui/dependencies_dialog.py`): Visual check and diagnostics of optional packages (`OR-Tools`, `pyarrow`).
 

@@ -64,6 +64,31 @@ class TestDockLayout(unittest.TestCase):
             "fora de qualquer aba (painel de resultados compartilhado)."
         )
 
+    def test_urban_dock_has_three_tabs(self):
+        content = (pathlib.Path(__file__).parent / "logis/gui/urban_dock.py").read_text(
+            encoding="utf-8"
+        )
+
+        self.assertIn("QTabWidget(", content)
+        self.assertIn("def _new_tab", content)
+
+        new_tab_calls = len(re.findall(r"self\._new_tab\(", content))
+        self.assertEqual(
+            new_tab_calls, 3,
+            f"Esperado exatamente 3 chamadas de _new_tab, encontrado {new_tab_calls}."
+        )
+
+    def test_urban_dock_results_panel_outside_tabs(self):
+        content = (pathlib.Path(__file__).parent / "logis/gui/urban_dock.py").read_text(
+            encoding="utf-8"
+        )
+
+        self.assertTrue(
+            re.search(r"outer\.addWidget\(self\.txt_results\)", content),
+            "self.txt_results deve ser adicionado ao layout externo (outer), "
+            "fora de qualquer aba (painel de resultados compartilhado)."
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

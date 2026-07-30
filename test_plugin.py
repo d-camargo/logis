@@ -157,11 +157,16 @@ class TestLogisPlugin(unittest.TestCase):
         self.assertIsNotNone(dock)
         
         # Check that new controls exist
+        self.assertTrue(hasattr(dock, 'tabs'))
         self.assertTrue(hasattr(dock, 'cmb_delivery_depots'))
         self.assertTrue(hasattr(dock, 'cmb_delivery_zones'))
         self.assertTrue(hasattr(dock, 'cmb_delivery_criterion'))
         self.assertTrue(hasattr(dock, 'btn_calculate_delivery'))
         self.assertTrue(hasattr(dock, 'calculate_delivery_distance'))
+        self.assertTrue(hasattr(dock, 'txt_cargo_expression'))
+        self.assertTrue(hasattr(dock, 'btn_calculate_cargo'))
+        self.assertTrue(hasattr(dock, 'calculate_cargo_restriction'))
+
 
 if __name__ == '__main__':
     unittest.main()

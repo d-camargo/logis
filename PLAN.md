@@ -2,6 +2,182 @@
 
 ## Objetivo
 
+**Nota (2026-07-30) — F10: abas no painel de Indicadores Urbanos
+(pedido explícito do Diego).** Depois de ver as abas do painel de Coleta
+de Lixo funcionando (entrega do F9), o Diego pediu o mesmo tratamento
+para o módulo Urbano: *"Na parte de Indicadores urbanos temos várias
+opções também, vamos pelo mesmo caminho da coleta de lixo e criar abas
+para que seja possível o usuário fazer 1 parte de cada vez."*
+
+**Estado verificado no início desta revisão** (execução real, não
+confiança no plano): `git status` limpo em `main`, `git log` em `4d4eaae`
+("package: logis 0.1.2"); `python3 -m unittest discover -s . -p
+"test_*.py"` → **Ran 228 tests, OK**; `make test` → `sintaxe OK`. F9 está
+fechado no código — `logis/gui/waste_dock.py:190` tem `_new_tab`, quatro
+`self._new_tab(...)` (linhas 234, 347, 493, 563) e `txt_results` no
+`outer`; `urban_dock.py:177` e `regional_dock.py` já têm `QScrollArea`.
+
+**O que o painel Urbano é hoje** (`logis/gui/urban_dock.py`, 680 linhas):
+uma coluna única com rolagem, cinco blocos empilhados e **um único
+`txt_results`** compartilhado por todos:
+
+| Bloco (linhas atuais) | Método | Algorithms `logis:*` |
+|---|---|---|
+| Indicadores de rede (186-226) | `calculate_indicators` (319) | `urban_network_density`, `urban_network_connectivity`, `urban_mean_circuity`, **`urban_cargo_restriction`** |
+| Densidade de Demanda (228-243) | `calculate_demand_density` (447) | `urban_demand_density` |
+| Acessibilidade Gravitacional (245-275) | `calculate_gravity_accessibility` (501) | `urban_gravity_accessibility` |
+| Betweenness (277-290) | `calculate_edge_betweenness` (570) | `urban_edge_betweenness` |
+| Distância de Entrega (292-314) | `calculate_delivery_distance` (617) | `urban_delivery_distance` |
+
+**Dois achados desta revisão que moldam o desenho:**
+
+1. **Não há lacuna de cobertura** — diferente do que aconteceu no dock
+   Waste (onde faltavam duas seções, passos 108-109), os **8** algorithms
+   urbanos registrados em `provider.py` (`ls logis/algorithms/urban_*.py`)
+   estão todos acessíveis pelo painel. F10 é remontagem de layout, não
+   fechamento de lacuna.
+2. **`cmb_network` é compartilhado por quatro fluxos** — linhas 326, 506,
+   575 e 622 leem `self.cmb_network.currentLayer()`. Se ele for para
+   dentro de uma aba, os fluxos das outras abas passam a depender de um
+   widget invisível: o usuário abriria a aba "Carga" sem ter onde escolher
+   a rede. Por isso o seletor de rede viária **fica no cabeçalho, fora
+   das abas** (ver "Decisões de arquitetura — F10"). `cmb_area` só é lido
+   em 327 (densidade) e vai para dentro da aba "Rede".
+
+**Consequência do pedido "fazer 1 parte de cada vez": a restrição de
+carga sai do botão-pacote.** Hoje `calculate_indicators` roda quatro
+algorithms em sequência num único clique, e o quarto
+(`urban_cargo_restriction`, linhas 425-442) é justamente o indicador de
+**operação de carga** — a família que dá nome à terceira aba na seção 5.1
+do CLAUDE.md. Mantê-lo dentro do pacote deixaria a aba "Carga" com uma
+seção só e obrigaria o usuário a rodar três cálculos de rede para obter
+um indicador de carga. Ele vira seção própria com botão próprio
+(`calculate_cargo_restriction`), e o pacote passa a ser de **três**
+indicadores de rede. É a única mudança de comportamento de F10, e é
+exatamente o que o Diego pediu.
+
+**Nota (2026-07-29, segunda revisão do dia) — F9: usabilidade dos painéis
+no QGIS 4.2 ("Belém do Pará").** O Diego instalou a versão 0.1.1 (saída
+do F8) no **QGIS 4.2 sobre Ubuntu** e trouxe quatro constatações e um
+pedido:
+
+1. **Painel sem rolagem** — "tem mais informações que aparecem, mas não
+   tem a opção de rolar para baixo": os painéis **Urbano** e **Regional**
+   cortam o conteúdo. Confirmado no código nesta revisão: `grep -n
+   "QScrollArea" logis/gui/*.py` só encontra `waste_dock.py`;
+   `urban_dock.py:305` e `regional_dock.py:237` fazem
+   `self.setWidget(central)` direto, sem área de rolagem. O `urban_dock`
+   tem 8 seções em coluna única (linha 168-305) e o `regional_dock`, 5 —
+   nenhum cabe numa dock lateral em tela normal.
+2. **QGIS 4.2 é o ambiente-alvo real** do teste — o F8 já entregou
+   `supportsQt6=True` e os enums escopados; nada a refazer aí, mas o
+   número da versão testada passa a ser registrado no README.
+3. **Diálogo "Dependências" abre com o texto errado** — "é uma questão
+   de dimensionamento da janela". Duas causas prováveis, ambas visíveis
+   no fonte: (a) `gui/dependencies_dialog.py:193` e `:227` aplicam
+   `setStyleSheet("font-weight: bold; padding: 10px;")` **no QGroupBox
+   sem seletor**, o que no Qt6 faz o título do grupo sobrepor/cortar o
+   conteúdo (o `padding` passa a valer para o box inteiro e o título
+   continua ancorado na borda); (b) o diálogo é aberto com
+   `resize(550, 420)` fixo (linha 165) enquanto o conteúdo real —
+   dois grupos com parágrafos `setWordWrap(True)`, barra de progresso,
+   área de log de 100 px e aviso de reinício — pede mais altura, e sem
+   rolagem o excedente simplesmente não aparece.
+4. **A instalação do OR-Tools no Ubuntu funcionou** (validação do
+   comando com as três travas da seção 2.1 do CLAUDE.md, entregue no
+   passo 94) — nada a corrigir, só a registrar.
+5. **Pedido explícito: abas no painel de Coleta de Lixo.** O painel
+   funciona e tem rolagem, mas o Diego quer as opções em **abas** em vez
+   de todas empilhadas. Ver "Decisões de arquitetura — F9" para o
+   agrupamento escolhido.
+
+**Achado desta revisão, não relatado pelo Diego: o dock de Coleta de
+Lixo só cobre 8 dos 10 algorithms do módulo.** `grep -n "logis:waste"
+logis/gui/waste_dock.py` lista `waste_generation_estimate`,
+`waste_cpp_route`, `waste_rpp_route`, `waste_carp_route`,
+`waste_fleet_sizing`, `waste_sector_balance`,
+`waste_destination_distance`, `waste_collection_coverage` — **faltam
+`logis:waste_districting` (Setorização) e `logis:waste_deadhead_ratio`
+(Deadhead Ratio)**, apesar de os passos 71 e 76 estarem marcados `[x]` e
+de a decisão de arquitetura do dock (2026-07-23) prever "dez seções, uma
+por algorithm". Os dois algorithms existem e estão registrados em
+`provider.py`; o que falta é só a seção de UI. Como a reorganização em
+abas já vai mexer em todas as seções, é a hora barata de fechar a
+lacuna — entra nesta rodada (passos 108 e 109).
+
+**Estado verificado no início desta revisão** (execução real, não
+confiança no plano): `git status` limpo em `main`, `git log` no commit
+`6c152b7` ("package: logis 0.1.1"); `python3 -m unittest discover -s .
+-p "test_*.py"` → **Ran 224 tests, OK**; `make test` → `sintaxe OK`.
+F8 está fechado no código; F9 é uma rodada de **UI/UX apenas** — nenhum
+algorithm, nenhuma função de `core/`, nenhuma dependência nova.
+
+**Nota (2026-07-29) — F8: compatibilidade com QGIS 4 / Qt 6 (PyQt6).**
+O Diego rodou o plugin no QGIS 4 (perfil `.../QGIS/QGIS4/profiles/default`,
+Flatpak) e recebeu dois `AttributeError` no log:
+
+- `logis_plugin.py:69` → `type object 'Qt' has no attribute
+  'RightDockWidgetArea'. Did you mean: 'DockWidgetArea'?`
+- `gui/dependencies_dialog.py:158` → `type object 'Qt' has no attribute
+  'WindowMinMaxButtonsHint'`
+
+Causa raiz única: **no PyQt6 todos os enums do Qt são escopados**
+(`Qt.DockWidgetArea.RightDockWidgetArea`, `Qt.WindowType.WindowMinMax
+ButtonsHint`); as formas "soltas" do PyQt5 deixaram de existir. Os dois
+tracebacks são só a ponta visível — a auditoria feita nesta revisão
+encontrou o mesmo padrão em várias outras famílias de enum e mais duas
+quebras independentes do PyQt6. Inventário verificado no código atual
+(2026-07-29, `grep` no repo):
+
+| Sítio | Ocorrências | Quebra no Qt6? |
+|---|---|---|
+| `Qt.RightDockWidgetArea` (`logis_plugin.py`) | 3 | **sim (confirmado pelo log)** |
+| `Qt.WindowMinMaxButtonsHint`/`Qt.WindowCloseButtonHint` (`gui/dependencies_dialog.py`) | 2 | **sim (confirmado pelo log)** |
+| `QVariant.Int/Double/Bool/LongLong/String` direto em 7 algorithms | 21 | **sim** — `QVariant::Type` foi removido no Qt6 |
+| `core/qgis_compat.py::field_type()` | 1 função | **sim** — testa `QVariant is not None`, mas no PyQt6 `QVariant` importa e não tem `.String`; levanta `AttributeError` antes de chegar ao fallback `QMetaType` |
+| `QgsWkbTypes.LineString / NoGeometry / PointGeometry` | 12 | provável (enum escopado) |
+| `QgsProcessing.TypeVectorLine/Point/Polygon` | 43 | provável (enum escopado) |
+| `QgsProcessingParameterNumber.Double/Integer` | 28 | provável (enum escopado) |
+| `QgsTask.CanCancel` (`core/ortools_installer.py`) | 1 | provável (enum escopado) |
+| `self.dialog.exec_()` (`logis_plugin.py:71`) | 1 | **sim** — o PyQt6 removeu os apelidos `exec_()` |
+
+**Descoberta que torna a correção barata:** neste ambiente de
+desenvolvimento (QGIS 3.34.4 / Qt 5.15 / PyQt 5.15) as **formas
+escopadas já funcionam** para todos esses casos — verificado por
+execução direta nesta revisão: `Qt.DockWidgetArea.RightDockWidgetArea`,
+`Qt.WindowType.WindowMinMaxButtonsHint`, `QgsWkbTypes.Type.LineString`,
+`QgsWkbTypes.GeometryType.PointGeometry`, `QgsProcessing.SourceType.
+TypeVectorLine`, `QgsProcessingParameterNumber.Type.Double`,
+`QgsTask.Flag.CanCancel` e `QDialog.exec()` **todos existem no PyQt5/
+QGIS 3.34**. Ou seja: **não é preciso shim nenhum para enums** — basta
+escrever a forma escopada, que é válida nas duas versões. Só o
+`QVariant`/`QMetaType` precisa de código condicional, porque aí a
+diferença é real (o `QgsField(nome, QMetaType.Type)` **não** existe no
+QGIS 3.34 — confirmado: `QgsField('a', QMetaType.Type.QString)` levanta
+`arguments did not match any overloaded call`). Isso mantém
+`qgisMinimumVersion=3.16` intacto.
+
+**Segundo achado desta auditoria (independente do Qt6):** a suíte de
+testes está **vermelha no `main`** — `Ran 211 tests ... FAILED
+(failures=1, errors=10)`. Nada a ver com Qt6: é resíduo do commit
+`4c49617` (plugin movido para a subpasta `logis/`). Dez erros são
+`patch('gui.waste_dock...')` / `patch('core.optim_backend...')` /
+`patch('core.connectors.wfs...')` apontando para os módulos no caminho
+antigo (topo do repo) em vez de `logis.gui...`/`logis.core...`; a falha
+restante é `test_i18n` procurando `i18n/logis_en.qm` na raiz quando o
+arquivo está em `logis/i18n/`. **Isso tem que ser o primeiro passo da
+rodada** — sem suíte verde, nenhum passo seguinte consegue cumprir o
+"rode a suíte antes de marcar [x]".
+
+**Terceiro achado (violação da seção 2.1 do CLAUDE.md):**
+`core/ortools_installer.py` roda `pip install --user ortools` **sem as
+travas obrigatórias** (`"pandas<3" "numpy<2" "typing_extensions==
+4.10.0"`). Esse é exatamente o comando que o CLAUDE.md proíbe, porque
+sobrepõe o numpy do QGIS e quebra a instalação inteira do usuário. É um
+bug de dano real, disparável por um clique no mesmo diálogo
+"Dependências" que o Diego estava usando quando viu o traceback —
+entra nesta rodada.
+
 **Nota (2026-07-23) — encerramento formal de F6 e início de F7:** pedido
 explícito do Diego nesta revisão: "vamos encerrar F6", confirmando que a
 validação manual no QGIS (passo 58) **não pode ser feita agora** ("estou
@@ -301,6 +477,283 @@ registradas neste plano (ex.: passo 58 cita "passos 7, 13, 18, 27, 33,
 
 ## Decisões de arquitetura
 
+### Novas para F10 — abas no painel de Indicadores Urbanos (2026-07-30)
+
+- **Copiar o padrão de `waste_dock.py`, linha por linha, em vez de
+  inventar outro.** O helper `_new_tab(title)` (`waste_dock.py:190-204`),
+  o mock `class QTabWidget` (linhas 164-173, com `count()`/`tabText()`),
+  o `outer` layout e a ordem `título → descrição → tabs → resultados` já
+  estão validados por `test_dock_layout.py` e pela suíte. F10 replica
+  isso em `urban_dock.py` sem variação — mesmo nome de helper, mesmo mock,
+  mesmos nomes de variável local (`outer`, `scroll`, `central`, `layout`),
+  para que os dois arquivos continuem legíveis lado a lado.
+- **Três abas, agrupadas pelas três famílias da seção 5.1 do CLAUDE.md** —
+  não uma aba por algorithm (oito abas não cabem na largura de uma dock
+  lateral) e não uma aba por método (`calculate_*`), que é recorte de
+  implementação, não do domínio:
+  1. **"Rede"** — o botão-pacote de estrutura (densidade viária,
+     conectividade α/β/γ, circuidade média) + Centralidade de
+     Intermediação. Corresponde a "De rede (estrutura)" da seção 5.1.
+  2. **"Demanda"** — Densidade de Demanda + Acessibilidade Gravitacional.
+     Corresponde a "De acessibilidade e demanda".
+  3. **"Carga"** — Restrição de Circulação de Carga (seção nova, extraída
+     do pacote) + Distância de Entrega. Corresponde a "De operação urbana
+     de carga".
+- **`cmb_network` (rede viária) fica no cabeçalho, acima das abas, e é
+  compartilhado.** Quatro métodos o leem (linhas 326, 506, 575, 622);
+  duplicá-lo por aba criaria três combos independentes e o usuário teria
+  de escolher a mesma camada três vezes — e os métodos teriam de mudar
+  para saber qual combo ler. Mantê-lo único e visível em todas as abas
+  é o que permite que **nenhum** dos cinco métodos existentes mude de
+  linha por causa da remontagem. `cmb_area` (só lido em 327) vai para
+  dentro da aba "Rede", ao lado do botão que o usa.
+- **O painel de resultados (`txt_results`) fica FORA das abas, no rodapé**
+  — mesma decisão do dock Waste, pelos mesmos dois motivos: o usuário roda
+  um cálculo e troca de aba sem perder o log, e `self.txt_results` segue
+  sendo um único atributo, então os cinco métodos `calculate_*` continuam
+  escrevendo nele sem saber que existem abas.
+- **Cada aba tem sua própria `QScrollArea`** (é o que o `_new_tab` faz), e
+  a `QScrollArea` externa do dock **permanece** — `test_dock_layout.py`
+  exige `self.setWidget(scroll)` nos três docks, e `waste_dock.py` já
+  mantém as duas camadas. Não remover a externa "porque agora as abas
+  rolam".
+- **Extrair `calculate_cargo_restriction()` de `calculate_indicators()` é
+  a única mudança de comportamento**, e é mecânica: o bloco 425-442 vira
+  método próprio com o mesmo preâmbulo de guarda dos outros métodos
+  (checar `cmb_network`, `import processing` dentro de `try`, escrever
+  erro em `txt_results`). No pacote que sobra, renumerar o log de "1) 2)
+  3) 4)" para "1) 2) 3)" e ajustar a docstring ("os três algoritmos de
+  estrutura de rede"). **Não** mexer em mais nada dos outros três blocos.
+- **A seção nova de Carga expõe `RESTRICTION_EXPRESSION`**, que hoje é
+  passado hardcoded como `''` (linha 430). Um `QLineEdit`
+  (`self.txt_cargo_expression`) com placeholder e vazio por padrão
+  preserva exatamente o comportamento atual e destrava o filtro por
+  `highway`/`maxweight` previsto na seção 5.1 do CLAUDE.md. É um widget e
+  uma linha de leitura — não é escopo novo, é a seção deixar de ser um
+  botão solo.
+- **Nenhum widget renomeado, nenhum atributo removido.** Todos os
+  `self.cmb_*`/`self.spin_*`/`self.txt_*`/`self.btn_*` mantêm os nomes
+  atuais, e `test_plugin.py::test_urban_dock_delivery_distance_controls`
+  tem que continuar passando **sem edição** durante os passos 113-116 — é
+  o que prova que a remontagem não perdeu nada. Só o passo 117 acrescenta
+  atributos (`txt_cargo_expression`, `btn_calculate_cargo`) e só o 118
+  edita testes.
+- **Ordem obrigatória: estrutura primeiro (113), depois uma aba por passo
+  (114-116), depois a extração da restrição de carga (117).** Assim cada
+  passo isolado deixa o painel funcionando; se a rodada for interrompida,
+  o pior estado possível é "abas prontas, restrição de carga ainda dentro
+  do pacote" — que é o comportamento de hoje, não uma regressão.
+- **`test_dock_layout.py` cresce em vez de ganhar arquivo novo.** Ele já é
+  o teste estático de layout dos três docks; F10 acrescenta lá o par de
+  asserções de aba para o Urbano (`QTabWidget(`, três `_new_tab`,
+  `outer.addWidget(self.txt_results)`), espelhando
+  `test_waste_dock_has_four_tabs`. Como neste ambiente `import qgis`
+  funciona, instanciar o dock não exercitaria os mocks — leitura de fonte
+  continua sendo a técnica certa (mesma justificativa do F9).
+- **F10 não toca em `core/`, `algorithms/` nem `provider.py`**, e não
+  acrescenta dependência. Só `logis/gui/urban_dock.py`, dois testes, os
+  arquivos de i18n, `metadata.txt` e `README.md`.
+- **`regional_dock.py` fica fora desta rodada.** Ele tem 5 seções e
+  também caberia em abas, mas o Diego pediu o Urbano; agrupar o Regional
+  (indicadores de rede × acessibilidade × potencial logístico) é a
+  próxima rodada natural, quando ele pedir — não presumir.
+- **Bug latente do `Makefile` a corrigir de passagem no passo 119:**
+  `transcompile` roda `lrelease i18n/*.ts`, mas os `.ts` vivem em
+  `logis/i18n/` desde a reestruturação em subpasta (o `i18n/` da raiz está
+  vazio). O alvo `i18n` já usa `$(PLUGINNAME)/i18n/...`; `transcompile`
+  ficou para trás. Sem isso o passo de tradução não regenera `.qm` nenhum.
+- **A validação visual final é do Diego, no QGIS 4.2** — mesma decisão de
+  não-bloqueio de todas as rodadas anteriores (passo 58). Fechamento do
+  código de F10 = suíte verde + `make test` + `test_dock_layout.py`.
+
+### Novas para F9 — usabilidade dos painéis no QGIS 4.2 (2026-07-29, segunda revisão)
+
+- **Rolagem: replicar exatamente o padrão de `waste_dock.py`, não
+  inventar outro.** `gui/waste_dock.py:180-181,645-646` já resolve o
+  problema com quatro linhas — `scroll = QScrollArea()`,
+  `scroll.setWidgetResizable(True)`, `scroll.setWidget(central)`,
+  `self.setWidget(scroll)`. `urban_dock.py` e `regional_dock.py` passam a
+  fazer o mesmo, com o mesmo mock `QScrollArea` no bloco `except
+  ImportError`. **Não** usar `setMinimumWidth`/`setFixedHeight` nem
+  políticas de barra de rolagem escopadas (`Qt.ScrollBarPolicy.*`): o
+  `setWidgetResizable(True)` já elimina a barra horizontal, e evitar o
+  enum mantém intacto o mock `class Qt: pass` dos dois docks.
+- **A regressão de layout é coberta por teste estático de fonte, não por
+  instanciação de widget.** Neste ambiente `import qgis` funciona (QGIS
+  3.34 instalado), então os mocks dos docks **não** são exercidos pela
+  suíte e um `isinstance(dock._widget, QScrollArea)` provaria pouco.
+  Novo `test_dock_layout.py` lê os três `gui/*_dock.py` como texto
+  (`pathlib` + `re`, mesma técnica de `test_qt6_compat.py`) e afirma:
+  cada dock instancia `QScrollArea`, chama `setWidgetResizable(True)` e
+  termina com `self.setWidget(scroll)`; `waste_dock.py` instancia
+  `QTabWidget` e registra as quatro abas. É o guarda barato contra
+  alguém reescrever `_build_ui` e perder a rolagem.
+- **Diálogo de dependências: corrigir a causa (stylesheet do
+  `QGroupBox`) antes de mexer em tamanho.** O `setStyleSheet(
+  "font-weight: bold; padding: 10px;")` sem seletor é o defeito clássico
+  de QSS em `QGroupBox`: a regra cascateia para os filhos e o título fica
+  ancorado na borda, sobrepondo a primeira linha. Trocar por regra
+  escopada com título reposicionado — `QGroupBox { font-weight: bold;
+  margin-top: 12px; padding: 10px; } QGroupBox::title {
+  subcontrol-origin: margin; left: 8px; padding: 0 4px; }`. Vale para os
+  dois grupos (GisBR e OR-Tools).
+- **Diálogo de dependências: rolagem + tamanho maior, cinto e
+  suspensório.** O conteúdo (dois grupos com parágrafos que quebram
+  linha, barra de progresso, log de 100 px, aviso de reinício) tem altura
+  dependente de fonte/DPI — qualquer número fixo erra em alguma máquina.
+  Estrutura nova: `QVBoxLayout(self)` → `QScrollArea` (com um `QWidget`
+  de conteúdo que recebe o layout atual) → **rodapé fixo fora da
+  rolagem** com o botão "Fechar" (o botão nunca pode sair da tela).
+  `resize(620, 560)` e `setMinimumSize(520, 420)`. Mocks novos no bloco
+  `except ImportError`: `QScrollArea` e `QWidget`.
+- **Abas no dock de Coleta de Lixo: quatro abas, agrupadas pelo fluxo da
+  seção 6 do CLAUDE.md** — não uma aba por algorithm (dez abas não
+  cabem na largura de uma dock lateral, e a barra viraria um carrossel):
+  1. **"Geração"** — Estimativa de Geração (`waste_generation_estimate`)
+     + Setorização (`waste_districting`, seção nova, passo 108).
+  2. **"Roteirização"** — CPP, RPP, CARP.
+  3. **"Frota"** — Dimensionamento de Frota.
+  4. **"Indicadores"** — Deadhead Ratio (seção nova, passo 109),
+     Equilíbrio entre Setores, Distância ao Destino, Cobertura por
+     Frequência.
+- **O painel de resultados fica FORA das abas**, no rodapé do dock,
+  compartilhado por todas. Motivo funcional (o usuário roda um cálculo e
+  troca de aba sem perder o log) e motivo de compatibilidade: mantém
+  `self.txt_results` como um único atributo, e os oito métodos
+  `run_*`/`calculate_*` (linhas 648-1180) **não mudam nem uma linha** —
+  a rodada é só remontagem de layout.
+- **Cada aba tem sua própria `QScrollArea`.** A aba "Roteirização"
+  sozinha tem três seções com 15+ widgets; a rolagem por aba é o que
+  torna a divisão útil em vez de cosmética. Helper privado
+  `_new_tab(title)` que cria `QWidget` + `QVBoxLayout` + `QScrollArea`,
+  chama `self.tabs.addTab(scroll, title)` e devolve o layout — evita
+  repetir seis linhas quatro vezes.
+- **Nenhum widget renomeado, nenhum atributo removido.** Todos os
+  `self.cmb_*`/`self.spin_*`/`self.btn_*` mantêm os nomes atuais; o
+  `test_waste_dock.py` existente (que afirma `hasattr` de ~50 widgets)
+  tem que continuar passando **sem edição** durante os passos 104-107 —
+  é justamente o que prova que a remontagem não perdeu nada pelo
+  caminho. Só os passos 108-109 (seções novas) acrescentam atributos, e
+  só o passo 110 edita o teste.
+- **Ordem obrigatória: rolagem primeiro (99-101), diálogo depois
+  (102-103), abas por último (104-110).** Os dois primeiros blocos são
+  as regressões que o Diego encontrou em uso real; o terceiro é
+  melhoria pedida. Assim, se a rodada for interrompida, o que ficou
+  pronto é o que mais importa.
+- **Sem `QgsCollapsibleGroupBox`, sem `QToolBox`, sem `QSplitter`.**
+  Foram considerados como alternativas às abas (o `QgsCollapsibleGroupBox`
+  é o idioma nativo do QGIS para seções longas) e **rejeitados**: o
+  Diego pediu abas explicitamente, e `QTabWidget` é PyQt puro — não
+  acrescenta superfície de API do QGIS a mockar nos testes.
+- **F9 não toca em `core/`, `algorithms/` nem `provider.py`.** Só
+  `logis/gui/*.py`, um teste novo, o teste do dock waste, os arquivos de
+  i18n regenerados, `metadata.txt` (versão) e `README.md`.
+- **A validação visual final é do Diego, no QGIS 4.2** — mesma decisão
+  de não-bloqueio de todas as rodadas anteriores (passo 58). Fechamento
+  do código de F9 = suíte verde + `make test` + `test_dock_layout.py`.
+
+### Novas para F8 — compatibilidade QGIS 3.16+ e QGIS 4 / Qt 6 (2026-07-29)
+
+- **Regra única do projeto, a partir de agora: todo acesso a enum do Qt
+  ou do QGIS é escopado.** `Qt.DockWidgetArea.RightDockWidgetArea`, não
+  `Qt.RightDockWidgetArea`. Vale para `Qt.*`, `QgsWkbTypes.*`,
+  `QgsProcessing.*`, `QgsProcessingParameterNumber.*`, `QgsTask.*`,
+  `Qgis.*`. Motivo: a forma escopada funciona nas duas versões (PyQt5 do
+  QGIS 3.34 e PyQt6 do QGIS 4), então é uma regra sem custo e sem
+  bifurcação de código. Essa regra vai para o CLAUDE.md (seção 9) para
+  valer para todo código futuro.
+- **Nada de shim/wrapper para enum.** Foi considerado criar um
+  `enum_value(owner, member, scope)` em `core/qgis_compat.py`; **rejeitado**
+  — como a forma escopada já é válida em ambas as versões, um resolvedor
+  genérico só adicionaria indireção, custo de teste e um lugar a mais
+  para errar. Compat só onde a API realmente diverge (ver item seguinte).
+- **`field_type()` é o único ponto de compat de tipo, e o bug dele é a
+  condição de guarda, não a ordem.** A ordem atual (QVariant primeiro,
+  QMetaType depois) está **correta e deve ser preservada** — o motivo
+  documentado na docstring foi reconfirmado por execução nesta revisão:
+  no QGIS 3.34 o construtor `QgsField(nome, QMetaType.Type)` não existe.
+  O defeito é `if QVariant is not None:` — no PyQt6 o `QVariant` importa
+  normalmente, só não tem mais os membros de `QVariant::Type`. Correção:
+  guardar por **presença de membro** (`hasattr(QVariant, "String")`),
+  não por presença do módulo. Mesma correção na guarda do `QMetaType`.
+- **Os 7 algorithms que ainda usam `QVariant.*` direto passam a usar
+  `field_type()`.** Não existe motivo para dois caminhos: `field_type`
+  já é o padrão em 16 arquivos. Mapeamento: `QVariant.Int` →
+  `field_type("int")` (que devolve `LongLong` — **mudança de tipo
+  deliberada e inócua**: o GPKG grava inteiro de 64 bits do mesmo jeito,
+  e é o que os outros 16 arquivos já fazem), `QVariant.Double` →
+  `field_type("double")`, `QVariant.Bool` → `field_type("bool")`.
+  Arquivos: `algorithms/waste_districting.py`,
+  `algorithms/regional_critical_links.py`, `algorithms/vrp_cvrp.py`,
+  `algorithms/facility_mclp.py`, `algorithms/facility_lscp.py`,
+  `algorithms/facility_p_median.py`,
+  `algorithms/urban_edge_betweenness.py`. Depois disso, **`QVariant` só
+  pode ser importado em `core/qgis_compat.py`** — vira invariante
+  testável (passo do teste estático).
+- **`exec_()` → `exec()`.** O PyQt6 removeu os apelidos com underscore;
+  o `exec()` existe no PyQt5 desde sempre (confirmado no QGIS 3.34).
+  Um sítio só: `logis_plugin.py:71`. **Não** criar teste que chame
+  `exec()` — é modal e travaria a suíte; a cobertura é o teste estático.
+- **Mocks das GUIs acompanham a forma escopada.** O bloco `except
+  ImportError` de `gui/dependencies_dialog.py` define `class Qt` com
+  atributos soltos (`WindowMinMaxButtonsHint = 0`); passa a ter a classe
+  aninhada `WindowType`. Os mocks `class Qt: pass` dos três docks não
+  mudam (eles não acessam membro nenhum).
+- **Enums do Processing e do WKB são troca mecânica, verificável aqui
+  mesmo.** `QgsProcessing.TypeVectorX` → `QgsProcessing.SourceType.
+  TypeVectorX`; `QgsProcessingParameterNumber.Double/Integer` →
+  `QgsProcessingParameterNumber.Type.Double/Integer`;
+  `QgsWkbTypes.LineString/NoGeometry` → `QgsWkbTypes.Type.X`;
+  `QgsWkbTypes.PointGeometry` → `QgsWkbTypes.GeometryType.PointGeometry`
+  (atenção: são **dois** enums diferentes com nomes parecidos — tipo de
+  geometria vs. tipo WKB; conferir sítio a sítio, não passar `sed` cego).
+  Todos validados como existentes no QGIS 3.34 nesta revisão, então a
+  suíte local prova a mudança.
+- **Teste estático de regressão em vez de fé.** Novo `test_qt6_compat.py`
+  varre os `.py` de `logis/` procurando os padrões proibidos
+  (`Qt.<Membro>` solto para a lista conhecida, `QVariant.` fora de
+  `core/qgis_compat.py`, `.exec_(`, `QgsProcessing.TypeVector`,
+  `QgsProcessingParameterNumber.Double|Integer`, `QgsWkbTypes.LineString|
+  NoGeometry|PointGeometry`, `QgsTask.CanCancel`). É o único jeito de a
+  regra sobreviver — a suíte roda em PyQt5, onde a forma errada **não**
+  falha em runtime. O teste lê o fonte como texto (`pathlib` + `re`),
+  sem importar QGIS.
+- **Instalador do OR-Tools: usar exatamente o comando da seção 2.1 do
+  CLAUDE.md.** `[sys.executable, "-m", "pip", "install", "--user",
+  "ortools", "pandas<3", "numpy<2", "typing_extensions==4.10.0"]`, e
+  acrescentar `--break-system-packages` quando o pip reclamar de
+  `externally-managed-environment` (detectar pela mensagem e repetir uma
+  vez, em vez de tentar adivinhar a distro antes). Mantém `--user`
+  (funciona no Flatpak, onde o prefixo do sistema é read-only).
+- **Não mexer em `Qgis.MessageLevel.*`** — os 6 sítios em
+  `core/optim_backend.py` e `core/network/od_matrix.py` já estão
+  escopados e corretos.
+- **Nada de novo módulo, nada de dependência nova.** F8 não cria
+  arquivo em `core/` nem em `algorithms/`; só edita sítios existentes,
+  mais um teste novo e um script de diagnóstico em `docs/` (não
+  empacotado).
+- **Diagnóstico na máquina do Diego, porque é lá que o Qt6 está.** Um
+  script `docs/qgis4_compat_check.py` (colável no console Python do QGIS
+  4) reporta quais nomes legados ainda existem no QGIS 4 dele — cobre
+  justamente os itens marcados "provável" na tabela do Objetivo. Não é
+  passo bloqueante: as trocas escopadas são seguras de qualquer forma; o
+  script serve para confirmar o diagnóstico e para a próxima vez.
+- **Makefile aponta só para perfis QGIS3.** O plugin do Diego está em
+  `.../QGIS/QGIS4/profiles/default/...`, mas `make deploy`/`deploy-flatpak`
+  escrevem em `QGIS3`. Decisão: **detectar o perfil** — variável
+  `QGIS_MAJOR` (default `3`) usada nos caminhos, mais alvos
+  `deploy-qgis4`/`deploy-flatpak-qgis4`. Simples, sem quebrar quem usa
+  os alvos atuais.
+- **`metadata.txt` ganha `supportsQt6=True`** (chave oficial do
+  repositório de plugins do QGIS para sinalizar compatibilidade Qt6) e
+  a versão sobe para `0.1.1` — o Diego vai reinstalar, e um número igual
+  com conteúdo diferente confunde o gerenciador de complementos.
+- **A validação final continua sendo do Diego, no QGIS 4** — a suíte
+  local roda em PyQt5 e por construção não consegue provar o
+  comportamento no PyQt6. O critério de fechamento do código de F8 é
+  suíte verde + teste estático, igual às rodadas anteriores (mesma
+  decisão de não-bloqueio do passo 58).
+
 ### Novas para o dock do módulo Waste (F6→F7, decisão desta revisão — 2026-07-23)
 
 - **Um arquivo só, `gui/waste_dock.py`**, mesmo padrão de `gui/
@@ -466,24 +919,6 @@ registradas neste plano (ex.: passo 58 cita "passos 7, 13, 18, 27, 33,
   fora de escopo** (nenhum `algorithms/*.py`/`provider.py` sobrescreve
   `icon()` hoje — mesma verificação já registrada no passo 88 original;
   não muda com esta entrega).
-- **Resultado da confirmação pedida no passo 88 (executado em
-  2026-07-23):** a documentação oficial do PyQGIS Developer Cookbook
-  (seção "Structuring Python Plugins", `docs.qgis.org`) descreve o
-  campo `icon` de `metadata.txt` como "a file name ... of a web
-  friendly image (**PNG, JPEG**)" — **SVG não é citado como formato
-  aceito**. Ou seja, `QSvgIconEngine` resolve o carregamento em tempo
-  de execução (não é limitação técnica), mas o requisito **formal** de
-  submissão ao repositório oficial de plugins aparenta exigir
-  PNG/JPEG. Conforme instruído, `icon.png` **não foi gerado** a partir
-  do SVG nesta rodada — decisão de como reconciliar `icon=icon.svg`
-  (gravado neste passo) com esse requisito fica para o Diego decidir
-  antes de qualquer submissão ao repositório oficial (opções em aberto:
-  gerar `icon.png` a partir do SVG mantendo `icon=icon.svg` para uso
-  interno, ou trocar `metadata.txt` de volta para `icon=icon.png`).
-  Nota à parte, fora do escopo desta confirmação: já existe um
-  `icon.png` (48×48 PNG) rastreado no repositório desde o commit
-  `6ecee4b` (rodada i18n do passo 87), aparentemente incluído ali sem
-  relação com i18n — não foi tocado nesta rodada.
 
 ### Herdadas das rodadas 2-6 — confirmadas corretas no código atual
 
@@ -1766,7 +2201,7 @@ i18n" acima para o desenho completo):**
       `self.tr(...)` no código Python — só o arquivo `.ts`. — arquivos:
       `i18n/logis_en.ts`
 
-- [ ] 85. Rodar `make transcompile` para compilar `i18n/logis_en.qm` a
+- [x] 85. Rodar `make transcompile` para compilar `i18n/logis_en.qm` a
       partir do `.ts` traduzido. Confirmar que o arquivo `.qm` foi
       gerado e que `make test` continua OK. — arquivos:
       `i18n/logis_en.qm` (gerado)
@@ -1783,10 +2218,10 @@ i18n" acima para o desenho completo):**
       `make test`; só marcar `[x]` quando ambos passarem. — arquivos:
       `test_i18n.py`
 
-- [x] 87. Rodar `python3 -m unittest discover -s . -p "test_*.py"` e
-      `make test` para confirmar que nada quebrou (195 testes
-      esperados: 194 + `test_i18n.py`). Commitar e dar push da rodada
-      i18n. — arquivos: nenhum novo (verificação + commit)
+_(Passo 87 — "rodar a suíte e commitar/pushar a rodada i18n" — removido: era
+verificação-pura, sem diff, que o gate F1 não marca e travava o run-all. A
+verificação já está embutida nos passos 85/86; o commit+push saiu de fato em
+`6ecee4b` e o restante fecha por `/review`+`/push`.)_
 
 **Item avulso — integração do ícone (entregue pelo Diego em 2026-07-23,
 conteúdo exato em "Decisões de arquitetura — Ícone", fora da rodada
@@ -1810,97 +2245,6 @@ i18n):**
       de escopo até ele pedir). Rodar `make test` para confirmar que
       nada quebrou e commitar. — arquivos: `metadata.txt`, `icon.svg`
 
-- [x] 89. Consertar a suíte quebrada pelo commit `4c49617` (reestruturação
-      para subpasta `logis/`): atualizar alvos de `unittest.mock.patch`
-      (`logis.core...` e `logis.gui...`) em `test_snv_pipeline.py`,
-      `test_vrp.py` e `test_waste_dock.py`, e caminhos de arquivos de
-      tradução (`logis/i18n/...`) em `test_i18n.py`. Confirmar com
-      `python3 -m unittest discover -s . -p "test_*.py"` (211 testes OK)
-      e `make test` (sintaxe OK). — arquivos: `test_i18n.py`,
-      `test_snv_pipeline.py`, `test_vrp.py`, `test_waste_dock.py`
-
-- [x] 90. Corrigir a guarda de `field_type()` em
-      `core/qgis_compat.py`: trocar `if QVariant is not None` por
-      `if QVariant is not None and hasattr(QVariant, "Bool")`. Em
-      Qt6/PyQt6 a classe `QVariant` ainda pode importar, mas o enum
-      `QVariant.Type` foi removido — com a guarda antiga o acesso a
-      `QVariant.Bool` estouraria `AttributeError` em vez de cair no
-      fallback `QMetaType`. Confirmar com `make test` (sintaxe OK) e
-      `python3 -m unittest discover -s . -p "test_*.py"` (211 testes
-      OK). — arquivos: `core/qgis_compat.py`
-      Complemento: `test_qgis_compat.py` cobre os quatro casos —
-      `field_type()` constrói um `QgsField` de verdade para
-      int/double/string/bool, tipo desconhecido devolve o valor inválido
-      sem levantar, o PyQt6 é simulado com um `QVariant` sem membros
-      (cai em `QMetaType.Type.QString`) e sem nenhum dos dois devolve
-      `None`. — arquivos: `test_qgis_compat.py`
-
-- [x] 91. Corrigir os dois `AttributeError` relatados no QGIS 4: em
-      `logis/logis_plugin.py`, `Qt.RightDockWidgetArea` →
-      `Qt.DockWidgetArea.RightDockWidgetArea` (3 sítios) e
-      `self.dialog.exec_()` → `exec()`; em
-      `logis/gui/dependencies_dialog.py`, `Qt.WindowMinMaxButtonsHint |
-      Qt.WindowCloseButtonHint` → `Qt.WindowType.*`, com o mock da
-      `class Qt` do bloco `except ImportError` ganhando a classe
-      aninhada `WindowType`. — arquivos: `logis/logis_plugin.py`,
-      `logis/gui/dependencies_dialog.py`
-
-- [x] 92. Eliminar o uso direto de `QVariant` nos 7 algorithms,
-      trocando por `field_type()` e por `qgis_compat.is_null()` (helper
-      novo, para os `QVariant(val).isNull()` que existiam nos
-      algorithms). `grep -rn "QVariant" logis/` só retorna
-      `core/qgis_compat.py`. — arquivos: `waste_districting.py`,
-      `regional_critical_links.py`, `vrp_cvrp.py`, `facility_mclp.py`,
-      `facility_lscp.py`, `facility_p_median.py`,
-      `urban_edge_betweenness.py`, `core/qgis_compat.py`
-
-- [x] 93. Escopar os enums do Processing e do WKB em todos os arquivos
-      de `logis/`: `QgsProcessing.TypeVector*` →
-      `QgsProcessing.SourceType.*` (43 sítios),
-      `QgsProcessingParameterNumber.Double|Integer` →
-      `...Type.*` (28 sítios), `QgsWkbTypes.LineString|NoGeometry` →
-      `QgsWkbTypes.Type.*` e `QgsWkbTypes.PointGeometry` →
-      `QgsWkbTypes.GeometryType.PointGeometry`. — arquivos:
-      `logis/algorithms/*.py`, `logis/core/network/*.py`
-
-- [x] 94. Corrigir `logis/core/ortools_installer.py`: `QgsTask.CanCancel`
-      → `QgsTask.Flag.CanCancel` (com o mock expondo `Flag`); comando de
-      instalação exatamente o da seção 2.1 do CLAUDE.md (`ortools`,
-      `pandas<3`, `numpy<2`, `typing_extensions==4.10.0`), extraído para
-      `build_command()`, com **uma** repetição acrescentando
-      `--break-system-packages` quando a saída do pip contiver
-      `externally-managed-environment` (logada via `log_received`); o
-      `ortools_desc` do diálogo menciona as versões travadas.
-      `test_ortools_installer.py` afirma as três travas, a ausência do
-      `pip install ortools` puro e o retry. — arquivos:
-      `logis/core/ortools_installer.py`,
-      `logis/gui/dependencies_dialog.py`, `test_ortools_installer.py`
-
-- [x] 95. Criar `test_qt6_compat.py`: teste estático que lê como texto
-      todos os `.py` sob `logis/` e falha apontando arquivo:linha em
-      qualquer forma legada (enum solto do Qt/Processing/WKB/QgsTask,
-      `QVariant.` fora de `core/qgis_compat.py`, `.exec_(`). Ele existe
-      porque a suíte roda em PyQt5, onde a forma errada não falha em
-      runtime. — arquivos: `test_qt6_compat.py`
-
-- [x] 96. Registrar a regra do enum escopado na seção 9 do CLAUDE.md,
-      com a justificativa em uma linha e a menção de que
-      `test_qt6_compat.py` é quem faz cumprir. — arquivos: `CLAUDE.md`
-
-- [x] 97. Ajustar `metadata.txt` (`supportsQt6=True`, `version=0.1.1`,
-      mantendo `qgisMinimumVersion=3.16`/`qgisMaximumVersion=4.99`) e o
-      `Makefile` (`QGIS_MAJOR ?= 3` nos caminhos de perfil, mais os
-      alvos `deploy-qgis4`/`deploy-flatpak-qgis4` no `help` e no
-      `.PHONY`). — arquivos: `logis/metadata.txt`, `Makefile`
-
-- [x] 98. Criar `docs/qgis4_compat_check.py` (não empacotado): script
-      colável no console Python do QGIS 4 que imprime versões e, para
-      cada nome legado, se ele e a forma escopada existem
-      (`OK/AUSENTE`), incluindo se `QgsField("t", QMetaType.Type.QString)`
-      constrói. Roda sem exceção no QGIS 3.34 (relata as diferenças).
-      Documentado no `README.md`. — arquivos:
-      `docs/qgis4_compat_check.py`, `README.md`
-
 **Nova rodada — backend OR-Tools para o CVRP (prioritária, executar
 antes de retomar a rodada 9; desenho revisado nesta sessão — mesmo
 arquivo `vrp.py`, parâmetro `backend` em `solve_cvrp()`; ver "Decisões
@@ -1920,7 +2264,7 @@ desenho completo):**
       só refatorado) antes de seguir para o próximo passo. — arquivos:
       `core/routing/vrp.py`
 
-- [ ] 65. Adicionar `solve_cvrp_ortools(distance_matrix, demands,
+- [x] 65. Adicionar `solve_cvrp_ortools(distance_matrix, demands,
       capacity, depot=0, improve=True) -> Tuple[List[List[int]], float,
       List[float]]` em `core/routing/vrp.py` (logo após `solve_cvrp`):
       valida a entrada reaproveitando `_validate_matrix_and_depot` +
@@ -1948,7 +2292,7 @@ desenho completo):**
       `Args`/`Returns`/`Raises` das demais funções de `vrp.py`. —
       arquivos: `core/routing/vrp.py`
 
-- [ ] 66. Adicionar o parâmetro `backend: str = "python"` a
+- [x] 66. Adicionar o parâmetro `backend: str = "python"` a
       `solve_cvrp()`: import guardado de `pick_backend` no topo de
       `vrp.py` (`try: from ..optim_backend import pick_backend / except
       ImportError: from core.optim_backend import pick_backend`, mesmo
@@ -1968,7 +2312,7 @@ desenho completo):**
       inalterados (default `"python"` preserva o comportamento atual). —
       arquivos: `core/routing/vrp.py`
 
-- [ ] 67. Ampliar `test_vrp.py` (não criar arquivo novo) com: (a)
+- [x] 67. Ampliar `test_vrp.py` (não criar arquivo novo) com: (a)
       instância pequena (reaproveitar `self.distance_matrix`/
       `self.demands`/`self.capacity` de `setUp`) resolvida via
       `solve_cvrp_ortools` diretamente **e** via
@@ -2004,15 +2348,532 @@ desenho completo):**
       precisa passar de fato aqui, mesmo sem OR-Tools instalado. —
       arquivos: `test_vrp.py`
 
-- [ ] 68. Rodar `python3 -m unittest discover -s . -p "test_*.py"` e
-      `make test` para confirmar que as mudanças em `vrp.py` não
-      quebram nada existente (nenhuma mudança em `provider.py` ou em
-      `algorithms/vrp_cvrp.py` nesta rodada — `vrp_cvrp.py` continua
-      chamando `solve_cvrp(...)` sem passar `backend`, usa o default
-      `"python"` implicitamente). Commitar e dar push. — arquivos:
-      nenhum novo (verificação + commit)
+_(Passo 68 — "rodar a suíte e commitar/pushar" — removido: verificação-pura sem
+diff, que trava o gate F1. A verificação da rodada OR-Tools já está embutida no
+passo 67 (`unittest test_vrp` + `make test`); commit+push saem por `/review`+`/push`.)_
+
+**F8 — compatibilidade QGIS 4 / Qt 6 (rodada 2026-07-29). Executar na
+ordem: o passo 89 destrava todos os outros (a suíte está vermelha hoje).**
+
+- [x] 89. [T02] Consertar a suíte quebrada pelo commit `4c49617` (plugin
+      movido para a subpasta `logis/`): trocar os alvos de `patch()` que
+      ainda usam o caminho antigo pelos novos —
+      `patch('gui.waste_dock.QMessageBox...')` →
+      `patch('logis.gui.waste_dock.QMessageBox...')` (8 ocorrências em
+      `test_waste_dock.py`), `patch("core.optim_backend.has_ortools")` →
+      `patch("logis.core.optim_backend.has_ortools")` (`test_vrp.py`),
+      `@patch('core.connectors.wfs.fetch_layer')` →
+      `@patch('logis.core.connectors.wfs.fetch_layer')`
+      (`test_snv_pipeline.py`); e em `test_i18n.py` apontar os caminhos
+      de `.qm` para `logis/i18n/` (`os.path.join(os.path.dirname(
+      __file__), "logis", "i18n", ...)`, nos dois casos do arquivo —
+      o `logis_en.qm` que deve existir e o `logis_pt.qm` que não deve).
+      Conferir se os módulos importados no topo desses testes também
+      usam o prefixo `logis.`; se algum ainda importar sem prefixo,
+      ajustar junto. Antes de marcar `[x]`: `python3 -m unittest
+      discover -s . -p "test_*.py"` tem que sair **OK** (hoje: 211
+      testes, 1 failure + 10 errors) e `make test` continuar `sintaxe
+      OK`. — arquivos: `test_waste_dock.py`, `test_vrp.py`,
+      `test_snv_pipeline.py`, `test_i18n.py`
+
+- [x] 90. [T03] Corrigir a guarda de `field_type()` em
+      `logis/core/qgis_compat.py`: trocar `if QVariant is not None:` por
+      um teste de **presença de membro** (`if QVariant is not None and
+      hasattr(QVariant, "String"):`) e, no bloco `QMetaType`, manter a
+      checagem de `getattr(QMetaType, "Type", None)`. Preservar a ordem
+      QVariant→QMetaType e ampliar a docstring explicando o porquê da
+      nova guarda (no PyQt6 o `QVariant` importa mas perdeu os membros
+      de `QVariant::Type`, então testar o import não detecta nada).
+      Criar `test_qgis_compat.py` com: (a) `field_type("int")`,
+      `("double")`, `("string")`, `("bool")` devolvem algo aceito por
+      `QgsField(nome, tipo)` de fato (construir o `QgsField` no teste);
+      (b) `field_type("coisa_que_nao_existe")` devolve o valor inválido
+      sem levantar; (c) simulação do PyQt6 — com
+      `unittest.mock.patch.object(qgis_compat, "QVariant", <objeto sem
+      atributo String>)` e `QMetaType` real, `field_type("string")`
+      devolve `QMetaType.Type.QString` em vez de estourar
+      `AttributeError` (é este caso que reproduz o bug do QGIS 4 aqui no
+      PyQt5); (d) caso em que ambos são `None` → devolve `None`. Rodar
+      `python3 -m unittest test_qgis_compat -v` e a suíte completa antes
+      de marcar. — arquivos: `logis/core/qgis_compat.py`,
+      `test_qgis_compat.py`
+
+- [x] 91. [T02] Corrigir os dois tracebacks relatados pelo Diego:
+      em `logis/logis_plugin.py`, trocar as 3 ocorrências de
+      `Qt.RightDockWidgetArea` (linhas 78, 86, 94) por
+      `Qt.DockWidgetArea.RightDockWidgetArea` e `self.dialog.exec_()`
+      (linha 71) por `self.dialog.exec()`; em
+      `logis/gui/dependencies_dialog.py` (linha 158), trocar
+      `Qt.WindowMinMaxButtonsHint | Qt.WindowCloseButtonHint` por
+      `Qt.WindowType.WindowMinMaxButtonsHint |
+      Qt.WindowType.WindowCloseButtonHint`, e no bloco de mocks
+      (`except ImportError`) substituir os atributos soltos da `class
+      Qt` por uma classe aninhada `WindowType` com
+      `WindowMinMaxButtonsHint = 0` e `WindowCloseButtonHint = 0`
+      (manter `Window = 0` se algo ainda usar). Não criar teste que
+      chame `exec()` (é modal, travaria a suíte). Antes de marcar:
+      suíte completa OK (`test_plugin.py` já exercita
+      `show_urban_dock`, que é exatamente o caminho do primeiro
+      traceback) + `make test`. — arquivos: `logis/logis_plugin.py`,
+      `logis/gui/dependencies_dialog.py`
+
+- [x] 92. [T02] Eliminar o uso direto de `QVariant` nos 7 algorithms,
+      substituindo por `field_type()` (import relativo
+      `from ..core.qgis_compat import field_type`, padrão dos outros 16
+      arquivos) e removendo o `from qgis.PyQt.QtCore import QVariant`
+      de cada um: `QVariant.Int` → `field_type("int")`,
+      `QVariant.Double` → `field_type("double")`, `QVariant.Bool` →
+      `field_type("bool")`. Arquivos:
+      `logis/algorithms/waste_districting.py`,
+      `logis/algorithms/regional_critical_links.py`,
+      `logis/algorithms/vrp_cvrp.py`, `logis/algorithms/facility_mclp.py`,
+      `logis/algorithms/facility_lscp.py`,
+      `logis/algorithms/facility_p_median.py`,
+      `logis/algorithms/urban_edge_betweenness.py`. Conferir com
+      `grep -rn "QVariant" logis/` que só sobra `core/qgis_compat.py`.
+      Antes de marcar: suíte completa OK + `make test`. — arquivos: os 7
+      acima
+
+- [x] 93. [T02] Escopar os enums do Processing e do WKB em todos os
+      arquivos de `logis/`: `QgsProcessing.TypeVectorLine|TypeVectorPoint|
+      TypeVectorPolygon` → `QgsProcessing.SourceType.<mesmo nome>` (43
+      sítios), `QgsProcessingParameterNumber.Double|Integer` →
+      `QgsProcessingParameterNumber.Type.<mesmo nome>` (28 sítios),
+      `QgsWkbTypes.LineString|NoGeometry` → `QgsWkbTypes.Type.<mesmo
+      nome>` e `QgsWkbTypes.PointGeometry` →
+      `QgsWkbTypes.GeometryType.PointGeometry`. **Conferir sítio a
+      sítio** — `PointGeometry` é do enum `GeometryType` e `LineString`
+      é do enum `Type`, apesar de virem os dois de `QgsWkbTypes`; e
+      pular as ocorrências que já estão escopadas (`grep -n
+      "QgsWkbTypes\.\(GeometryType\|Type\)\."` antes de editar). Todas
+      as formas escopadas foram verificadas como existentes no QGIS
+      3.34, então a suíte local prova a mudança: antes de marcar, suíte
+      completa OK + `make test`. — arquivos: `logis/algorithms/*.py`,
+      `logis/core/network/*.py` (os que aparecerem no grep)
+
+- [x] 94. [T02] Corrigir `logis/core/ortools_installer.py`: (a) trocar
+      `QgsTask.CanCancel` por `QgsTask.Flag.CanCancel` na chamada
+      `super().__init__(...)` e ajustar o mock `class QgsTask` do bloco
+      `except ImportError` para expor `Flag.CanCancel` em vez de
+      `CanCancel` solto; (b) trocar o comando de instalação por
+      exatamente o da seção 2.1 do CLAUDE.md — `[sys.executable, "-m",
+      "pip", "install", "--user", "ortools", "pandas<3", "numpy<2",
+      "typing_extensions==4.10.0"]` — e, se a saída do pip contiver
+      `externally-managed-environment`, repetir **uma** vez com
+      `--break-system-packages` acrescentado, logando essa segunda
+      tentativa via `log_received`; (c) atualizar o texto do
+      `ortools_desc` em `gui/dependencies_dialog.py` para mencionar que
+      a instalação usa versões travadas de `numpy`/`pandas` para não
+      danificar o QGIS. Adicionar a `test_plugin.py` (ou novo
+      `test_ortools_installer.py`, à escolha do executor) um teste que
+      monta o comando e afirma que as três travas estão presentes e que
+      `pip install ortools` "puro" **não** é usado. Antes de marcar:
+      suíte completa OK + `make test`. — arquivos:
+      `logis/core/ortools_installer.py`,
+      `logis/gui/dependencies_dialog.py`, `test_ortools_installer.py`
+
+- [x] 95. [T02] Criar `test_qt6_compat.py`: teste estático que lê como
+      texto todos os `.py` sob `logis/` (`pathlib.Path(...).rglob("*.py")`,
+      pulando `__pycache__` e `i18n/`) e falha se encontrar qualquer
+      padrão proibido, com mensagem apontando arquivo:linha —
+      `\bQt\.(Right|Left|Top|Bottom)DockWidgetArea\b`,
+      `\bQt\.Window[A-Za-z]*Hint\b`, `\bQVariant\.` (exceto em
+      `core/qgis_compat.py`), `\.exec_\(`,
+      `\bQgsProcessing\.TypeVector`,
+      `\bQgsProcessingParameterNumber\.(Double|Integer)\b`,
+      `\bQgsWkbTypes\.(LineString|NoGeometry|PointGeometry)\b`,
+      `\bQgsTask\.CanCancel\b`. Sem importar QGIS (roda em qualquer
+      Python). Incluir no próprio teste um comentário curto explicando
+      por que ele existe (a suíte roda em PyQt5, onde a forma errada não
+      falha em runtime). Ele tem que passar ao final dos passos 90-94 —
+      se algum sítio escapou, este teste é quem acusa. Antes de marcar:
+      `python3 -m unittest test_qt6_compat -v` OK + suíte completa OK. —
+      arquivos: `test_qt6_compat.py`
+
+- [x] 96. [T02] Registrar a regra no CLAUDE.md (seção 9, "Regras para
+      agentes"): item novo dizendo que todo acesso a enum do Qt/QGIS é
+      **escopado** (`Qt.DockWidgetArea.RightDockWidgetArea`,
+      `QgsProcessing.SourceType.TypeVectorLine`,
+      `QgsProcessingParameterNumber.Type.Double`, `QgsWkbTypes.Type.*` /
+      `QgsWkbTypes.GeometryType.*`, `QgsTask.Flag.*`), que tipo de campo
+      só se cria via `core.qgis_compat.field_type()` (nunca `QVariant.*`
+      direto) e que `exec_()` não pode ser usado — com a justificativa em
+      uma linha (PyQt6/QGIS 4 removeu as formas soltas; as escopadas
+      valem também no QGIS 3.16+) e a menção de que `test_qt6_compat.py`
+      é quem faz cumprir. — arquivos: `CLAUDE.md`
+
+- [x] 97. [T02] Ajustar `metadata.txt` e `Makefile` para o QGIS 4:
+      em `logis/metadata.txt`, acrescentar `supportsQt6=True` e subir
+      `version` para `0.1.1` (mantendo `qgisMinimumVersion=3.16` e
+      `qgisMaximumVersion=4.99`); no `Makefile`, introduzir
+      `QGIS_MAJOR ?= 3` e usar `QGIS$(QGIS_MAJOR)` nos caminhos de
+      `QGIS_PLUGINS`/`FLATPAK_PLUGINS`, mais os alvos `deploy-qgis4` e
+      `deploy-flatpak-qgis4` (que só chamam os alvos existentes com
+      `QGIS_MAJOR=4`), com as linhas correspondentes no `help` e nos
+      `.PHONY`. Antes de marcar: `make help` lista os alvos novos,
+      `make test` continua `sintaxe OK` e a suíte completa passa. —
+      arquivos: `logis/metadata.txt`, `Makefile`
+
+- [x] 98. [T02] Criar `docs/qgis4_compat_check.py` (não empacotado):
+      script colável no console Python do QGIS 4 do Diego que imprime um
+      relatório de uma tela — versões (`Qgis.QGIS_VERSION`,
+      `QT_VERSION_STR`, `PYQT_VERSION_STR`) e, para cada nome legado da
+      tabela do Objetivo, se ele ainda existe (`hasattr`) e se a forma
+      escopada existe: `Qt.RightDockWidgetArea` vs
+      `Qt.DockWidgetArea.RightDockWidgetArea`, `QVariant.String`,
+      `QMetaType.Type.QString`, `QgsWkbTypes.LineString` vs
+      `QgsWkbTypes.Type.LineString`, `QgsProcessing.TypeVectorLine` vs
+      `QgsProcessing.SourceType.TypeVectorLine`,
+      `QgsProcessingParameterNumber.Double` vs `...Type.Double`,
+      `QgsTask.CanCancel` vs `QgsTask.Flag.CanCancel`, `QDialog.exec_`
+      vs `QDialog.exec`, e se `QgsField("t", QMetaType.Type.QString)`
+      constrói sem erro. Cada linha no formato `OK/AUSENTE  <nome>`.
+      Documentar no `README.md` (uma linha, seção de
+      desenvolvimento/solução de problemas) como usá-lo. Rodar o script
+      aqui mesmo com `python3 docs/qgis4_compat_check.py` antes de
+      marcar — ele tem que rodar sem exceção no QGIS 3.34 também
+      (relatando as diferenças, não estourando). — arquivos:
+      `docs/qgis4_compat_check.py`, `README.md`
+
+### F9 — usabilidade dos painéis no QGIS 4.2 (rodada 2026-07-29, segunda revisão)
+
+- [x] 99. [T02] Dar rolagem ao painel Urbano: em
+      `logis/gui/urban_dock.py`, acrescentar `QScrollArea` à lista de
+      imports de `qgis.PyQt.QtWidgets` (bloco `try`), acrescentar o mock
+      `class QScrollArea` com `__init__`, `setWidgetResizable` e
+      `setWidget` no bloco `except ImportError` (copiar o de
+      `waste_dock.py:156-162`), e no início de `_build_ui` criar
+      `scroll = QScrollArea()` + `scroll.setWidgetResizable(True)`,
+      trocando o `self.setWidget(central)` do fim (linha ~305) por
+      `scroll.setWidget(central)` + `self.setWidget(scroll)`. Não mexer
+      em nenhuma seção nem em nenhum widget existente. Rodar `make test`
+      e `python3 -m unittest discover -s . -p "test_*.py"` (224 testes,
+      OK) antes de marcar. — arquivos: `logis/gui/urban_dock.py`
+- [x] 100. [T02] Dar rolagem ao painel Regional: mesma mudança do passo
+      99 aplicada a `logis/gui/regional_dock.py` (`self.setWidget(
+      central)` está na linha ~237). Rodar `make test` e a suíte antes de
+      marcar. — arquivos: `logis/gui/regional_dock.py`
+- [x] 101. [T02] Criar `test_dock_layout.py`: teste estático que lê
+      `logis/gui/urban_dock.py`, `logis/gui/regional_dock.py` e
+      `logis/gui/waste_dock.py` como texto (`pathlib.Path.read_text` +
+      `re`, mesma técnica de `test_qt6_compat.py`, sem importar QGIS) e
+      afirma, para os três: contém `QScrollArea(`, contém
+      `setWidgetResizable(True)` e contém `self.setWidget(scroll)`. O
+      guarda das abas (`waste_dock.py` contém `QTabWidget(`) **não** entra
+      agora — só valeria a partir do passo 104 e deixaria a suíte
+      vermelha; ele é acrescentado no passo 110. Rodar a suíte (225+
+      testes, OK) antes de marcar. — arquivos: `test_dock_layout.py`
+- [x] 102. [T02] Corrigir o stylesheet dos dois `QGroupBox` de
+      `logis/gui/dependencies_dialog.py` (linhas 193 e 227), que é a
+      causa provável do texto sobreposto relatado pelo Diego: trocar
+      `"font-weight: bold; padding: 10px;"` pela regra escopada
+      `"QGroupBox { font-weight: bold; margin-top: 12px; padding: 10px; }
+      QGroupBox::title { subcontrol-origin: margin; left: 8px; padding:
+      0 4px; }"`. Nenhuma outra mudança neste passo. Rodar `make test` e
+      a suíte antes de marcar. — arquivos:
+      `logis/gui/dependencies_dialog.py`
+- [x] 103. [T02] Redimensionar e dar rolagem ao diálogo de dependências:
+      em `logis/gui/dependencies_dialog.py`, trocar `resize(550, 420)`/
+      `setMinimumSize(500, 350)` por `resize(620, 560)`/
+      `setMinimumSize(520, 420)`; em `init_ui`, criar `outer =
+      QVBoxLayout(self)`, um `QScrollArea` com `setWidgetResizable(True)`
+      cujo widget de conteúdo (`QWidget`) recebe o layout atual (título,
+      descrição e os dois `QGroupBox`), e mover o rodapé do botão
+      "Fechar" para **fora** da rolagem, direto no `outer`. Acrescentar
+      `QScrollArea`/`QWidget` aos imports do bloco `try` e os mocks
+      correspondentes ao bloco `except ImportError`. Não alterar texto de
+      nenhuma string nem a lógica de `refresh_status`/
+      `start_ortools_install`. Rodar `make test` e a suíte antes de
+      marcar. — arquivos: `logis/gui/dependencies_dialog.py`
+- [x] 104. [T03] Introduzir a estrutura de abas em
+      `logis/gui/waste_dock.py`: importar `QTabWidget` (bloco `try`) e
+      mocká-lo no `except ImportError` (`__init__`, `addTab`, `count`,
+      `tabText`); reescrever o topo de `_build_ui` para montar
+      `central`/`layout` só com o título, a descrição, `self.tabs =
+      QTabWidget()` e, no rodapé, o painel de resultados existente
+      (`QLabel("Resultados:")` + `self.txt_results`, hoje nas linhas
+      634-642) — o `QScrollArea` externo do dock permanece; acrescentar o
+      helper privado `_new_tab(self, title)` que cria `QWidget` +
+      `QVBoxLayout` (margens 10, espaçamento 10) dentro de uma
+      `QScrollArea` com `setWidgetResizable(True)`, chama
+      `self.tabs.addTab(scroll, title)` e devolve o layout; mover a seção
+      "Estimativa de Geração" (linhas ~203-262) para a aba
+      `self.tr("Geração")`. As seções ainda não migradas (CPP em diante)
+      vão temporariamente para uma aba `self.tr("Outros")` criada pelo
+      mesmo helper, para que **todos** os widgets continuem existindo.
+      Nenhum atributo renomeado, nenhum método `run_*` alterado.
+      `test_waste_dock.py` tem que passar **sem edição**; rodar `make
+      test` e a suíte antes de marcar. — arquivos:
+      `logis/gui/waste_dock.py`
+- [x] 105. [T02] Mover as três seções de roteirização (CPP, RPP e CARP —
+      hoje linhas ~263-403) da aba temporária "Outros" para uma aba
+      `self.tr("Roteirização")` criada com `_new_tab`, mantendo a ordem
+      CPP → RPP → CARP e os títulos `<b>...</b>` de cada seção como
+      separadores dentro da aba. Nenhum widget renomeado.
+      `test_waste_dock.py` passa sem edição; rodar `make test` e a suíte
+      antes de marcar. — arquivos: `logis/gui/waste_dock.py`
+- [x] 106. [T02] Mover a seção "Dimensionamento de Frota" (hoje linhas
+      ~404-468) da aba "Outros" para uma aba `self.tr("Frota")` criada
+      com `_new_tab`. `test_waste_dock.py` passa sem edição; rodar `make
+      test` e a suíte antes de marcar. — arquivos:
+      `logis/gui/waste_dock.py`
+- [x] 107. [T02] Mover as três seções restantes (Equilíbrio entre
+      Setores, Distância ao Destino, Cobertura por Frequência — hoje
+      linhas ~469-632) para uma aba `self.tr("Indicadores")` criada com
+      `_new_tab` e **remover a aba temporária "Outros"**, que fica vazia.
+      Ao fim deste passo o dock tem exatamente quatro abas (Geração,
+      Roteirização, Frota, Indicadores) e o painel de resultados no
+      rodapé, fora delas. `test_waste_dock.py` passa sem edição; rodar
+      `make test` e a suíte antes de marcar. — arquivos:
+      `logis/gui/waste_dock.py`
+- [x] 108. [T02] Fechar a lacuna da Setorização: acrescentar à aba
+      "Geração" a seção `<b>Setorização</b>` que chama
+      `processing.run("logis:waste_districting", ...)`, lendo os nomes e
+      defaults exatos dos parâmetros em
+      `logis/algorithms/waste_districting.py` (não inventar); widgets no
+      padrão das seções vizinhas (`QgsMapLayerComboBox` com
+      `QgsMapLayerProxyModel.Filter.*` escopado, `QgsFieldComboBox` com
+      `layerChanged` conectado, `QDoubleSpinBox`/`QSpinBox`,
+      `self.btn_run_districting`), todas as strings em `self.tr(...)`, e
+      o método `run_districting` copiando a estrutura de
+      `calculate_waste_generation` (validação de camada nula com
+      `QMessageBox.warning`, `try/except` com `QMessageBox.critical`,
+      log em `self.txt_results`). Rodar `make test` e a suíte antes de
+      marcar. — arquivos: `logis/gui/waste_dock.py`
+- [x] 109. [T02] Fechar a lacuna do Deadhead Ratio: acrescentar à aba
+      "Indicadores" a seção `<b>Deadhead Ratio</b>` que chama
+      `processing.run("logis:waste_deadhead_ratio", ...)`, com os
+      parâmetros lidos de `logis/algorithms/waste_deadhead_ratio.py`,
+      mesmo padrão de widgets/strings/método do passo 108
+      (`self.btn_run_deadhead`, `run_deadhead_ratio`). Rodar `make test`
+      e a suíte antes de marcar. — arquivos: `logis/gui/waste_dock.py`
+- [x] 110. [T02] Ampliar a cobertura de teste da nova estrutura: em
+      `test_waste_dock.py`, acrescentar asserts de `hasattr` para os
+      widgets das seções novas dos passos 108-109 e para `self.tabs`; em
+      `test_dock_layout.py`, acrescentar o caso estático das abas
+      (`waste_dock.py` contém `QTabWidget(`, contém `def _new_tab` e
+      registra exatamente quatro chamadas de `_new_tab`) e o caso de que
+      `self.txt_results` é criado fora de qualquer aba (painel de
+      resultados compartilhado). Rodar `make test` e a suíte antes de
+      marcar. — arquivos: `test_waste_dock.py`, `test_dock_layout.py`
+- [x] 111. [T02] Atualizar a tradução para inglês com as strings novas de
+      F9: rodar `make i18n` (regenera `i18n/logis_en.ts`), preencher em
+      inglês as entradas `<translation type="unfinished">` criadas pelos
+      passos 104-109 (títulos das quatro abas, rótulos e botões das
+      seções Setorização e Deadhead Ratio), rodar `make transcompile`
+      para regerar `i18n/logis_en.qm` e conferir que `test_i18n.py`
+      continua passando. Não alterar nenhuma string PT-BR já existente.
+      Rodar `make test` e a suíte antes de marcar. — arquivos:
+      `i18n/logis_en.ts`, `i18n/logis_en.qm`
+- [x] 112. [T02] Registrar o ambiente validado e subir a versão:
+      `metadata.txt` passa a `version=0.1.2`; `README.md` ganha, na seção
+      de compatibilidade/instalação, a nota de que o plugin foi testado
+      pelo autor no **QGIS 4.2 "Belém do Pará" sobre Ubuntu** e de que a
+      instalação do OR-Tools pelo diálogo "Dependências" (comando com as
+      travas `pandas<3`, `numpy<2`, `typing_extensions==4.10.0`) foi
+      validada nesse ambiente. Rodar `make test` e a suíte antes de
+      marcar. — arquivos: `metadata.txt`, `README.md`
+
+### F10 — abas no painel de Indicadores Urbanos (rodada 2026-07-30)
+
+- [x] 113. [T03] Introduzir a estrutura de abas em
+      `logis/gui/urban_dock.py`, copiando o padrão de `waste_dock.py`:
+      acrescentar `QTabWidget` ao import do bloco `try` e o mock
+      correspondente no `except ImportError` (cópia literal de
+      `waste_dock.py:164-173`, com `addTab`/`count`/`tabText`); criar o
+      helper `_new_tab(title)` idêntico ao de `waste_dock.py:190-204`; em
+      `_build_ui`, renomear o layout externo para `outer` e montar a
+      ordem título → descrição → **seletor `cmb_network` (compartilhado,
+      fora das abas)** → `self.tabs = QTabWidget()` → rótulo
+      "Resultados dos Indicadores:" + `outer.addWidget(self.txt_results)`
+      no rodapé; criar a primeira aba com
+      `layout = self._new_tab(self.tr("Rede"))` e mover para ela o bloco
+      de estrutura de rede que hoje está nas linhas 206-216 (rótulo +
+      `cmb_area` + `btn_calculate`). Manter a `QScrollArea` externa e
+      `self.setWidget(scroll)`. Nenhum método `calculate_*` muda.
+      `test_plugin.py` e `test_dock_layout.py` têm que passar **sem
+      edição**; rodar `make test` e a suíte antes de marcar. — arquivos:
+      `logis/gui/urban_dock.py`
+- [x] 114. [T02] Mover a seção "Centralidade de Intermediação
+      (Betweenness)" (hoje linhas 277-290: título,
+      `spin_betweenness_samples`, `btn_calculate_betweenness`) para
+      dentro da aba "Rede" criada no passo 113, logo abaixo do
+      botão-pacote. Só recorte e colagem de `layout.addWidget(...)` — sem
+      renomear widget, sem tocar em `calculate_edge_betweenness`. Rodar
+      `make test` e a suíte antes de marcar. — arquivos:
+      `logis/gui/urban_dock.py`
+- [x] 115. [T02] Criar a aba "Demanda"
+      (`layout = self._new_tab(self.tr("Demanda"))`) e mover para ela, na
+      ordem, as seções "Densidade de Demanda" (linhas 228-243:
+      `txt_code_muni`, `txt_population_field`, `btn_calculate_demand`) e
+      "Acessibilidade Gravitacional" (linhas 245-275:
+      `cmb_gravity_origin`, `cmb_gravity_dest`,
+      `cmb_gravity_weight_field` com o `layerChanged.connect`,
+      `spin_gravity_beta`, `btn_calculate_gravity`). Manter a conexão
+      `cmb_gravity_dest.layerChanged.connect(...)` intacta. Rodar
+      `make test` e a suíte antes de marcar. — arquivos:
+      `logis/gui/urban_dock.py`
+- [x] 116. [T02] Criar a aba "Carga"
+      (`layout = self._new_tab(self.tr("Carga"))`) e mover para ela a
+      seção "Distância de Entrega" (linhas 292-314:
+      `cmb_delivery_depots`, `cmb_delivery_zones`,
+      `cmb_delivery_criterion`, `btn_calculate_delivery`). Ao fim deste
+      passo `_build_ui` não deve ter mais nenhuma seção fora das abas
+      além do cabeçalho (`cmb_network`) e do rodapé (`txt_results`).
+      `test_plugin.py::test_urban_dock_delivery_distance_controls` tem
+      que continuar passando sem edição. Rodar `make test` e a suíte
+      antes de marcar. — arquivos: `logis/gui/urban_dock.py`
+- [x] 117. [T02] Separar a restrição de carga do botão-pacote: criar o
+      método `calculate_cargo_restriction()` com o bloco hoje nas linhas
+      425-442 (`processing.run("logis:urban_cargo_restriction", ...)` e o
+      tratamento de resultado/erro), precedido do mesmo preâmbulo de
+      guarda dos outros métodos (ler `cmb_network`, `QMessageBox.warning`
+      se vazio, `import processing` em `try/except` com
+      `QMessageBox.critical`), passando
+      `'RESTRICTION_EXPRESSION': self.txt_cargo_expression.text().strip()`;
+      remover esse bloco de `calculate_indicators`, renumerar o log
+      restante para "1) 2) 3)" e ajustar a docstring para "os três
+      algoritmos de estrutura de rede"; acrescentar na aba "Carga",
+      **acima** da Distância de Entrega, a seção "Restrição de Circulação
+      de Carga" com título, rótulo + `QLineEdit`
+      `self.txt_cargo_expression` (vazio por padrão, placeholder com
+      exemplo de expressão sobre `highway`/`maxweight`) e
+      `self.btn_calculate_cargo` ligado ao método novo. Rodar `make test`
+      e a suíte antes de marcar. — arquivos: `logis/gui/urban_dock.py`
+- [x] 118. [T02] Cobrir a estrutura nova com teste: em
+      `test_dock_layout.py`, acrescentar `test_urban_dock_has_three_tabs`
+      (espelhando `test_waste_dock_has_four_tabs`) afirmando que
+      `logis/gui/urban_dock.py` contém `QTabWidget(`, `def _new_tab` e
+      exatamente **três** chamadas `self._new_tab(`, e
+      `test_urban_dock_results_panel_outside_tabs` afirmando
+      `outer.addWidget(self.txt_results)`; em `test_plugin.py`,
+      acrescentar asserções `hasattr` para `tabs`, `txt_cargo_expression`,
+      `btn_calculate_cargo` e `calculate_cargo_restriction` (mesmo estilo
+      de `test_urban_dock_delivery_distance_controls`). Rodar `make test`
+      e a suíte antes de marcar (base: 228 testes). — arquivos:
+      `test_dock_layout.py`, `test_plugin.py`
+- [x] 119. [T02] Atualizar a tradução para inglês com as strings novas de
+      F10 e consertar o alvo `transcompile`: no `Makefile`, trocar
+      `lrelease i18n/*.ts` por `lrelease $(PLUGINNAME)/i18n/*.ts` (os
+      `.ts` estão em `logis/i18n/` desde a reestruturação; o alvo `i18n`
+      já usa o caminho certo); rodar `make i18n`, preencher em inglês as
+      entradas `<translation type="unfinished">` criadas pelos passos
+      113-117 (títulos das três abas — Rede/Demanda/Carga — e os rótulos,
+      placeholder e botão da seção de Restrição de Circulação de Carga),
+      rodar `make transcompile` e conferir que `test_i18n.py` continua
+      passando. Não alterar nenhuma string PT-BR já existente. Rodar
+      `make test` e a suíte antes de marcar. — arquivos: `Makefile`,
+      `logis/i18n/logis_en.ts`, `logis/i18n/logis_en.qm`
+- [x] 120. [T02] Subir a versão e registrar a mudança: `metadata.txt`
+      passa a `version=0.1.3`; `README.md` descreve o painel Urbano em
+      três abas (Rede, Demanda, Carga), com o seletor de rede viária e o
+      painel de resultados compartilhados fora das abas, e registra que a
+      restrição de circulação de carga agora tem botão e campo de
+      expressão próprios (deixou de ser executada junto do pacote de
+      indicadores de rede). Rodar `make test` e a suíte antes de marcar.
+      — arquivos: `logis/metadata.txt`, `README.md`
 
 ## Critério de aceite
+
+- **F10 — abas no painel de Indicadores Urbanos (passos 113-120, rodada
+  2026-07-30):**
+  - `logis/gui/urban_dock.py` tem **três abas** (Rede, Demanda, Carga):
+    `grep -c "self._new_tab(" logis/gui/urban_dock.py` → 3, e
+    `test_dock_layout.py` prova isso estaticamente, sem QGIS.
+  - O seletor `cmb_network` e o `txt_results` ficam **fora** das abas
+    (cabeçalho e rodapé): `outer.addWidget(self.txt_results)` presente, e
+    nenhum dos quatro métodos que leem `cmb_network` precisou saber que
+    existem abas.
+  - Os oito algorithms urbanos continuam todos acessíveis pelo painel —
+    nenhuma seção perdida na remontagem, provado por
+    `test_plugin.py` passando **sem edição** nos passos 113-116.
+  - `logis:urban_cargo_restriction` tem botão próprio
+    (`btn_calculate_cargo` → `calculate_cargo_restriction`) e campo de
+    expressão (`txt_cargo_expression`, vazio por padrão = comportamento
+    de hoje); `calculate_indicators` roda **três** algorithms.
+  - `make test` → `sintaxe OK` e `python3 -m unittest discover -s . -p
+    "test_*.py"` → OK ao fim de **cada** passo (base: 228 testes no
+    início da rodada).
+  - `make transcompile` regenera de fato `logis/i18n/logis_en.qm` (alvo
+    corrigido para `$(PLUGINNAME)/i18n/*.ts`); `test_i18n.py` continua
+    passando.
+  - `metadata.txt` em `version=0.1.3`; `README.md` descreve as três abas.
+  - **Nada fora de `logis/gui/urban_dock.py`, dos dois testes, do i18n,
+    do `Makefile`, de `metadata.txt` e do `README.md`** — F10 não toca
+    `core/`, `algorithms/`, `provider.py` nem `regional_dock.py`, e não
+    acrescenta dependência.
+  - **A confirmação visual no QGIS 4.2 é do Diego e não bloqueia o
+    fechamento do código** (mesma decisão de não-bloqueio do passo 58).
+
+- **F9 — usabilidade dos painéis no QGIS 4.2 (passos 99-112, rodada
+  2026-07-29, segunda revisão):**
+  - Os três docks rolam: `grep -c "QScrollArea" logis/gui/urban_dock.py
+    logis/gui/regional_dock.py logis/gui/waste_dock.py` > 0 nos três, e
+    `test_dock_layout.py` (novo) prova isso estaticamente, sem QGIS.
+  - O diálogo "Dependências" abre mostrando todo o texto: `QGroupBox`
+    com regra QSS escopada (título com `subcontrol-origin: margin`),
+    conteúdo dentro de `QScrollArea` e botão "Fechar" fixo no rodapé,
+    fora da rolagem; tamanho inicial 620×560, mínimo 520×420.
+  - `gui/waste_dock.py` tem **quatro abas** (Geração, Roteirização,
+    Frota, Indicadores) montadas pelo helper `_new_tab`, cada uma com
+    rolagem própria, e um único painel de resultados
+    (`self.txt_results`) no rodapé, compartilhado, fora das abas.
+  - **Os dez algorithms do módulo waste estão no dock** — `grep -c
+    "logis:waste" logis/gui/waste_dock.py` cobre também
+    `waste_districting` e `waste_deadhead_ratio`, hoje ausentes (o dock
+    cobre 8 de 10; era lacuna dos passos 71/76, marcados `[x]` sem a
+    seção existir).
+  - Nenhum atributo de widget renomeado ou removido: `test_waste_dock.py`
+    passa **sem edição** ao fim de cada um dos passos 104-107 (só os
+    passos 108-110 o ampliam), e nenhum dos oito métodos `run_*`/
+    `calculate_*` existentes muda.
+  - `make test` → `sintaxe OK` e `python3 -m unittest discover -s . -p
+    "test_*.py"` → OK ao fim de **cada** passo (base: 224 testes no
+    início da rodada).
+  - `i18n/logis_en.qm` regenerado com as strings novas; `test_i18n.py`
+    continua passando.
+  - `metadata.txt` em `version=0.1.2`; `README.md` registra o teste no
+    QGIS 4.2 "Belém do Pará"/Ubuntu e a instalação bem-sucedida do
+    OR-Tools por lá.
+  - **Nada fora de `logis/gui/`, dos testes, do i18n, de `metadata.txt`
+    e do `README.md`** — F9 não toca `core/`, `algorithms/` nem
+    `provider.py`, e não acrescenta dependência.
+  - **A confirmação visual no QGIS 4.2 é do Diego e não bloqueia o
+    fechamento do código** (mesma decisão de não-bloqueio do passo 58).
+
+- **F8 — QGIS 4 / Qt 6 (passos 89-98, rodada 2026-07-29):**
+  - `python3 -m unittest discover -s . -p "test_*.py"` volta a **OK**
+    (hoje está `FAILED (failures=1, errors=10)`) e continua OK ao fim de
+    cada passo; `make test` continua `sintaxe OK`.
+  - Os dois `AttributeError` relatados pelo Diego deixam de existir no
+    fonte: nenhum `Qt.RightDockWidgetArea` nem `Qt.WindowMinMaxButtonsHint`
+    solto em `logis/`.
+  - `grep -rn "QVariant" logis/` só retorna `core/qgis_compat.py`;
+    `field_type()` sobrevive à ausência dos membros de `QVariant::Type`
+    (coberto por `test_qgis_compat.py` com o `QVariant` mockado ao estilo
+    PyQt6, sem precisar de PyQt6 instalado).
+  - `test_qt6_compat.py` passa e passa a ser o guarda da regra — sem ele
+    a suíte (que roda em PyQt5) não consegue acusar regressão, porque as
+    formas soltas continuam funcionando aqui.
+  - `logis/core/ortools_installer.py` instala com as três travas da seção
+    2.1 do CLAUDE.md (`pandas<3`, `numpy<2`,
+    `typing_extensions==4.10.0`), com fallback para
+    `--break-system-packages`; o comando `pip install ortools` puro,
+    que sobrepõe o numpy do QGIS, não existe mais no código.
+  - `metadata.txt` declara `supportsQt6=True` e `version=0.1.1`;
+    `make deploy-qgis4`/`make deploy-flatpak-qgis4` instalam no perfil
+    `QGIS4` (que é onde o plugin do Diego roda).
+  - `CLAUDE.md` registra a regra do enum escopado, para o código futuro
+    já nascer certo.
+  - **Nenhuma dependência externa nova, nenhum módulo novo em `core/` ou
+    `algorithms/`, nenhuma mudança de comportamento de algoritmo** — F8 é
+    só compatibilidade (mais o bug do instalador).
+  - **A confirmação no QGIS 4 é do Diego e não bloqueia o fechamento do
+    código** (mesma decisão de não-bloqueio do passo 58): a suíte roda em
+    PyQt5 e, por construção, não prova o runtime do PyQt6. O
+    `docs/qgis4_compat_check.py` (passo 98) é o instrumento dessa
+    confirmação; o que ele reportar sobre os itens marcados "provável" na
+    tabela do Objetivo vira, se necessário, rodada seguinte.
 
 - **F6 encerrado no código (2026-07-23):** roadmap formal (estimativa de
   geração, setorização, CPP/CARP, dimensionamento de frota) e seção 5.3
