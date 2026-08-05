@@ -2,7 +2,7 @@
 
 Complemento (plugin) do QGIS para apoiar projetos de logística no Brasil.
 
-**Versão:** 0.1.4 (`experimental`)  
+**Versão:** 0.1.5 (`experimental`)  
 **Licença:** GPL-3.0  
 **Idioma:** **Português** | [English](#english)
 
@@ -90,7 +90,7 @@ logis/
 ├── __init__.py               # Ponto de entrada do plugin
 ├── logis_plugin.py           # Registrador de GUI e Provider
 ├── provider.py               # Processing Provider "logis" (25 algoritmos)
-├── metadata.txt              # Metadados do plugin QGIS (versão 0.1.4)
+├── metadata.txt              # Metadados do plugin QGIS (versão 0.1.5)
 ├── Makefile                  # Comandos de deploy e testes de sintaxe
 ├── core/                     # Núcleo de lógica técnica
 │   ├── network/              # Pipelines OSM/SNV, construtor de grafos e matriz OD
@@ -112,7 +112,7 @@ logis/
 ### Requisitos e Instalação (Desenvolvimento)
 
 - **Requisitos:** QGIS 3.16 ou superior.
-- **Ambiente Validado:** O plugin foi testado pelo autor no **QGIS 4.2 "Belém do Pará" sobre Ubuntu**, e a instalação do OR-Tools pelo diálogo "Dependências" (comando com as travas `pandas<3`, `numpy<2`, `typing_extensions==4.10.0`) foi validada nesse ambiente.
+- **Ambiente Validado:** O plugin foi testado pelo autor no **QGIS 4.2 "Belém do Pará" sobre Ubuntu** (instalação do OR-Tools pelo diálogo "Dependências" fixa nas versões já instaladas no ambiente, validada). No **QGIS 4.2 Flatpak / Python 3.13**, a instalação do OR-Tools pode falhar por ausência de pacote binário — o plugin opera normalmente com as heurísticas em Python puro.
 - **Instalação para Desenvolvimento:**
   ```bash
   cd ~/projects/logis/
@@ -226,7 +226,7 @@ logis/
 ├── __init__.py               # Plugin entry point
 ├── logis_plugin.py           # GUI and Provider registrar
 ├── provider.py               # Processing Provider "logis" (25 algorithms)
-├── metadata.txt              # QGIS plugin metadata (version 0.1.4)
+├── metadata.txt              # QGIS plugin metadata (version 0.1.5)
 ├── Makefile                  # Deployment and syntax testing commands
 ├── core/                     # Technical logic core
 │   ├── network/              # OSM/SNV pipelines, graph builder, and OD matrix
@@ -248,7 +248,7 @@ logis/
 ### Requirements and Installation (Development)
 
 - **Requirements:** QGIS 3.16 or higher.
-- **Validated Environment:** The plugin was tested by the author on **QGIS 4.2 "Belém do Pará" on Ubuntu**, and the OR-Tools installation via the "Dependencies" dialog (command with constraints `pandas<3`, `numpy<2`, `typing_extensions==4.10.0`) was validated in this environment.
+- **Validated Environment:** The plugin was tested by the author on **QGIS 4.2 "Belém do Pará" on Ubuntu** (OR-Tools installation via "Dependencies" dialog fixed to versions already installed in the environment, validated). On **QGIS 4.2 Flatpak / Python 3.13**, OR-Tools installation may fail due to missing binary packages — the plugin operates normally with pure Python heuristics.
 - **Development Installation:**
   ```bash
   cd ~/projects/logis/

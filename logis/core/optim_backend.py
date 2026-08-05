@@ -23,7 +23,14 @@ def has_ortools():
     try:
         import ortools
         return True
-    except ImportError:
+    except Exception as e:
+        if not isinstance(e, ImportError):
+            msg = f"Erro ao importar ortools: {e}"
+            if QgsMessageLog is not None and Qgis is not None:
+                QgsMessageLog.logMessage(msg, LOG_TAG, Qgis.MessageLevel.Warning)
+            else:
+                import logging
+                logging.warning(f"[{LOG_TAG}] {msg}")
         return False
 
 

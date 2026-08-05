@@ -35,20 +35,16 @@ Consequências práticas:
 
 ### 2.1 OR-Tools — como instalar (e por que o comando cru quebra o QGIS)
 
-O OR-Tools é backend **opcional**. Quando o plugin oferecer ao usuário instalá-lo para obter a solução ótima, a instrução — na UI, no README ou em qualquer doc — **tem que ser esta**, nunca `pip install ortools` puro:
+O OR-Tools é backend **opcional**. Quando o plugin oferecer ao usuário instalá-lo para obter a solução ótima, o comando normativo passa a ser descrito como uma **regra** — `ortools` mais `nome==versão_instalada` para `numpy`, `pandas` e `typing_extensions` quando presentes no ambiente Python do QGIS, mais `--only-binary=:all:` —, em vez do comando literal estático.
 
-```
-pip install ortools "pandas<3" "numpy<2" "typing_extensions==4.10.0"
-```
+Fixar `nome==versão_instalada` garante que o pip não substitua nem altere as versões de pacotes que o QGIS já utiliza e possui em seu `sys.path`.
 
 (No Python do sistema em Debian/Ubuntu, acrescentar `--break-system-packages`. No Windows/macOS, usar o Python que o QGIS usa — no Windows, o *OSGeo4W Shell*.)
 
-As duas travas não são preciosismo; sem elas o pip danifica a instalação do QGIS do usuário:
+A trava antiga (`"pandas<3" "numpy<2" "typing_extensions==4.10.0"`) quebra em Python 3.13 (QGIS 4.2+ / Flatpak) porque não existe wheel de `numpy 1.x` para Python 3.13 (`cp313`) e `ortools>=9.15` exige `numpy>=2.0.2`.
+*(Nota histórica: o comando antigo `pip install ortools "pandas<3" "numpy<2" "typing_extensions==4.10.0"` foi utilizado e validado no ambiente QGIS 3.34/VPS - D18).*
 
-- **`pandas<3` / `numpy<2`** — o `pandas 3.x` exige `numpy>=2`, e o pip instala esse numpy num diretório que **tem precedência sobre o numpy do QGIS** no `sys.path`. O QGIS 3.34 vem com `numpy 1.26.4`; sobrepor por 2.x quebra o QGIS inteiro, não só o logis. Com a trava, o numpy existente satisfaz o requisito e não é tocado.
-- **`typing_extensions==4.10.0`** — sem o pin, o pip tenta desinstalar o `typing_extensions` empacotado pela distro, falha (`RECORD file not found`) e **aborta a instalação no meio**, deixando dependências órfãs. O pin resolve para `ortools 9.12`, que já tem o `pywrapcp`/CP-SAT usado aqui.
-
-Corolário para o código: como a instalação pode falhar, estar ausente ou estar quebrada na máquina do usuário, o import do `ortools` é **sempre lazy/guarded**, com fallback automático para a heurística Python — o plugin nunca pode deixar de funcionar porque o OR-Tools não está lá. Instalado e validado na VPS em 23/07 (`ortools 9.12.4544`); detalhes em `~/.hermes/DECISOES.md` D18.
+Corolário para o código: como a instalação pode falhar (em ambientes isolados como QGIS Flatpak, a instalação pode não ser possível por ausência de pacote binário), estar ausente ou estar quebrada na máquina do usuário, o import do `ortools` é **sempre lazy/guarded**, com fallback automático para a heurística Python — o plugin nunca pode deixar de funcionar porque o OR-Tools não está lá. Instalado e validado na VPS em 23/07 (`ortools 9.12.4544`); detalhes em `~/.hermes/DECISOES.md` D18.
 
 ## 3. Aproveitamento do GisBR (https://github.com/d-camargo/gisbr)
 

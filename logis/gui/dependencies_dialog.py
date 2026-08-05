@@ -267,8 +267,11 @@ class DependenciesDialog(QDialog):
             "O OR-Tools é uma biblioteca do Google para resolver problemas complexos de otimização de rotas "
             "e localização de instalações. O logis possui heurísticas internas em Python puro, mas o "
             "OR-Tools é recomendado para maior velocidade e precisão. "
-            "A instalação usa versões travadas de numpy e pandas (numpy<2, pandas<3) "
-            "para não danificar a instalação do QGIS."
+            "A instalação fixa numpy, pandas e typing_extensions nas versões já instaladas no QGIS "
+            "para não danificar a instalação existente. "
+            "Em instalações isoladas (Flatpak/Snap) a instalação pode não ser possível por falta de "
+            "pacote binário para o Python do QGIS; nesse caso o plugin continua funcionando "
+            "normalmente com as heurísticas em Python puro."
         )
         ortools_desc.setStyleSheet("font-weight: normal; color: #555; font-size: 11px;")
         ortools_desc.setWordWrap(True)
