@@ -1,4 +1,11 @@
-# Schema Real da Camada WFS DNIT:snv_202507a
+# Schema SNV — Sistema Rodoviário Nacional
+
+- **Título:** Schema Real da Camada WFS SNV/DNIT
+- **Origem:** DNIT (Departamento Nacional de Infraestrutura de Transportes) / GeoServer INDE
+- **Vintage:** `snv_202507a` (Julho/2025)
+- **Data de Consulta:** 2025-07-23
+
+---
 
 Este documento apresenta o resultado da investigação do schema de atributos e geometria da camada WFS `DNIT:snv_202507a` (SNV - Sistema Rodoviário Nacional, vintage Julho/2025), consultada a partir do GeoServer da Infraestrutura Nacional de Dados Espaciais (INDE) em `https://geoservicos.inde.gov.br/geoserver/DNIT/ows`.
 

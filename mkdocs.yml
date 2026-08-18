@@ -1,0 +1,73 @@
+site_name: logis
+site_url: https://logis.dcamargo.com.br
+repo_url: https://github.com/d-camargo/logis
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  language: pt-BR
+  logo: assets/logo.svg
+  favicon: assets/logo.svg
+
+plugins:
+  - search
+  - i18n:
+      docs_structure: suffix
+      fallback_to_default: true
+      languages:
+        - locale: pt
+          name: Português
+          default: true
+          build: true
+        - locale: en
+          name: English
+          build: true
+
+nav:
+  - Início: index.md
+  - Sobre: sobre.md
+  - Guias:
+      - Instalação: guias/instalacao.md
+      - OR-Tools (opcional): ortools.md
+      - Logística Urbana: guias/urbano.md
+      - Logística Regional: guias/regional.md
+      - Coleta de Lixo: guias/residuos.md
+  - Algoritmos:
+      - Visão geral: algoritmos/index.md
+      - Indicadores Urbanos: algoritmos/urbano.md
+      - Indicadores Regionais: algoritmos/regional.md
+      - Localização de Instalações: algoritmos/localizacao.md
+      - Roteirização (VRP): algoritmos/roteirizacao.md
+      - Coleta de Resíduos: algoritmos/residuos.md
+  - Referência:
+      - Fontes de Dados: referencia/fontes_dados.md
+      - Schema SNV: referencia/schema-snv.md
+  - Desenvolvimento: desenvolvimento.md
+  - Changelog: changelog.md
+
+validation:
+  nav:
+    omitted_files: warn
+    not_found: warn
+  links:
+    not_found: warn
+    anchors: warn
+    absolute_links: warn
+    unrecognized_links: warn
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+      slugify: !!python/object/apply:pymdownx.slugs.slugify {kwds: {case: lower}}
+  - pymdownx.superfences
+  - pymdownx.arithmatex:
+      generic: true
+
+extra_javascript:
+  - javascripts/mathjax.js
+  - https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js
+

@@ -12,7 +12,7 @@ TARGET = $(QGIS_PLUGINS)/$(PLUGINNAME)
 FLATPAK_TARGET = $(FLATPAK_PLUGINS)/$(PLUGINNAME)
 SRC = $(CURDIR)/$(PLUGINNAME)
 
-.PHONY: deploy deploy-flatpak deploy-qgis4 deploy-flatpak-qgis4 undeploy undeploy-flatpak clean test package i18n transcompile help
+.PHONY: deploy deploy-flatpak deploy-qgis4 deploy-flatpak-qgis4 undeploy undeploy-flatpak clean test package i18n transcompile docs-deps docs-serve docs-build help
 
 help:
 	@echo "make deploy          - symlink do plugin no perfil QGIS3 do sistema"
@@ -26,6 +26,9 @@ help:
 	@echo "make package         - gera o pacote zip via qgis-plugin-ci em dist/logis-<version>.zip"
 	@echo "make i18n            - extrai strings self.tr(...) para i18n/logis_pt_BR.ts"
 	@echo "make transcompile    - compila i18n/*.ts para .qm (lrelease)"
+	@echo "make docs-deps       - cria .venv-docs e instala dependencias de docs"
+	@echo "make docs-serve      - inicia servidor local de documentacao (mkdocs serve)"
+	@echo "make docs-build      - compila a documentacao (mkdocs build --strict)"
 
 deploy:
 	@mkdir -p $(QGIS_PLUGINS)
@@ -82,3 +85,16 @@ i18n:
 transcompile:
 	@lrelease $(PLUGINNAME)/i18n/*.ts
 
+VENV_DOCS = .venv-docs
+
+docs-deps:
+	@if [ ! -d "$(VENV_DOCS)" ]; then \
+		python3 -m venv $(VENV_DOCS) >/dev/null 2>&1 || (rm -rf $(VENV_DOCS) && python3 -m venv --without-pip --system-site-packages $(VENV_DOCS)); \
+	fi
+	@$(VENV_DOCS)/bin/python3 -m pip install -q -r docs/requirements.txt
+
+docs-serve: docs-deps
+	@$(VENV_DOCS)/bin/mkdocs serve
+
+docs-build: docs-deps
+	@$(VENV_DOCS)/bin/mkdocs build --strict

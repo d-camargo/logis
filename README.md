@@ -10,6 +10,8 @@ Complemento (plugin) do QGIS para apoiar projetos de logística no Brasil.
 
 ## Português
 
+📖 Documentação: https://logis.dcamargo.com.br
+
 O **logis** é um plugin para o QGIS desenvolvido para apoiar projetos e análises de logística no Brasil, atuando em três módulos estratégicos: **Logística Urbana**, **Logística Regional** e **Logística Especializada** (com foco inicial em coleta de resíduos sólidos urbanos).
 
 ### Visão Geral
@@ -106,7 +108,8 @@ logis/
 ├── algorithms/               # Algoritmos expostos no Processing (8 urbanos + 3 regionais + 3 de localização + 1 de roteirização + 10 de coleta de lixo)
 ├── gui/                      # Painéis dock e diálogos de interface
 ├── i18n/                     # Traduções PT-BR/EN
-└── docs/                     # Scripts de teste e especificações
+├── tools/                    # Scripts de teste e manutenção
+└── docs/                     # Documentação e especificações
 ```
 
 ### Requisitos e Instalação (Desenvolvimento)
@@ -122,7 +125,7 @@ logis/
   ```bash
   make test          # Validação rápida de sintaxe em todos os arquivos .py
   ```
-- **Verificação de Compatibilidade QGIS 4 / Qt6:** Execute `python3 docs/qgis4_compat_check.py` (ou cole o conteúdo no Console Python do QGIS) para validar versões e a presença de símbolos legados/escopados.
+- **Verificação de Compatibilidade QGIS 4 / Qt6:** Execute `python3 tools/qgis4_compat_check.py` (ou cole o conteúdo no Console Python do QGIS) para validar versões e a presença de símbolos legados/escopados.
 
 ### Uso no Console Python do QGIS
 
@@ -145,6 +148,8 @@ processing.run("logis:urban_network_density", {
 - **Documentação Detalhada:** Para especificações de arquitetura, decisões técnicas e roadmap por fases (F1-F7), consulte o arquivo [`CLAUDE.md`](CLAUDE.md).
 
 ## English
+
+📖 Documentation: https://logis.dcamargo.com.br
 
 **logis** is a QGIS plugin developed to support logistics projects and analyses in Brazil, operating across three strategic modules: **Urban Logistics**, **Regional Logistics**, and **Specialized Logistics** (with an initial focus on municipal solid waste collection).
 
@@ -242,7 +247,8 @@ logis/
 ├── algorithms/               # Algorithms exposed in Processing (8 urban + 3 regional + 3 location + 1 routing + 10 waste collection)
 ├── gui/                      # Dock panels and interface dialogs
 ├── i18n/                     # PT-BR/EN translations
-└── docs/                     # Test scripts and specifications
+├── tools/                    # Test scripts and maintenance tools
+└── docs/                     # Documentation and specifications
 ```
 
 ### Requirements and Installation (Development)
@@ -258,7 +264,7 @@ logis/
   ```bash
   make test          # Quick syntax validation across all .py files
   ```
-- **QGIS 4 / Qt6 Compatibility Check:** Run `python3 docs/qgis4_compat_check.py` (or paste its content into the QGIS Python Console) to inspect Qt6/QGIS 4 version details and legacy/scoped symbols.
+- **QGIS 4 / Qt6 Compatibility Check:** Run `python3 tools/qgis4_compat_check.py` (or paste its content into the QGIS Python Console) to inspect Qt6/QGIS 4 version details and legacy/scoped symbols.
 
 ### Usage in QGIS Python Console
 

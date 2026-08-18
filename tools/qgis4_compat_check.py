@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """qgis4_compat_check.py - Relatório de compatibilidade QGIS 4 / Qt6 vs QGIS 3 / Qt5.
 
-Pode ser executado via CLI (`python3 docs/qgis4_compat_check.py`) ou colado
+Pode ser executado via CLI (`python3 tools/qgis4_compat_check.py`) ou colado
 diretamente no console Python do QGIS.
 """
 

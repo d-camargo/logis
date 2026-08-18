@@ -8,10 +8,10 @@ e valida que os resultados de distância e tempo são gravados corretamente.
 import sys
 from pathlib import Path
 
-# Adiciona o diretório contendo a pasta logis (para importações absolutas) e a pasta docs ao path
+# Adiciona o diretório contendo a pasta logis (para importações absolutas) e a pasta tools ao path
 project_root = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(project_root.parent))
-sys.path.insert(0, str(project_root / "docs"))
+sys.path.insert(0, str(project_root / "tools"))
 
 from qgis.core import QgsApplication
 
