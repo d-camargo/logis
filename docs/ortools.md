@@ -32,7 +32,8 @@ python3 -m pip install --user --only-binary=:all: \
 
 Em outra máquina, com outras versões — ou sem o `pandas`, por exemplo —, o comando
 correto é **outro**. É por isso que o plugin monta o comando na hora
-(`ORToolsInstallTask.build_command()`) em vez de guardar uma linha literal.
+(`core.ortools_installer.build_command()`, e `command_text()` para a linha pronta para
+cópia) em vez de guardar uma linha literal.
 
 ### Por que a trava antiga quebra em Python 3.13
 
@@ -65,8 +66,8 @@ python3 -m pip install --user --only-binary=:all: --break-system-packages \
     ortools numpy==2.1.3 ...
 ```
 
-O diálogo *Dependências* faz isso sozinho: ao detectar `externally-managed-environment`
-na saída do pip, ele repete a instalação **uma única vez** com a opção acrescentada.
+Quem roda o pip é você, então esse ajuste é seu: se a saída trouxer
+`externally-managed-environment`, repita o comando com a opção acrescentada.
 
 ### Windows e macOS — use o Python do QGIS
 
@@ -80,7 +81,7 @@ usa, senão o `import ortools` dentro do QGIS continuará falhando.
   (`/Applications/QGIS.app/Contents/MacOS/bin/python3`).
 
 Dentro do QGIS, `sys.executable` no Console Python mostra qual interpretador está em uso
-— e é exatamente ele que o instalador do plugin chama.
+— e é exatamente ele que o plugin escreve no comando que mostra.
 
 ## O diálogo “Dependências” do plugin
 
@@ -89,14 +90,17 @@ abre o *logis — Gerenciador de Dependências*. Para o OR-Tools ele:
 
 - mostra o **status** — *Instalado (Disponível)* ou *Não instalado (Heurística pura
   ativada)*;
-- instala com o botão **Instalar OR-Tools**, em segundo plano (`QgsTask`, cancelável),
-  aplicando a regra acima com as versões detectadas na hora;
-- exibe a **saída do pip** ao vivo em um painel de log;
-- traduz as falhas mais comuns em mensagens claras (sem rede, sem permissão, sem `pip`,
-  sem wheel para este Python, conflito de `numpy`), sempre lembrando que o plugin segue
-  funcionando com a heurística;
-- avisa que é preciso **reiniciar o QGIS** depois de uma instalação bem-sucedida, para
-  que a biblioteca seja carregada.
+- **monta e exibe** o comando aplicando a regra acima com as versões detectadas na hora,
+  já apontando para o interpretador do QGIS;
+- copia essa linha para a área de transferência no botão **Copiar Comando**;
+- lista os passos seguintes: abrir o terminal (ou o *OSGeo4W Shell*, no Windows), colar e
+  executar o comando, e **reiniciar o QGIS** para que a biblioteca seja carregada.
+
+O que ele **não** faz é executar o comando: nenhum arquivo sob `logis/` chama
+`subprocess`, para não acionar o achado **B603** do scanner do `plugins.qgis.org`. A
+instalação roda no seu terminal, e é lá que aparecem os erros do pip — sem rede, sem
+permissão, sem `pip`, sem wheel para este Python, conflito de `numpy`. Em qualquer um
+desses casos o plugin segue funcionando com a heurística em Python puro.
 
 O mesmo diálogo mostra o estado do **GisBR** (fonte de dados viários) e do **pyarrow**.
 
@@ -121,5 +125,5 @@ Teitz-Bart na p-mediana, guloso nas coberturas) — **soluções boas, não nece
 
 Em instalações isoladas — **QGIS Flatpak ou Snap com Python 3.13** — pode não existir
 pacote binário do OR-Tools para o interpretador do QGIS, e `--only-binary=:all:` impede
-a compilação local. O diálogo relata a falha e **nada precisa ser feito**: todos os
-algoritmos continuam disponíveis com as heurísticas em Python puro.
+a compilação local. O pip termina em `No matching distribution found` e **nada precisa
+ser feito**: todos os algoritmos continuam disponíveis com as heurísticas em Python puro.

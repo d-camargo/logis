@@ -41,7 +41,7 @@ Consequências práticas:
 
 ### 2.1 OR-Tools — como instalar (e por que o comando cru quebra o QGIS)
 
-O OR-Tools é backend **opcional**. Quando o plugin oferecer ao usuário instalá-lo para obter a solução ótima, o comando normativo passa a ser descrito como uma **regra** — `ortools` mais `nome==versão_instalada` para `numpy`, `pandas` e `typing_extensions` quando presentes no ambiente Python do QGIS, mais `--only-binary=:all:` —, em vez do comando literal estático.
+O OR-Tools é backend **opcional**. Quando o plugin oferecer ao usuário o **comando** pronto para instalá-lo e obter a solução ótima, o comando normativo passa a ser descrito como uma **regra** — `ortools` mais `nome==versão_instalada` para `numpy`, `pandas` e `typing_extensions` quando presentes no ambiente Python do QGIS, mais `--only-binary=:all:` —, em vez do comando literal estático.
 
 Fixar `nome==versão_instalada` garante que o pip não substitua nem altere as versões de pacotes que o QGIS já utiliza e possui em seu `sys.path`.
 
@@ -211,4 +211,4 @@ logis/
   - Proibido bypass de verificação SSL (`PeerVerifyMode` + `VerifyNone`).
   - Proibido gerador `random` da stdlib (sinalizado como B311 pelo scanner do `plugins.qgis.org`, que ignora `# nosec`; usar `logis.core.sampling.DeterministicRandom`).
   - Proibidos hashes fracos `hashlib.md5(` e `hashlib.sha1(` (usar `hashlib.sha256`).
-  - Proibido `subprocess` fora de `logis/core/ortools_installer.py`, e `shell=True` proibido em qualquer lugar.
+  - Proibido `subprocess` em qualquer arquivo sob `logis/` — o plugin não executa processos externos (achado B603 do scanner do `plugins.qgis.org`) —, e `shell=True` proibido em qualquer lugar. O instalador do OR-Tools apenas **monta e exibe** o comando (`core.ortools_installer.build_command()` / `command_text()`), cabendo ao usuário executá-lo no console do ambiente Python do QGIS.

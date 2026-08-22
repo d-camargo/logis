@@ -498,7 +498,7 @@ def solve_cvrp_ortools(
     except ImportError as e:
         raise RuntimeError(
             "O backend OR-Tools não está instalado ou disponível no ambiente. "
-            "Instale-o via core/ortools_installer.py ou utilize a heurística pura em Python."
+            "Use o diálogo Complementos → logis → Dependências… para obter o comando de instalação, ou utilize a heurística pura em Python."
         ) from e
 
     num_vehicles = min(len(customers), max(1, math.ceil(sum(demands) / capacity)) + 2)

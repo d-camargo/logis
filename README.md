@@ -2,7 +2,7 @@
 
 Complemento (plugin) do QGIS para apoiar projetos de logística no Brasil.
 
-**Versão:** 0.1.7 (`experimental`)  
+**Versão:** 0.1.8 (`experimental`)  
 **Licença:** GPL-3.0  
 **Idioma:** **Português** | [English](#english)
 
@@ -83,7 +83,7 @@ O plugin atua como um **Processing Provider** (`logis`), expondo os seguintes al
 - **Painel de Logística Urbana** (`gui/urban_dock.py`): Interface dock interativa em três abas — Rede, Demanda e Carga —, com o seletor de rede viária e o painel de resultados compartilhados fora das abas. A restrição de circulação de carga tem botão e campo de expressão próprios na aba Carga, executada de forma independente do pacote de indicadores de rede. A centralidade de intermediação (aba Rede) aceita uma semente opcional de amostragem, para tornar o resultado reproduzível entre execuções.
 - **Painel de Logística Regional** (`gui/regional_dock.py`): Interface dock dedicada a análises de redes rodoviárias estaduais e nacionais.
 - **Painel de Coleta de Lixo** (`gui/waste_dock.py`): Interface dock em quatro abas — Geração (estimativa de geração + setorização), Roteirização (CPP, RPP, CARP), Frota (dimensionamento) e Indicadores (deadhead ratio, equilíbrio entre setores, distância ao destino, cobertura por frequência) —, com rolagem por aba e painel de resultados único no rodapé, fora das abas.
-- **Diálogo de Dependências** (`gui/dependencies_dialog.py`): Verificação e diagnóstico visual de pacotes opcionais (`OR-Tools`, `pyarrow`).
+- **Diálogo de Dependências** (`gui/dependencies_dialog.py`): Verificação, diagnóstico visual e orientação de instalação de pacotes opcionais (`OR-Tools`, `pyarrow`).
 
 ### Estrutura do Repositório
 
@@ -92,7 +92,7 @@ logis/
 ├── __init__.py               # Ponto de entrada do plugin
 ├── logis_plugin.py           # Registrador de GUI e Provider
 ├── provider.py               # Processing Provider "logis" (25 algoritmos)
-├── metadata.txt              # Metadados do plugin QGIS (versão 0.1.7)
+├── metadata.txt              # Metadados do plugin QGIS (versão 0.1.8)
 ├── Makefile                  # Comandos de deploy e testes de sintaxe
 ├── core/                     # Núcleo de lógica técnica
 │   ├── network/              # Pipelines OSM/SNV, construtor de grafos e matriz OD
@@ -115,7 +115,7 @@ logis/
 ### Requisitos e Instalação (Desenvolvimento)
 
 - **Requisitos:** QGIS 3.16 ou superior.
-- **Ambiente Validado:** O plugin foi testado pelo autor no **QGIS 4.2 "Belém do Pará" sobre Ubuntu** (instalação do OR-Tools pelo diálogo "Dependências" fixa nas versões já instaladas no ambiente, validada). No **QGIS 4.2 Flatpak / Python 3.13**, a instalação do OR-Tools pode falhar por ausência de pacote binário — o plugin opera normalmente com as heurísticas em Python puro.
+- **Ambiente Validado:** O plugin foi testado pelo autor no **QGIS 4.2 "Belém do Pará" sobre Ubuntu** (orientação de instalação do OR-Tools pelo diálogo "Dependências" fixa nas versões já instaladas no ambiente, validada). No **QGIS 4.2 Flatpak / Python 3.13**, a instalação do OR-Tools pode falhar por ausência de pacote binário — o plugin opera normalmente com as heurísticas em Python puro.
 - **Instalação para Desenvolvimento:**
   ```bash
   cd ~/projects/logis/
@@ -222,7 +222,7 @@ The plugin acts as a **Processing Provider** (`logis`), exposing the following a
 - **Urban Logistics Panel** (`gui/urban_dock.py`): Interactive dock interface with three tabs — Network, Demand, and Cargo —, with the road network selector and the results panel shared outside the tabs. Freight vehicle circulation restriction has its own button and expression field in the Cargo tab, run independently of the network indicators batch. Betweenness centrality (Network tab) accepts an optional sampling seed to make the result reproducible across runs.
 - **Regional Logistics Panel** (`gui/regional_dock.py`): Dedicated dock interface for state and national road network analyses.
 - **Waste Collection Panel** (`gui/waste_dock.py`): Dock interface with four tabs — Generation (generation estimate + districting), Routing (CPP, RPP, CARP), Fleet (sizing), and Indicators (deadhead ratio, sector balance, waste destination distance, collection coverage) —, with tab scrolling and a single results panel at the footer, outside the tabs.
-- **Dependencies Dialog** (`gui/dependencies_dialog.py`): Visual check and diagnostics of optional packages (`OR-Tools`, `pyarrow`).
+- **Dependencies Dialog** (`gui/dependencies_dialog.py`): Visual check, diagnostics, and installation guidance for optional packages (`OR-Tools`, `pyarrow`).
 
 ### Repository Structure
 
@@ -231,7 +231,7 @@ logis/
 ├── __init__.py               # Plugin entry point
 ├── logis_plugin.py           # GUI and Provider registrar
 ├── provider.py               # Processing Provider "logis" (25 algorithms)
-├── metadata.txt              # QGIS plugin metadata (version 0.1.7)
+├── metadata.txt              # QGIS plugin metadata (version 0.1.8)
 ├── Makefile                  # Deployment and syntax testing commands
 ├── core/                     # Technical logic core
 │   ├── network/              # OSM/SNV pipelines, graph builder, and OD matrix
@@ -254,7 +254,7 @@ logis/
 ### Requirements and Installation (Development)
 
 - **Requirements:** QGIS 3.16 or higher.
-- **Validated Environment:** The plugin was tested by the author on **QGIS 4.2 "Belém do Pará" on Ubuntu** (OR-Tools installation via "Dependencies" dialog fixed to versions already installed in the environment, validated). On **QGIS 4.2 Flatpak / Python 3.13**, OR-Tools installation may fail due to missing binary packages — the plugin operates normally with pure Python heuristics.
+- **Validated Environment:** The plugin was tested by the author on **QGIS 4.2 "Belém do Pará" on Ubuntu** (OR-Tools installation guidance via "Dependencies" dialog fixed to versions already installed in the environment, validated). On **QGIS 4.2 Flatpak / Python 3.13**, OR-Tools installation may fail due to missing binary packages — the plugin operates normally with pure Python heuristics.
 - **Development Installation:**
   ```bash
   cd ~/projects/logis/

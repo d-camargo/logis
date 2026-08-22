@@ -147,19 +147,22 @@ também torna os indicadores reprodutíveis entre execuções. Ele **não é
 criptograficamente seguro**: nunca o utilize para segredos, tokens, chaves ou senhas.
 
 ### 5. Subprocessos
-O plugin executa um único processo externo: o `pip` do Python do QGIS, no instalador
-opcional do OR-Tools. Por isso `subprocess` é permitido **apenas** em
-`logis/core/ortools_installer.py`, e `shell=True` é proibido em qualquer arquivo. A
-linha de comando é montada por `build_command()` a partir de literais, de
-`sys.executable` e de versões de dependência validadas por expressão regular — versão
-lida de metadados de terceiros que não case com `^[A-Za-z0-9][A-Za-z0-9._+!-]*$` é
-descartada, para que uma string começando com `-` nunca vire flag do `pip`. Antes de
-executar, `_run_pip()` confere que o comando começa com
-`[sys.executable, "-m", "pip", "install"]`.
+O plugin **não executa nenhum processo externo**: `subprocess` é proibido em qualquer
+arquivo sob `logis/`, e `shell=True` é proibido em qualquer lugar do repositório. A
+proibição elimina o achado **B603** (*subprocesso com entrada não confiável*) do scanner
+do `plugins.qgis.org`, que ignora comentários `# nosec`.
 
-O achado **B603** (*subprocesso com entrada não confiável*) do scanner é aceito e
-documentado no próprio arquivo: instalar uma biblioteca externa exige um processo
-externo, e não há versão do recurso sem `subprocess`.
+A consequência prática está no instalador opcional do OR-Tools: em vez de rodar o `pip`,
+`logis/core/ortools_installer.py` apenas **monta e exibe** o comando, e quem o executa é
+o usuário, no console do ambiente Python do QGIS (ver
+[Instalação do OR-Tools](ortools.md)). `build_command()` devolve a lista de argumentos a
+partir de literais, de `sys.executable` e das versões detectadas por
+`installed_versions()`; `command_text()` transforma essa lista na linha pronta para
+cópia, entre aspas quando o token contém espaço.
+
+Versão lida de metadados de terceiros continua validada por expressão regular — a que
+não casar com `^[A-Za-z0-9][A-Za-z0-9._+!-]*$` é descartada, para que uma string
+começando com `-` nunca vire flag do `pip` no comando mostrado ao usuário.
 
 Para rodar apenas as guardas de segurança:
 

@@ -2,6 +2,11 @@
 
 Este documento registra as principais alterações e evoluções do plugin **logis** organizadas por versão.
 
+## 0.1.8
+
+- **Instalação de Dependências por Comando**: O Gerenciador de Dependências deixa de executar o `pip` diretamente via subprocesso e passa a gerar e exibir o comando exato formatado para o interpretador do QGIS, com cópia em um clique para execução no terminal.
+- **Conformidade de Segurança e Subprocessos**: Remoção completa de chamadas ao módulo `subprocess` no repositório do plugin para eliminar riscos de execução arbitrária e alertas em scanners de segurança de plugins do QGIS.
+
 ## 0.1.7
 
 - **Amostragem Determinística**: O gerador `logis.core.sampling.DeterministicRandom` (SplitMix64 em Python puro) substitui o `random` da biblioteca padrão, tornando a circuidade média e a centralidade de intermediação reprodutíveis para a mesma camada e os mesmos parâmetros.

@@ -13,16 +13,24 @@ try:
         QHBoxLayout,
         QLabel,
         QPushButton,
-        QProgressBar,
         QTextEdit,
         QGroupBox,
         QMessageBox,
         QScrollArea,
         QWidget,
+        QApplication,
     )
     from qgis.utils import iface
 except ImportError:
     # Mocks para quando rodado fora do QGIS (ex: smoke tests ou CLI)
+    class MockClipboard:
+        def setText(self, text):
+            pass
+
+    class QApplication:
+        @staticmethod
+        def clipboard():
+            return MockClipboard()
     class Qt:
         Window = 0
 
@@ -98,27 +106,25 @@ except ImportError:
             self._text = text
         def setStyleSheet(self, style):
             pass
-
-    class QProgressBar:
-        def __init__(self, parent=None):
-            pass
-        def setRange(self, min_val, max_val):
-            pass
-        def setValue(self, val):
-            pass
         def setVisible(self, visible):
             pass
 
     class QTextEdit:
         def __init__(self, parent=None):
-            pass
+            self._text = ""
         def setReadOnly(self, read_only):
             pass
         def append(self, text):
-            pass
+            self._text += str(text) + "\n"
+        def setText(self, text):
+            self._text = str(text)
+        def toPlainText(self):
+            return self._text
         def clear(self):
-            pass
+            self._text = ""
         def setVisible(self, visible):
+            pass
+        def setMaximumHeight(self, h):
             pass
         def verticalScrollBar(self):
             class DummyScrollBar:
@@ -162,14 +168,14 @@ except ImportError:
 
 from ..core.data_backend import has_gisbr
 from ..core.optim_backend import has_ortools
-from ..core.ortools_installer import install
+from ..core.ortools_installer import command_text
 
 
 class DependenciesDialog(QDialog):
     """
-    Diálogo para verificar e gerenciar as dependências do plugin logis.
-    Permite visualizar o status do GisBR e do Google OR-Tools, além de
-    instalar o OR-Tools em segundo plano.
+    Diálogo para verificar e orientar a instalação de dependências do plugin logis.
+    Permite visualizar o status do GisBR e do Google OR-Tools, exibindo o comando
+    recomendado para a instalação manual do OR-Tools no ambiente do QGIS.
     """
 
     def __init__(self, parent=None):
@@ -180,8 +186,6 @@ class DependenciesDialog(QDialog):
         self.setWindowTitle("logis — Gerenciador de Dependências")
         self.resize(620, 560)
         self.setMinimumSize(520, 420)
-        
-        self.install_task = None
         
         self.init_ui()
         self.refresh_status()
@@ -205,7 +209,7 @@ class DependenciesDialog(QDialog):
         layout.addWidget(title_label)
         
         desc_label = QLabel(
-            "Verifique e instale as dependências recomendadas para o funcionamento "
+            "Verifique as dependências recomendadas para o funcionamento "
             "completo do plugin de logística."
         )
         desc_label.setStyleSheet("color: #666; margin-bottom: 10px;")
@@ -266,44 +270,49 @@ class DependenciesDialog(QDialog):
         ortools_desc = QLabel(
             "O OR-Tools é uma biblioteca do Google para resolver problemas complexos de otimização de rotas "
             "e localização de instalações. O logis possui heurísticas internas em Python puro, mas o "
-            "OR-Tools é recomendado para maior velocidade e precisão. "
-            "A instalação fixa numpy, pandas e typing_extensions nas versões já instaladas no QGIS "
-            "para não danificar a instalação existente. "
-            "Em instalações isoladas (Flatpak/Snap) a instalação pode não ser possível por falta de "
-            "pacote binário para o Python do QGIS; nesse caso o plugin continua funcionando "
-            "normalmente com as heurísticas em Python puro."
+            "OR-Tools é recomendado para maior velocidade e precisão.\n\n"
+            "Por segurança, o plugin não executa comandos externos: ele monta o comando "
+            "correto para ESTE ambiente Python do QGIS e cabe a você executá-lo. O comando "
+            "fixa numpy, pandas e typing_extensions nas versões já instaladas no QGIS, "
+            "para não danificar a instalação existente.\n\n"
+            "Em instalações isoladas (Flatpak/Snap) a instalação pode não ser possível por "
+            "falta de pacote binário para o Python do QGIS; nesse caso o plugin continua "
+            "funcionando normalmente com as heurísticas em Python puro."
         )
         ortools_desc.setStyleSheet("font-weight: normal; color: #555; font-size: 11px;")
         ortools_desc.setWordWrap(True)
         ortools_layout.addWidget(ortools_desc)
         
-        self.btn_ortools = QPushButton("Instalar OR-Tools")
-        self.btn_ortools.setStyleSheet("font-weight: normal;")
-        self.btn_ortools.clicked.connect(self.start_ortools_install)
-        ortools_layout.addWidget(self.btn_ortools)
-        
-        self.progress_bar = QProgressBar()
-        self.progress_bar.setRange(0, 0)
-        self.progress_bar.setVisible(False)
-        ortools_layout.addWidget(self.progress_bar)
-        
-        self.log_area = QTextEdit()
-        self.log_area.setReadOnly(True)
-        self.log_area.setMinimumHeight(100)
-        self.log_area.setStyleSheet(
-            "font-family: monospace; font-size: 10px; background-color: #2d3748; color: #edf2f7; font-weight: normal;"
+        self.txt_command = QTextEdit()
+        self.txt_command.setReadOnly(True)
+        self.txt_command.setMaximumHeight(65)
+        self.txt_command.setStyleSheet(
+            "font-family: monospace; font-size: 10px; background-color: #2d3748; color: #edf2f7;"
         )
-        self.log_area.setVisible(False)
-        ortools_layout.addWidget(self.log_area)
+        ortools_layout.addWidget(self.txt_command)
         
-        self.lbl_restart_warning = QLabel(
-            "⚠️ <b>Nota:</b> Após a instalação ser concluída com sucesso, reinicie o QGIS "
-            "para carregar a biblioteca."
+        btn_cmd_layout = QHBoxLayout()
+        self.btn_copy_cmd = QPushButton("Copiar Comando")
+        self.btn_copy_cmd.setStyleSheet("font-weight: normal;")
+        self.btn_copy_cmd.clicked.connect(self.copy_command)
+        btn_cmd_layout.addWidget(self.btn_copy_cmd)
+        btn_cmd_layout.addStretch()
+        ortools_layout.addLayout(btn_cmd_layout)
+
+        self.lbl_instructions = QLabel(
+            "<b>Instruções de Instalação:</b><br>"
+            "1. Clique em <b>Copiar Comando</b> acima.<br>"
+            "2. Abra o console do Python que o QGIS usa — no Windows, o "
+            "<i>OSGeo4W Shell</i>; no macOS, o Python embarcado do QGIS; no Linux, "
+            "o terminal.<br>"
+            "3. Cole e execute o comando. No Debian/Ubuntu, se o pip recusar com "
+            "<i>externally-managed-environment</i>, acrescente "
+            "<code>--break-system-packages</code> ao final e repita.<br>"
+            "4. Reinicie o QGIS para carregar a biblioteca."
         )
-        self.lbl_restart_warning.setStyleSheet("color: #dd6b20; font-size: 11px; font-weight: normal;")
-        self.lbl_restart_warning.setWordWrap(True)
-        self.lbl_restart_warning.setVisible(False)
-        ortools_layout.addWidget(self.lbl_restart_warning)
+        self.lbl_instructions.setStyleSheet("font-weight: normal; color: #555; font-size: 11px;")
+        self.lbl_instructions.setWordWrap(True)
+        ortools_layout.addWidget(self.lbl_instructions)
         
         self.ortools_group.setLayout(ortools_layout)
         layout.addWidget(self.ortools_group)
@@ -330,16 +339,19 @@ class DependenciesDialog(QDialog):
             self.gisbr_status_val.setStyleSheet("color: #c53030; font-weight: bold;")
             
         # 2. OR-Tools
-        if has_ortools():
+        self.txt_command.setText(command_text())
+        self.btn_copy_cmd.setText("Copiar Comando")
+        instalado = has_ortools()
+        # Com o OR-Tools presente, o comando só polui a tela.
+        self.txt_command.setVisible(not instalado)
+        self.btn_copy_cmd.setVisible(not instalado)
+        self.lbl_instructions.setVisible(not instalado)
+        if instalado:
             self.ortools_status_val.setText("Instalado (Disponível)")
             self.ortools_status_val.setStyleSheet("color: #2f855a; font-weight: bold;")
-            self.btn_ortools.setEnabled(False)
-            self.btn_ortools.setText("OR-Tools já instalado")
         else:
             self.ortools_status_val.setText("Não instalado (Heurística pura ativada)")
             self.ortools_status_val.setStyleSheet("color: #dd6b20; font-weight: bold;")
-            self.btn_ortools.setEnabled(True)
-            self.btn_ortools.setText("Instalar OR-Tools")
 
     def open_plugin_manager(self):
         if iface is not None:
@@ -350,51 +362,9 @@ class DependenciesDialog(QDialog):
                 "Aviso",
                 "O Gerenciador de Complementos só pode ser aberto dentro do QGIS."
             )
-            
-    def start_ortools_install(self):
-        self.btn_ortools.setEnabled(False)
-        self.btn_close.setEnabled(False)
-        
-        self.progress_bar.setVisible(True)
-        self.log_area.setVisible(True)
-        self.log_area.clear()
-        self.log_area.append("Iniciando a instalação do Google OR-Tools...")
-        
-        try:
-            self.install_task = install(
-                on_progress=self.on_install_progress,
-                on_finish=self.on_install_finish
-            )
-        except Exception as e:
-            self.on_install_finish(False, f"Erro ao disparar tarefa: {str(e)}")
-            
-    def on_install_progress(self, message):
-        self.log_area.append(message)
-        scrollbar = self.log_area.verticalScrollBar()
-        scrollbar.setValue(scrollbar.maximum())
-        
-    def on_install_finish(self, success, error):
-        self.progress_bar.setVisible(False)
-        self.btn_close.setEnabled(True)
-        
-        if success:
-            self.log_area.append("\nInstalação concluída com sucesso!")
-            self.ortools_status_val.setText("Instalado (Pendente reiniciar)")
-            self.ortools_status_val.setStyleSheet("color: #2f855a; font-weight: bold;")
-            self.lbl_restart_warning.setVisible(True)
-            
-            QMessageBox.information(
-                self,
-                "Instalação Concluída",
-                "Google OR-Tools foi instalado com sucesso!\n\n"
-                "Por favor, reinicie o QGIS para carregar a biblioteca."
-            )
-        else:
-            self.log_area.append(f"\nErro durante a instalação:\n{error}")
-            self.btn_ortools.setEnabled(True)
-            
-            QMessageBox.critical(
-                self,
-                "Erro na Instalação",
-                f"Falha ao instalar o Google OR-Tools:\n{error}"
-            )
+
+    def copy_command(self):
+        cmd = self.txt_command.toPlainText()
+        if cmd:
+            QApplication.clipboard().setText(cmd)
+            self.btn_copy_cmd.setText("Comando copiado!")

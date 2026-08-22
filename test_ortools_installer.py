@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Testes de core/ortools_installer.py.
 
-Guarda a construção do comando de instalação e os tratamentos de erro:
+Guarda a construção do comando de instalação:
 fixar os pacotes já instalados no QGIS (numpy, pandas, typing_extensions)
 preserva o ambiente do usuário sem impor travas fixas incompatíveis com
 Python 3.13 / QGIS 4.x.
@@ -12,16 +12,18 @@ import unittest
 from unittest import mock
 
 from logis.core import ortools_installer
-from logis.core.ortools_installer import ORToolsInstallTask, installed_versions
+from logis.core.ortools_installer import (
+    build_command,
+    command_text,
+    installed_versions,
+    is_installed,
+)
 from logis.core.optim_backend import has_ortools
 
 
 class TestInstallCommand(unittest.TestCase):
-    def setUp(self):
-        self.task = ORToolsInstallTask()
-
     def test_command_has_only_binary_flag(self):
-        cmd = self.task.build_command()
+        cmd = build_command()
         self.assertIn("--only-binary=:all:", cmd)
 
     def test_command_pins_installed_versions(self):
@@ -30,7 +32,7 @@ class TestInstallCommand(unittest.TestCase):
             "pandas": "2.0.3",
             "typing_extensions": "4.10.0",
         }
-        cmd = self.task.build_command(versions=versions)
+        cmd = build_command(versions=versions)
         self.assertIn("numpy==1.26.4", cmd)
         self.assertIn("pandas==2.0.3", cmd)
         self.assertIn("typing_extensions==4.10.0", cmd)
@@ -44,7 +46,7 @@ class TestInstallCommand(unittest.TestCase):
             "pandas": "2.2.3",
             "typing_extensions": None,
         }
-        cmd = self.task.build_command(versions=versions)
+        cmd = build_command(versions=versions)
         self.assertIn("numpy==2.1.3", cmd)
         self.assertIn("pandas==2.2.3", cmd)
         self.assertFalse(any(arg.startswith("typing_extensions") for arg in cmd))
@@ -55,7 +57,7 @@ class TestInstallCommand(unittest.TestCase):
             "pandas": None,
             "typing_extensions": None,
         }
-        cmd = self.task.build_command(versions=versions)
+        cmd = build_command(versions=versions)
         pacotes = [
             arg for arg in cmd[cmd.index("install") + 1:] if not arg.startswith("-")
         ]
@@ -68,7 +70,7 @@ class TestInstallCommand(unittest.TestCase):
             {"numpy": None, "pandas": None, "typing_extensions": None},
         ]
         for versions in cases:
-            cmd = self.task.build_command(versions=versions)
+            cmd = build_command(versions=versions)
             self.assertNotIn("numpy<2", cmd)
             self.assertNotIn("pandas<3", cmd)
             self.assertIn("--only-binary=:all:", cmd)
@@ -80,10 +82,10 @@ class TestInstallCommand(unittest.TestCase):
             self.assertIn(key, res)
 
     def test_break_system_packages_is_opt_in(self):
-        self.assertNotIn("--break-system-packages", self.task.build_command())
+        self.assertNotIn("--break-system-packages", build_command())
         self.assertIn(
             "--break-system-packages",
-            self.task.build_command(break_system_packages=True),
+            build_command(break_system_packages=True),
         )
 
     def test_command_pins_valid_pep440_versions(self):
@@ -92,13 +94,13 @@ class TestInstallCommand(unittest.TestCase):
             "pandas": "1.5.3.post1",
             "typing_extensions": "4.10.0",
         }
-        cmd = self.task.build_command(versions=versions)
+        cmd = build_command(versions=versions)
         self.assertIn("numpy==2.1.0", cmd)
         self.assertIn("pandas==1.5.3.post1", cmd)
         self.assertIn("typing_extensions==4.10.0", cmd)
 
     def test_command_pins_prerelease_and_local_version(self):
-        cmd = self.task.build_command(versions={"numpy": "2.0.0rc1+local"})
+        cmd = build_command(versions={"numpy": "2.0.0rc1+local"})
         self.assertIn("numpy==2.0.0rc1+local", cmd)
 
     def test_command_rejects_unsafe_versions(self):
@@ -107,14 +109,14 @@ class TestInstallCommand(unittest.TestCase):
             "pandas": "1.0; rm -rf /",
             "typing_extensions": "4.10.0",
         }
-        cmd = self.task.build_command(versions=versions)
+        cmd = build_command(versions=versions)
         self.assertFalse(any(arg.startswith("numpy") for arg in cmd))
         self.assertFalse(any(arg.startswith("pandas") for arg in cmd))
         self.assertIn("typing_extensions==4.10.0", cmd)
         self.assertIn("ortools", cmd)
 
     def test_command_rejects_empty_and_non_string_versions(self):
-        cmd = self.task.build_command(
+        cmd = build_command(
             versions={"numpy": "", "pandas": 2.0, "typing_extensions": ["4.10.0"]}
         )
         pacotes = [
@@ -122,92 +124,38 @@ class TestInstallCommand(unittest.TestCase):
         ]
         self.assertEqual(pacotes, ["ortools"])
 
-    def test_build_command_matches_run_pip_prefix(self):
-        cmd = self.task.build_command()
+    def test_build_command_matches_pip_prefix(self):
+        cmd = build_command()
         self.assertEqual(cmd[:4], [sys.executable, "-m", "pip", "install"])
 
-    def test_run_pip_rejects_foreign_command(self):
-        with mock.patch.object(ortools_installer.subprocess, "Popen") as fake_popen:
-            with self.assertRaises(ValueError):
-                self.task._run_pip(["curl", "http://x"])
-            with self.assertRaises(ValueError):
-                self.task._run_pip("pip install ortools")
-            with self.assertRaises(ValueError):
-                self.task._run_pip([sys.executable, "-m", "pip", "download", "ortools"])
-            fake_popen.assert_not_called()
+    def test_command_text_returns_formatted_string(self):
+        versions = {"numpy": "1.26.4"}
+        text = command_text(versions=versions, break_system_packages=True)
+        self.assertIsInstance(text, str)
+        self.assertIn("pip install", text)
+        self.assertIn("numpy==1.26.4", text)
+        self.assertIn("--break-system-packages", text)
 
-    def test_retries_once_with_break_system_packages(self):
-        chamadas = []
+    def test_command_text_quotes_args_with_spaces(self):
+        versions = {"numpy": "1.26.4"}
+        with mock.patch("sys.executable", "/path with space/python"):
+            text = command_text(versions=versions)
+            self.assertIn('"/path with space/python"', text)
 
-        def fake_run_pip(cmd):
-            chamadas.append(cmd)
-            if len(chamadas) == 1:
-                self.task.output.append(
-                    "error: externally-managed-environment"
-                )
-                return 1
-            return 0
+    def test_is_installed_returns_bool(self):
+        res = is_installed()
+        self.assertIsInstance(res, bool)
 
-        self.task._run_pip = fake_run_pip
-        self.assertTrue(self.task.run())
-        self.assertEqual(len(chamadas), 2)
-        self.assertNotIn("--break-system-packages", chamadas[0])
-        self.assertIn("--break-system-packages", chamadas[1])
-
-    def test_no_retry_when_error_is_unrelated(self):
-        chamadas = []
-
-        def fake_run_pip(cmd):
-            chamadas.append(cmd)
-            self.task.output.append("Network is unreachable")
-            return 1
-
-        self.task._run_pip = fake_run_pip
-        self.assertFalse(self.task.run())
-        self.assertEqual(len(chamadas), 1)
-        self.assertIn("Falha de rede", self.task.error)
-
-    def test_error_message_numpy_incompatibility(self):
-        def fake_run_pip(cmd):
-            self.task.output.append("ResolutionImpossible: numpy incompatibility")
-            return 1
-
-        self.task._run_pip = fake_run_pip
-        self.assertFalse(self.task.run())
-        self.assertIn("NumPy", self.task.error)
-        self.assertIn("incompatível", self.task.error)
-        self.assertTrue(self.task.error.endswith("O OR-Tools é opcional."))
-
-    def test_error_message_no_binary_package(self):
-        def fake_run_pip(cmd):
-            self.task.output.append("No matching distribution found for ortools (only-binary)")
-            return 1
-
-        self.task._run_pip = fake_run_pip
-        self.assertFalse(self.task.run())
-        self.assertIn("pacote binário", self.task.error)
-        self.assertTrue(self.task.error.endswith("O OR-Tools é opcional."))
-
-    def test_no_wheel_for_this_python_is_not_reported_as_network_failure(self):
-        """Saída real do pip no Flatpak/cp313: sem wheel, mas com rede."""
-        def fake_run_pip(cmd):
-            self.task.output.append(
-                "ERROR: Could not find a version that satisfies the "
-                "requirement ortools (from versions: none)"
-            )
-            self.task.output.append("ERROR: No matching distribution found for ortools")
-            return 1
-
-        self.task._run_pip = fake_run_pip
-        self.assertFalse(self.task.run())
-        self.assertNotIn("Falha de rede", self.task.error)
-        self.assertIn("pacote binário", self.task.error)
+    def test_module_has_no_subprocess_and_no_installer_api(self):
+        """O módulo não roda processo externo: sem subprocess, sem install/Task."""
+        self.assertFalse(hasattr(ortools_installer, "subprocess"))
+        self.assertFalse(hasattr(ortools_installer, "install"))
+        self.assertFalse(hasattr(ortools_installer, "ORToolsInstallTask"))
 
 
 class TestHasORTools(unittest.TestCase):
     def test_clean_import_error_returns_false_without_raising(self):
         from unittest.mock import patch
-        import sys
         import builtins
         orig_import = builtins.__import__
 
@@ -223,7 +171,6 @@ class TestHasORTools(unittest.TestCase):
 
     def test_broken_installation_exception_returns_false_and_does_not_propagate(self):
         from unittest.mock import patch
-        import sys
         import builtins
         orig_import = builtins.__import__
 

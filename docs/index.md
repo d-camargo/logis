@@ -35,7 +35,7 @@ Os dados são entregues em SIRGAS 2000 / EPSG:4674, com reprojeção para CRS m�
 
 | | |
 |---|---|
-| **Versão** | 0.1.7 |
+| **Versão** | 0.1.8 |
 | **Estado** | `experimental` |
 | **Licença** | GPL-3.0 |
 | **QGIS** | 3.16 ou superior (compatível com Qt6 / QGIS 4) |
