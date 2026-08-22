@@ -9,7 +9,7 @@ from pathlib import Path
 
 from qgis.PyQt.QtCore import QStandardPaths, QUrl
 from qgis.PyQt.QtNetwork import QNetworkRequest
-from qgis.core import QgsBlockingNetworkRequest
+from qgis.core import Qgis, QgsBlockingNetworkRequest, QgsMessageLog
 
 # Definido diretamente aqui (sem constants.py no logis)
 CACHE_SUBDIR = "logis"
@@ -54,8 +54,14 @@ def _configure_ssl_config(request):
                 ssl_config = request.sslConfiguration()
                 ssl_config.addCaCertificates(certs)
                 request.setSslConfiguration(ssl_config)
-        except Exception:
-            pass
+        except (ImportError, OSError) as e:
+            QgsMessageLog.logMessage(
+                "Falha ao carregar a cadeia de certificados {}: {} — seguindo com o trust store do sistema".format(
+                    cert_path, e
+                ),
+                "logis",
+                Qgis.MessageLevel.Warning,
+            )
 
 
 def _http_get(url):

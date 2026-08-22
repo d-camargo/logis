@@ -69,10 +69,20 @@ make test
 ```
 
 ### Suíte de Testes Unitários e de Integração
-Para rodar a suíte completa de testes unitários com o `pytest`:
+Para rodar a suíte completa de testes unitários com o `pytest`, em ambiente com sessão gráfica:
 ```bash
 python3 -m pytest -q
 ```
+
+!!! warning "Ambiente sem display (headless)"
+    Em servidor/VPS ou CI sem X11, o comando cru **derruba o processo com falha de
+    segmentação do Qt**. É preciso forçar a plataforma offscreen antes de rodar o
+    `pytest`:
+    ```bash
+    QT_QPA_PLATFORM=offscreen python3 -m pytest -q
+    ```
+    Resultado esperado, medido em 2026-08-22 nesta VPS: **240 testes passando + 9
+    subtests, em ~22 s**.
 
 ---
 
@@ -105,11 +115,13 @@ O método `exec_()` com underline legado do PyQt4/PyQt5 foi totalmente removido 
 
 ```python
 # Correto:
-dialog.exec()
+dialog.exec()  # nosec B102
 
 # Proibido:
 dialog.exec_()
 ```
+
+Como a chamada ao método `.exec()` tem o mesmo nome da função *built-in* do Python, o analisador estático Bandit dispara o falso positivo **B102** (`exec_used`). Por essa razão, a chamada em `logis/logis_plugin.py` é anotada com `# nosec B102` acompanhada de um comentário justificativo — desenvolvedores que criarem novos diálogos modais devem aplicar a mesma anotação.
 
 Para verificar se o seu ambiente atende às regras de compatibilidade, você pode rodar o utilitário `tools/qgis4_compat_check.py`.
 

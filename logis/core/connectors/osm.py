@@ -7,7 +7,7 @@ import json
 import time
 from pathlib import Path
 
-from qgis.core import QgsBlockingNetworkRequest
+from qgis.core import QgsBlockingNetworkRequest, QgsMessageLog, Qgis
 from qgis.PyQt.QtCore import QUrl
 from qgis.PyQt.QtNetwork import QNetworkRequest, QNetworkReply
 
@@ -99,8 +99,11 @@ def fetch_overpass_json(bbox, timeout=_OVERPASS_TIMEOUT, cache_path=None, feedba
                                 "Aviso: Falha na consulta do Overpass. Usando cache local: {}".format(cache_path)
                             )
                         return payload
-                except Exception:
-                    pass
+                except (OSError, ValueError) as err:
+                    msg = "Falha ao ler o cache local {}: {}".format(cache_path, err)
+                    if feedback is not None:
+                        feedback.pushInfo(msg)
+                    QgsMessageLog.logMessage(msg, "logis", Qgis.MessageLevel.Warning)
         raise e
 
 

@@ -68,7 +68,7 @@ def is_null(val):
     if QVariant is not None:
         try:
             return QVariant(val).isNull()
-        except Exception:
-            pass
+        except (TypeError, ValueError):
+            return False
     return False
 

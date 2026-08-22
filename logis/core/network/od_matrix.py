@@ -26,7 +26,7 @@ Complexity/Scale limits:
 """
 
 import hashlib
-import pickle
+import json
 from pathlib import Path
 
 from qgis.core import QgsPointXY, QgsMessageLog, Qgis
@@ -147,7 +147,7 @@ def compute_od_matrix(
         
     cache_key = h.hexdigest()
     prefix = f"{cache_id}_" if cache_id else ""
-    cache_file = od_cache_dir / f"od_matrix_{prefix}{cache_key}.pkl"
+    cache_file = od_cache_dir / f"od_matrix_{prefix}{cache_key}.json"
 
     # 3. Try to load from cache
     if not force and cache_file.exists():
@@ -157,8 +157,8 @@ def compute_od_matrix(
         QgsMessageLog.logMessage(msg, LOG_TAG, Qgis.MessageLevel.Info)
         
         try:
-            with open(cache_file, "rb") as f:
-                data = pickle.load(f)
+            with open(cache_file, "r", encoding="utf-8") as f:
+                data = json.load(f)
             if isinstance(data, dict) and "matrix" in data:
                 return data["matrix"]
             elif isinstance(data, list):
@@ -201,8 +201,8 @@ def compute_od_matrix(
             "criterion_num": criterion_num,
             "cache_id": cache_id
         }
-        with open(cache_file, "wb") as f:
-            pickle.dump(cache_data, f)
+        with open(cache_file, "w", encoding="utf-8") as f:
+            json.dump(cache_data, f)
         
         save_msg = f"Saved OD matrix to cache: {cache_file.name}"
         if feedback is not None:
