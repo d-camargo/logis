@@ -66,6 +66,21 @@ class TestLogisPlugin(unittest.TestCase):
         self.mock_iface.addPluginToMenu.assert_any_call("logis", self.plugin.action_regional)
         self.mock_iface.addPluginToMenu.assert_any_call("logis", self.plugin.action_waste)
 
+    def test_show_dependencies(self):
+        self.plugin.initGui()
+        self.assertIsNone(self.plugin.dialog)
+
+        # Trigger show_dependencies
+        self.plugin.show_dependencies()
+
+        # Check that dialog was created
+        self.assertIsNotNone(self.plugin.dialog)
+
+        # Call it again to make sure it is not recreated
+        dialog_first = self.plugin.dialog
+        self.plugin.show_dependencies()
+        self.assertEqual(self.plugin.dialog, dialog_first)
+
     def test_show_urban_dock(self):
         self.plugin.initGui()
         self.assertIsNone(self.plugin.dock_urban)
@@ -116,6 +131,7 @@ class TestLogisPlugin(unittest.TestCase):
     def test_unload(self):
         # Setup GUI
         self.plugin.initGui()
+        self.plugin.show_dependencies()
         self.plugin.show_urban_dock()
         self.plugin.show_regional_dock()
         self.plugin.show_waste_dock()
@@ -124,6 +140,7 @@ class TestLogisPlugin(unittest.TestCase):
         action_urban = self.plugin.action_urban
         action_regional = self.plugin.action_regional
         action_waste = self.plugin.action_waste
+        dialog = self.plugin.dialog
         dock_urban = self.plugin.dock_urban
         dock_regional = self.plugin.dock_regional
         dock_waste = self.plugin.dock_waste
@@ -147,6 +164,7 @@ class TestLogisPlugin(unittest.TestCase):
         self.assertIsNone(self.plugin.action_urban)
         self.assertIsNone(self.plugin.action_regional)
         self.assertIsNone(self.plugin.action_waste)
+        self.assertIsNone(self.plugin.dialog)
         self.assertIsNone(self.plugin.dock_urban)
         self.assertIsNone(self.plugin.dock_regional)
         self.assertIsNone(self.plugin.dock_waste)

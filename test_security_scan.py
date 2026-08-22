@@ -93,31 +93,25 @@ class TestSecurityScan(unittest.TestCase):
             )
             self.fail(msg)
 
-    def test_exec_has_nosec(self):
-        """(c) A linha do .exec() em logis/logis_plugin.py carrega o marcador # nosec B102."""
-        root_dir, logis_dir, _ = self._get_logis_py_files()
-        target_plugin = logis_dir / "logis_plugin.py"
-        self.assertTrue(
-            target_plugin.exists(), f"Arquivo {target_plugin} não encontrado."
-        )
-
-        rel_path = target_plugin.relative_to(root_dir)
+    def test_no_exec(self):
+        """(c) Nenhum arquivo sob logis/ contém chamadas .exec() ou exec()."""
+        root_dir, _, py_files = self._get_logis_py_files()
         violations = []
 
-        with open(target_plugin, "r", encoding="utf-8") as f:
-            for line_idx, line in enumerate(f, start=1):
-                stripped = line.strip()
-                if stripped.startswith("#"):
-                    continue
-                if ".exec()" in line:
-                    if "# nosec B102" not in line:
+        for py_path, rel_path in py_files:
+            with open(py_path, "r", encoding="utf-8") as f:
+                for line_idx, line in enumerate(f, start=1):
+                    stripped = line.strip()
+                    if stripped.startswith("#"):
+                        continue
+                    if ".exec()" in line or ".exec_(" in line or re.search(r"\bexec\(", line):
                         violations.append(
-                            f"{rel_path}:{line_idx}: Chamada .exec() sem '# nosec B102' -> {line.strip()}"
+                            f"{rel_path}:{line_idx}: Uso de exec() -> {line.strip()}"
                         )
 
         if violations:
             msg = (
-                f"Encontradas {len(violations)} chamadas de .exec() sem marcador '# nosec B102':\n"
+                f"Encontradas {len(violations)} ocorrências de exec() em logis/:\n"
                 + "\n".join(violations)
             )
             self.fail(msg)

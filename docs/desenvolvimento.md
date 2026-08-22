@@ -110,18 +110,19 @@ from qgis.PyQt.QtCore import QVariant
 field = QgsField("nome", field_type(QVariant.String))
 ```
 
-### 3. Proibição de `exec_()`
-O método `exec_()` com underline legado do PyQt4/PyQt5 foi totalmente removido no PyQt6. Use exclusivamente `exec()` em caixas de diálogo (`QDialog`) e modais:
+### 3. Proibição de `exec_()` e de `exec()`
+O método `exec_()` com underline legado do PyQt4/PyQt5 foi totalmente removido no PyQt6. Mas o substituto `exec()` **também é proibido** no logis: ele abre o diálogo de forma modal (bloqueando o laço de eventos do QGIS) e tem o mesmo nome da função *built-in* `exec` do Python, que o analisador estático Bandit sinaliza como **B102** (`exec_used`). Em vez de silenciar o aviso com `# nosec`, os diálogos do plugin são exibidos de forma não modal com `.show()`:
 
 ```python
 # Correto:
-dialog.exec()  # nosec B102
+dialog.show()
 
 # Proibido:
+dialog.exec()
 dialog.exec_()
 ```
 
-Como a chamada ao método `.exec()` tem o mesmo nome da função *built-in* do Python, o analisador estático Bandit dispara o falso positivo **B102** (`exec_used`). Por essa razão, a chamada em `logis/logis_plugin.py` é anotada com `# nosec B102` acompanhada de um comentário justificativo — desenvolvedores que criarem novos diálogos modais devem aplicar a mesma anotação.
+Diálogos não modais continuam vivos depois de `show()`, então quem os cria é responsável por fechá-los e liberar a referência no `unload()` do plugin (ver `LogisPlugin.unload` em `logis/logis_plugin.py`). A regra é verificada automaticamente por `test_security_scan.py`, que falha se qualquer arquivo sob `logis/` contiver `exec()`, `.exec()` ou `.exec_()`.
 
 Para verificar se o seu ambiente atende às regras de compatibilidade, você pode rodar o utilitário `tools/qgis4_compat_check.py`.
 

@@ -2,6 +2,11 @@
 
 Este documento registra as principais alterações e evoluções do plugin **logis** organizadas por versão.
 
+## 0.1.6
+
+- **Interface Sem Diálogos Modais**: Transição de `.exec()` para `.show()` na caixa de diálogo de dependências para compatibilidade total com PyQt6/QGIS 4 e remoção de chamadas modais/bloqueantes.
+- **Conformidade e Regras de Segurança**: Atualização em `test_plugin.py` e `test_security_scan.py` para reforçar a varredura contra chamadas `exec()` em todo o repositório.
+
 ## 0.1.5
 
 - **Ajuste Dinâmico de Dependências (OR-Tools)**: Atualização na estratégia de verificação e instalação do backend OR-Tools, adequando a trava de dependências (`numpy`, `pandas`, `typing_extensions`) ao ambiente Python ativo no QGIS.

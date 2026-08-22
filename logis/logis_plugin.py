@@ -68,9 +68,7 @@ class LogisPlugin:
         if self.dialog is None:
             self.dialog = DependenciesDialog(self.iface.mainWindow())
         self.dialog.refresh_status()
-        # QDialog.exec() do Qt (diálogo modal), não o builtin exec do Python.
-        # GEMINI.md §9 obriga esta forma porque exec_() foi removido no PyQt6/QGIS 4.
-        self.dialog.exec()  # nosec B102
+        self.dialog.show()
 
     def show_urban_dock(self):
         from qgis.PyQt.QtCore import Qt
@@ -126,6 +124,9 @@ class LogisPlugin:
 
         # Libera referência ao diálogo
         if self.dialog is not None:
+            from qgis.PyQt import sip
+            if not sip.isdeleted(self.dialog):
+                self.dialog.close()
             self.dialog = None
 
         # Remove e libera o dock widget

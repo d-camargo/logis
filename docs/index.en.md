@@ -35,7 +35,7 @@ Data is output in SIRGAS 2000 / EPSG:4674, reprojected to a metric CRS only for 
 
 | | |
 |---|---|
-| **Version** | 0.1.5 |
+| **Version** | 0.1.6 |
 | **Status** | `experimental` |
 | **License** | GPL-3.0 |
 | **QGIS** | 3.16 or higher (Qt6 / QGIS 4 compatible) |
