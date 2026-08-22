@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 # Este teste estático verifica a ausência de vulnerabilidades e maus padrões de segurança
-# nos arquivos Python sob logis/ (guarda estática contra regressão).
+# nos arquivos Python sob logis/ (guarda estática contra regressão: pickle, broad except/pass,
+# exec, PeerVerifyMode+VerifyNone, stdlib random, md5/sha1, subprocess fora do instalador e shell=True).
 # Não importa QGIS e não depende de ferramentas externas como bandit.
 
 import pathlib
@@ -136,6 +137,99 @@ class TestSecurityScan(unittest.TestCase):
         if violations:
             msg = (
                 f"Encontradas {len(violations)} ocorrências de PeerVerifyMode + VerifyNone em logis/:\n"
+                + "\n".join(violations)
+            )
+            self.fail(msg)
+
+    def test_no_stdlib_random(self):
+        """(e) Nenhum arquivo sob logis/ usa o gerador random da stdlib (usar logis/core/sampling.py)."""
+        root_dir, _, py_files = self._get_logis_py_files()
+        random_patterns = [
+            (r"\bimport\s+random\b", "Uso de 'import random'"),
+            (r"\bfrom\s+random\s+import\b", "Uso de 'from random import'"),
+            (r"\brandom\.", "Uso de 'random.'"),
+        ]
+        violations = []
+
+        for py_path, rel_path in py_files:
+            with open(py_path, "r", encoding="utf-8") as f:
+                for line_idx, line in enumerate(f, start=1):
+                    stripped = line.strip()
+                    if stripped.startswith("#"):
+                        continue
+                    for pattern, desc in random_patterns:
+                        if re.search(pattern, line):
+                            violations.append(
+                                f"{rel_path}:{line_idx}: {desc} -> {stripped}"
+                            )
+
+        if violations:
+            msg = (
+                f"Encontradas {len(violations)} ocorrências do gerador stdlib random em logis/ (use logis/core/sampling.py):\n"
+                + "\n".join(violations)
+            )
+            self.fail(msg)
+
+    def test_no_weak_hash(self):
+        """(f) Nenhum arquivo sob logis/ contém hashlib.md5( nem hashlib.sha1(."""
+        root_dir, _, py_files = self._get_logis_py_files()
+        weak_hash_patterns = [
+            (r"\bhashlib\.md5\(", "Uso de hashlib.md5("),
+            (r"\bhashlib\.sha1\(", "Uso de hashlib.sha1("),
+        ]
+        violations = []
+
+        for py_path, rel_path in py_files:
+            with open(py_path, "r", encoding="utf-8") as f:
+                for line_idx, line in enumerate(f, start=1):
+                    stripped = line.strip()
+                    if stripped.startswith("#"):
+                        continue
+                    for pattern, desc in weak_hash_patterns:
+                        if re.search(pattern, line):
+                            violations.append(
+                                f"{rel_path}:{line_idx}: {desc} -> {stripped}"
+                            )
+
+        if violations:
+            msg = (
+                f"Encontradas {len(violations)} ocorrências de hash fraco (md5/sha1) em logis/ (use hashlib.sha256):\n"
+                + "\n".join(violations)
+            )
+            self.fail(msg)
+
+    def test_subprocess_only_in_installer(self):
+        """(g) subprocess só em logis/core/ortools_installer.py, e shell=True em lugar nenhum."""
+        root_dir, _, py_files = self._get_logis_py_files()
+        subprocess_patterns = [
+            (r"\bimport\s+subprocess\b", "Uso de 'import subprocess'"),
+            (r"\bfrom\s+subprocess\s+import\b", "Uso de 'from subprocess import'"),
+            (r"\bsubprocess\.", "Uso de 'subprocess.'"),
+        ]
+        violations = []
+
+        for py_path, rel_path in py_files:
+            is_installer = rel_path.as_posix() == "logis/core/ortools_installer.py"
+
+            with open(py_path, "r", encoding="utf-8") as f:
+                for line_idx, line in enumerate(f, start=1):
+                    stripped = line.strip()
+                    if stripped.startswith("#"):
+                        continue
+                    if "shell=True" in line:
+                        violations.append(
+                            f"{rel_path}:{line_idx}: Uso de 'shell=True' -> {stripped}"
+                        )
+                    if not is_installer:
+                        for pattern, desc in subprocess_patterns:
+                            if re.search(pattern, line):
+                                violations.append(
+                                    f"{rel_path}:{line_idx}: {desc} fora do instalador -> {stripped}"
+                                )
+
+        if violations:
+            msg = (
+                f"Encontradas {len(violations)} violações de subprocess/shell=True em logis/:\n"
                 + "\n".join(violations)
             )
             self.fail(msg)

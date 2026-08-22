@@ -35,5 +35,39 @@ class TestEdgeBetweenness(unittest.TestCase):
         with self.assertRaises(ValueError):
             edge_betweenness([[-1]], num_edges=3)
 
+    def test_sample_od_pairs_deterministic(self):
+        from logis.core.network.betweenness import sample_od_pairs
+
+        class MockGraph:
+            def vertexCount(self):
+                return 10
+
+        graph = MockGraph()
+        pairs1 = sample_od_pairs(graph, num_samples=5, seed=42)
+        pairs2 = sample_od_pairs(graph, num_samples=5, seed=42)
+
+        self.assertEqual(len(pairs1), 5)
+        self.assertEqual(pairs1, pairs2)
+        for orig, dest in pairs1:
+            self.assertNotEqual(orig, dest)
+            self.assertTrue(0 <= orig < 10)
+            self.assertTrue(0 <= dest < 10)
+
+    def test_sample_od_pairs_invalid_inputs(self):
+        from logis.core.network.betweenness import sample_od_pairs
+
+        class MockGraph:
+            def __init__(self, count):
+                self._count = count
+            def vertexCount(self):
+                return self._count
+
+        with self.assertRaises(ValueError):
+            sample_od_pairs(MockGraph(10), num_samples=0)
+
+        with self.assertRaises(ValueError):
+            sample_od_pairs(MockGraph(1), num_samples=5)
+
+
 if __name__ == '__main__':
     unittest.main()

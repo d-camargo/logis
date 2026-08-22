@@ -2,6 +2,12 @@
 
 Este documento registra as principais alterações e evoluções do plugin **logis** organizadas por versão.
 
+## 0.1.7
+
+- **Amostragem Determinística**: O gerador `logis.core.sampling.DeterministicRandom` (SplitMix64 em Python puro) substitui o `random` da biblioteca padrão, tornando a circuidade média e a centralidade de intermediação reprodutíveis para a mesma camada e os mesmos parâmetros.
+- **Chave de Cache em SHA-256**: A assinatura do cache da matriz OD passa de MD5 para SHA-256; os arquivos de cache gravados por versões anteriores deixam de ser encontrados e são recalculados na primeira execução.
+- **Instalador do OR-Tools Endurecido**: As versões de dependência são validadas antes de entrar na linha de comando do `pip`, e o comando é conferido antes de ser executado.
+
 ## 0.1.6
 
 - **Interface Sem Diálogos Modais**: Transição de `.exec()` para `.show()` na caixa de diálogo de dependências para compatibilidade total com PyQt6/QGIS 4 e remoção de chamadas modais/bloqueantes.

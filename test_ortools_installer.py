@@ -7,8 +7,11 @@ preserva o ambiente do usuário sem impor travas fixas incompatíveis com
 Python 3.13 / QGIS 4.x.
 """
 
+import sys
 import unittest
+from unittest import mock
 
+from logis.core import ortools_installer
 from logis.core.ortools_installer import ORToolsInstallTask, installed_versions
 from logis.core.optim_backend import has_ortools
 
@@ -82,6 +85,56 @@ class TestInstallCommand(unittest.TestCase):
             "--break-system-packages",
             self.task.build_command(break_system_packages=True),
         )
+
+    def test_command_pins_valid_pep440_versions(self):
+        versions = {
+            "numpy": "2.1.0",
+            "pandas": "1.5.3.post1",
+            "typing_extensions": "4.10.0",
+        }
+        cmd = self.task.build_command(versions=versions)
+        self.assertIn("numpy==2.1.0", cmd)
+        self.assertIn("pandas==1.5.3.post1", cmd)
+        self.assertIn("typing_extensions==4.10.0", cmd)
+
+    def test_command_pins_prerelease_and_local_version(self):
+        cmd = self.task.build_command(versions={"numpy": "2.0.0rc1+local"})
+        self.assertIn("numpy==2.0.0rc1+local", cmd)
+
+    def test_command_rejects_unsafe_versions(self):
+        versions = {
+            "numpy": "-rmalicioso.txt",
+            "pandas": "1.0; rm -rf /",
+            "typing_extensions": "4.10.0",
+        }
+        cmd = self.task.build_command(versions=versions)
+        self.assertFalse(any(arg.startswith("numpy") for arg in cmd))
+        self.assertFalse(any(arg.startswith("pandas") for arg in cmd))
+        self.assertIn("typing_extensions==4.10.0", cmd)
+        self.assertIn("ortools", cmd)
+
+    def test_command_rejects_empty_and_non_string_versions(self):
+        cmd = self.task.build_command(
+            versions={"numpy": "", "pandas": 2.0, "typing_extensions": ["4.10.0"]}
+        )
+        pacotes = [
+            arg for arg in cmd[cmd.index("install") + 1:] if not arg.startswith("-")
+        ]
+        self.assertEqual(pacotes, ["ortools"])
+
+    def test_build_command_matches_run_pip_prefix(self):
+        cmd = self.task.build_command()
+        self.assertEqual(cmd[:4], [sys.executable, "-m", "pip", "install"])
+
+    def test_run_pip_rejects_foreign_command(self):
+        with mock.patch.object(ortools_installer.subprocess, "Popen") as fake_popen:
+            with self.assertRaises(ValueError):
+                self.task._run_pip(["curl", "http://x"])
+            with self.assertRaises(ValueError):
+                self.task._run_pip("pip install ortools")
+            with self.assertRaises(ValueError):
+                self.task._run_pip([sys.executable, "-m", "pip", "download", "ortools"])
+            fake_popen.assert_not_called()
 
     def test_retries_once_with_break_system_packages(self):
         chamadas = []

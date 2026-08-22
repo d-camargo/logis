@@ -68,16 +68,16 @@ def _resolve_nodes(graph, nodes):
 
 
 def _get_graph_hash(graph, criterion_num):
-    """Generates a unique MD5 hash for the graph topology, coordinates, and cost strategy.
+    """Generates a unique SHA-256 hash for the graph topology, coordinates, and cost strategy.
 
     Args:
         graph (QgsGraph): The network graph.
         criterion_num (int): Strategy index for optimization.
 
     Returns:
-        str: MD5 hash of the graph.
+        str: SHA-256 hash of the graph.
     """
-    h = hashlib.md5()
+    h = hashlib.sha256()
     h.update(f"V:{graph.vertexCount()}".encode('utf-8'))
     h.update(f"E:{graph.edgeCount()}".encode('utf-8'))
     h.update(f"C:{criterion_num}".encode('utf-8'))
@@ -135,10 +135,12 @@ def compute_od_matrix(
     od_cache_dir = c_dir / "od_matrices"
     od_cache_dir.mkdir(parents=True, exist_ok=True)
 
-    # Generate matrix-specific MD5 signature
+    # Generate matrix-specific SHA-256 signature
     graph_hash = _get_graph_hash(graph, criterion_num)
     
-    h = hashlib.md5()
+    # O hash é identificador de cache, não credencial: usa SHA-256 no lugar do MD5
+    # porque o scanner do plugins.qgis.org acusa o MD5 como B324.
+    h = hashlib.sha256()
     h.update(graph_hash.encode('utf-8'))
     h.update(f"O:{origins_idx}".encode('utf-8'))
     h.update(f"D:{destinations_idx}".encode('utf-8'))

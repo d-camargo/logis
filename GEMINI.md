@@ -203,4 +203,12 @@ logis/
 - Reprojetar para CRS métrico antes de cálculos de custo; devolver saídas em EPSG:4674.
 - Cache: `QStandardPaths.CacheLocation` → `.../logis/`. Nunca gravar fora do cache ou do GPKG escolhido pelo usuário.
 - Licença: GPL-3.0 (herdada da lógica do GisBR).
-- Compatibilidade Qt6/QGIS 4: todo acesso a enum do Qt/QGIS deve ser escopado (`Qt.DockWidgetArea.RightDockWidgetArea`, `QgsProcessing.SourceType.TypeVectorLine`, `QgsProcessingParameterNumber.Type.Double`, `QgsWkbTypes.Type.*` / `QgsWkbTypes.GeometryType.*`, `QgsTask.Flag.*`), tipos de campo só se criam via `core.qgis_compat.field_type()` (nunca `QVariant.*` direto) e `exec_()` / `exec()` não podem ser usados (PyQt6/QGIS 4 removeram `exec_()`, e `exec()` / `.exec()` é proibido por segurança e para evitar diálogos modais — usar `.show()`; verificado por `test_qt6_compat.py` e `test_security_scan.py`).
+- Compatibilidade Qt6/QGIS 4: todo acesso a enum do Qt/QGIS deve ser escopado (`Qt.DockWidgetArea.RightDockWidgetArea`, `QgsProcessing.SourceType.TypeVectorLine`, `QgsProcessingParameterNumber.Type.Double`, `QgsWkbTypes.Type.*` / `QgsWkbTypes.GeometryType.*`, `QgsTask.Flag.*`), tipos de campo só se criam via `core.qgis_compat.field_type()` (nunca `QVariant.*` direto).
+- Padrões de segurança e qualidade do código (validados estaticamente por `test_security_scan.py` e `test_qt6_compat.py`):
+  - Proibido uso de `pickle` (usar JSON para cache e serialização).
+  - Proibido `except Exception: pass` ou `except:` com `pass` silencioso.
+  - Proibidos `exec()` e `exec_()` (PyQt6/QGIS 4 removeram `exec_()`; proibidos por segurança e para evitar diálogos modais — usar `.show()`).
+  - Proibido bypass de verificação SSL (`PeerVerifyMode` + `VerifyNone`).
+  - Proibido gerador `random` da stdlib (sinalizado como B311 pelo scanner do `plugins.qgis.org`, que ignora `# nosec`; usar `logis.core.sampling.DeterministicRandom`).
+  - Proibidos hashes fracos `hashlib.md5(` e `hashlib.sha1(` (usar `hashlib.sha256`).
+  - Proibido `subprocess` fora de `logis/core/ortools_installer.py`, e `shell=True` proibido em qualquer lugar.

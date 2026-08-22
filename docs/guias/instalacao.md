@@ -16,7 +16,7 @@ a ausência (ou a falha de instalação) dessas bibliotecas nunca impede o uso d
 ## Instalação pelo pacote ZIP
 
 O pacote distribuível é gerado em `dist/logis-<versão>.zip` (por exemplo,
-`dist/logis-0.1.6.zip`) — para gerá-lo a partir do código-fonte, use `make package`.
+`dist/logis-0.1.7.zip`) — para gerá-lo a partir do código-fonte, use `make package`.
 
 1. No QGIS, abra **Complementos → Gerenciar e Instalar Complementos…**
 2. Vá até a aba **Instalar a partir do ZIP**.

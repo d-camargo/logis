@@ -3,7 +3,6 @@
 Algoritmo de processamento para cálculo da circuidade média da rede viária urbana.
 """
 
-import random
 import math
 
 from qgis.core import (
@@ -18,11 +17,15 @@ from qgis.analysis import QgsGraphAnalyzer
 
 from ..core.network.graph_builder import build_graph
 from ..core.indicators.urban import mean_circuity
+from ..core.sampling import DeterministicRandom
 
 
 class UrbanMeanCircuity(QgsProcessingAlgorithm):
     """
     Algoritmo QGIS Processing para calcular a circuidade média de uma rede viária urbana.
+
+    A amostragem de pares de vértices utiliza semente fixa determinística, tornando o
+    indicador totalmente reprodutível para a mesma camada e os mesmos parâmetros.
 
     Referência Bibliográfica da Técnica:
         Giacomin, C., & Levinson, D. (2015). Road network circuity in metro areas.
@@ -109,7 +112,8 @@ class UrbanMeanCircuity(QgsProcessingAlgorithm):
 
         # Determinar origens aleatórias
         all_vertices = list(range(num_vertices))
-        random.shuffle(all_vertices)
+        rng = DeterministicRandom()
+        rng.shuffle(all_vertices)
 
         network_distances = []
         euclidean_distances = []
@@ -128,7 +132,7 @@ class UrbanMeanCircuity(QgsProcessingAlgorithm):
             # Para evitar viés de correlação de uma única origem, limitamos o número de destinos
             # a partir da mesma origem, mas permitimos que complete se necessário.
             max_dest_per_origin = min(50, num_vertices - 1)
-            dests = random.sample(all_vertices, max_dest_per_origin)
+            dests = rng.sample(all_vertices, max_dest_per_origin)
 
             pt_u = graph.vertex(u).point()
 

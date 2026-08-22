@@ -86,9 +86,9 @@ python3 -m pytest -q
 
 ---
 
-## 4. Regras de Compatibilidade Qt6 / QGIS 4
+## 4. Regras de Compatibilidade e Segurança
 
-Para garantir que o **logis** seja totalmente compatível tanto com o QGIS 3 (Qt5/PyQt5) quanto com o futuro QGIS 4 (Qt6/PyQt6), todo o código deve seguir rigorosamente as três regras abaixo:
+Para garantir que o **logis** seja totalmente compatível tanto com o QGIS 3 (Qt5/PyQt5) quanto com o futuro QGIS 4 (Qt6/PyQt6) — e que o pacote passe no analisador estático do `plugins.qgis.org` — todo o código deve seguir rigorosamente as cinco regras abaixo. As três primeiras são de compatibilidade e são verificadas por `test_qt6_compat.py`; as duas últimas são de segurança e são verificadas por `test_security_scan.py`.
 
 ### 1. Enums Escopados (*Scoped Enums*)
 O PyQt6 removeu os enums não escopados. Sempre acesse os enums utilizando o namespace completo da classe:
@@ -125,6 +125,51 @@ dialog.exec_()
 Diálogos não modais continuam vivos depois de `show()`, então quem os cria é responsável por fechá-los e liberar a referência no `unload()` do plugin (ver `LogisPlugin.unload` em `logis/logis_plugin.py`). A regra é verificada automaticamente por `test_security_scan.py`, que falha se qualquer arquivo sob `logis/` contiver `exec()`, `.exec()` ou `.exec_()`.
 
 Para verificar se o seu ambiente atende às regras de compatibilidade, você pode rodar o utilitário `tools/qgis4_compat_check.py`.
+
+### 4. Amostragem e Hash
+O gerador `random` da biblioteca padrão e os hashes `hashlib.md5()` / `hashlib.sha1()` não
+entram no pacote. O scanner do `plugins.qgis.org` os sinaliza como **B311**
+(*pseudo-random generators*) e **B324** (*hash inseguro*) e **ignora comentários
+`# nosec`**, o que reprova o pacote na publicação. Para amostragem (por exemplo, a de
+pares OD do cálculo de *betweenness*), use o gerador determinístico do próprio plugin;
+para chave de cache, use `hashlib.sha256()`:
+
+```python
+from logis.core.sampling import DeterministicRandom
+
+rng = DeterministicRandom(seed=42)
+amostra = rng.sample(nos, 100)
+```
+
+`DeterministicRandom` implementa SplitMix64 em Python puro (`randrange`, `shuffle`,
+`sample`) e é **determinístico por construção** — mesma semente, mesmo resultado, o que
+também torna os indicadores reprodutíveis entre execuções. Ele **não é
+criptograficamente seguro**: nunca o utilize para segredos, tokens, chaves ou senhas.
+
+### 5. Subprocessos
+O plugin executa um único processo externo: o `pip` do Python do QGIS, no instalador
+opcional do OR-Tools. Por isso `subprocess` é permitido **apenas** em
+`logis/core/ortools_installer.py`, e `shell=True` é proibido em qualquer arquivo. A
+linha de comando é montada por `build_command()` a partir de literais, de
+`sys.executable` e de versões de dependência validadas por expressão regular — versão
+lida de metadados de terceiros que não case com `^[A-Za-z0-9][A-Za-z0-9._+!-]*$` é
+descartada, para que uma string começando com `-` nunca vire flag do `pip`. Antes de
+executar, `_run_pip()` confere que o comando começa com
+`[sys.executable, "-m", "pip", "install"]`.
+
+O achado **B603** (*subprocesso com entrada não confiável*) do scanner é aceito e
+documentado no próprio arquivo: instalar uma biblioteca externa exige um processo
+externo, e não há versão do recurso sem `subprocess`.
+
+Para rodar apenas as guardas de segurança:
+
+```bash
+python3 -m pytest -q test_security_scan.py
+```
+
+O `test_security_scan.py` cobre ainda os invariantes herdados das rodadas anteriores —
+proibição de `pickle`, de `except`/`pass` silencioso e de bypass de verificação SSL
+(`PeerVerifyMode` + `VerifyNone`). A lista completa está na §9 do `GEMINI.md`.
 
 ---
 

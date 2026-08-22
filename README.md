@@ -2,7 +2,7 @@
 
 Complemento (plugin) do QGIS para apoiar projetos de logística no Brasil.
 
-**Versão:** 0.1.6 (`experimental`)  
+**Versão:** 0.1.7 (`experimental`)  
 **Licença:** GPL-3.0  
 **Idioma:** **Português** | [English](#english)
 
@@ -92,7 +92,7 @@ logis/
 ├── __init__.py               # Ponto de entrada do plugin
 ├── logis_plugin.py           # Registrador de GUI e Provider
 ├── provider.py               # Processing Provider "logis" (25 algoritmos)
-├── metadata.txt              # Metadados do plugin QGIS (versão 0.1.6)
+├── metadata.txt              # Metadados do plugin QGIS (versão 0.1.7)
 ├── Makefile                  # Comandos de deploy e testes de sintaxe
 ├── core/                     # Núcleo de lógica técnica
 │   ├── network/              # Pipelines OSM/SNV, construtor de grafos e matriz OD
@@ -231,7 +231,7 @@ logis/
 ├── __init__.py               # Plugin entry point
 ├── logis_plugin.py           # GUI and Provider registrar
 ├── provider.py               # Processing Provider "logis" (25 algorithms)
-├── metadata.txt              # QGIS plugin metadata (version 0.1.6)
+├── metadata.txt              # QGIS plugin metadata (version 0.1.7)
 ├── Makefile                  # Deployment and syntax testing commands
 ├── core/                     # Technical logic core
 │   ├── network/              # OSM/SNV pipelines, graph builder, and OD matrix

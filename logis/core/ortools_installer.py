@@ -6,6 +6,7 @@ Licença: GPL-3.0
 """
 
 import sys
+import re
 import subprocess
 from importlib import import_module
 
@@ -36,6 +37,22 @@ except ImportError:
             pass
 
 from .optim_backend import has_ortools
+
+# Versão vinda de metadados de distribuições de terceiros não entra crua na linha de
+# comando do pip: uma que comece com "-" viraria flag em vez de nome de pacote.
+_VERSION_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._+!-]*$")
+
+
+def _is_safe_version(val):
+    """Verifica se a versão pode entrar com segurança na linha de comando do pip.
+
+    Args:
+        val: valor lido dos metadados da distribuição.
+
+    Returns:
+        bool: True se for str e casar com _VERSION_RE.
+    """
+    return isinstance(val, str) and bool(_VERSION_RE.match(val))
 
 
 def installed_versions(modules=("numpy", "pandas", "typing_extensions")):
@@ -107,7 +124,7 @@ class ORToolsInstallTask(QgsTask):
         packages = ["ortools"]
         for name in ("numpy", "pandas", "typing_extensions"):
             version = versions.get(name)
-            if version is not None:
+            if version is not None and _is_safe_version(version):
                 packages.append(f"{name}=={version}")
 
         cmd = [sys.executable, "-m", "pip", "install", "--user", "--only-binary=:all:"] + packages
@@ -121,8 +138,23 @@ class ORToolsInstallTask(QgsTask):
 
         Returns:
             int|None: código de retorno, ou None se a task foi cancelada.
+
+        Raises:
+            ValueError: se cmd não for o comando pip montado por build_command().
         """
-        # Inicia o subprocesso redirecionando stderr para stdout
+        if (
+            not isinstance(cmd, list)
+            or cmd[:1] != [sys.executable]
+            or cmd[1:4] != ["-m", "pip", "install"]
+        ):
+            raise ValueError(
+                "Comando recusado: só é permitido executar o pip do Python do QGIS."
+            )
+
+        # O achado B603 (subprocesso com entrada não confiável) é aceito aqui porque
+        # instalar o OR-Tools exige um processo externo — não há versão do recurso sem
+        # subprocess. A lista vem apenas de build_command(), montada com literais,
+        # sys.executable e versões validadas por _VERSION_RE, e nunca há shell=True.
         process = subprocess.Popen(
             cmd,
             stdout=subprocess.PIPE,

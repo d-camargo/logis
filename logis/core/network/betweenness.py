@@ -31,11 +31,10 @@ Complexity/Scale limits:
     - Space complexity: O(V + E).
 """
 
-import random
-
 from qgis.analysis import QgsGraphAnalyzer
 
 from ..indicators.urban import edge_betweenness
+from ..sampling import DeterministicRandom
 
 LOG_TAG = "logis"
 
@@ -46,7 +45,8 @@ def sample_od_pairs(graph, num_samples, seed=None):
     Args:
         graph (QgsGraph): The network graph.
         num_samples (int): Number of OD pairs to sample. Must be strictly greater than zero.
-        seed (int, optional): Seed for reproducible sampling.
+        seed (int, optional): Seed for reproducible sampling. When None, the default
+            seed of DeterministicRandom is used, so sampling is reproducible by default.
 
     Returns:
         list of tuple(int, int): List of (origin_idx, destination_idx) vertex index pairs.
@@ -58,7 +58,7 @@ def sample_od_pairs(graph, num_samples, seed=None):
     if vertex_count < 2:
         raise ValueError("O grafo precisa de ao menos 2 vértices para amostrar pares OD.")
 
-    rng = random.Random(seed)
+    rng = DeterministicRandom(seed)
     pairs = []
     for _ in range(num_samples):
         origin_idx = rng.randrange(vertex_count)
