@@ -107,7 +107,7 @@ class VrpCvrp(QgsProcessingAlgorithm):
             QgsProcessingParameterField(
                 self.FIELD_DEMAND,
                 self.tr("Campo de peso/demanda (opcional, default=1.0)"),
-                type=QgsProcessingParameterField.Numeric,
+                type=QgsProcessingParameterField.DataType.Numeric,
                 parentLayerParameterName=self.INPUT_DEMAND,
                 optional=True
             )
@@ -329,7 +329,7 @@ class VrpCvrp(QgsProcessingAlgorithm):
                 feat = QgsFeature(route_fields)
                 feat.setGeometry(geom)
                 feat.setAttributes([route_idx, len(route_nodes), r_load, r_dist])
-                sink_routes.addFeature(feat, QgsFeatureSink.FastInsert)
+                sink_routes.addFeature(feat, QgsFeatureSink.Flag.FastInsert)
 
             if sink_stops is not None:
                 cum_load = 0.0
@@ -340,7 +340,7 @@ class VrpCvrp(QgsProcessingAlgorithm):
                     attrs = stop_feat.attributes()
                     attrs.extend([route_idx, seq_idx, cum_load])
                     stop_feat.setAttributes(attrs)
-                    sink_stops.addFeature(stop_feat, QgsFeatureSink.FastInsert)
+                    sink_stops.addFeature(stop_feat, QgsFeatureSink.Flag.FastInsert)
 
         results = {self.OUTPUT_ROUTES: dest_routes}
         if sink_stops is not None:

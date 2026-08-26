@@ -339,7 +339,7 @@ class WasteRppRoute(QgsProcessingAlgorithm):
                 out_feat.setGeometry(orig_feat.geometry())
                 is_connector = edge_id not in original_req_ids
                 out_feat.setAttributes(orig_feat.attributes() + [visit_idx, sec_val, is_connector])
-                sink.addFeature(out_feat, QgsFeatureSink.FastInsert)
+                sink.addFeature(out_feat, QgsFeatureSink.Flag.FastInsert)
 
             completed_sectors += 1
             feedback.setProgress(int((completed_sectors / total_sectors) * 100))

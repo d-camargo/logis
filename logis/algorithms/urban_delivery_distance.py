@@ -196,7 +196,7 @@ class UrbanDeliveryDistance(QgsProcessingAlgorithm):
             out_feature = QgsFeature(out_fields)
             out_feature.setGeometry(feature.geometry())
             out_feature.setAttributes(feature.attributes() + [cost])
-            sink.addFeature(out_feature, QgsFeatureSink.FastInsert)
+            sink.addFeature(out_feature, QgsFeatureSink.Flag.FastInsert)
 
         feedback.pushInfo(
             self.tr("Custo de entrega ao depósito mais próximo calculado para {count} zona(s).").format(count=len(costs))

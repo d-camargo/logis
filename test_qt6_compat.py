@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 # Este teste estático verifica a compatibilidade com Qt6 / PyQt6 / QGIS 4.x nos arquivos Python sob logis/.
 # Ele existe porque a suíte de testes roda em PyQt5 / QGIS 3.x, onde as sintaxes legadas do Qt5/QGIS 3.x
-# não falham em runtime, mas quebram ao executar no Qt6 (onde enums como QVariant, QgsWkbTypes.*, etc.
-# foram escopados ou alterados).
+# não falham em runtime, mas quebram ao executar no Qt6 (onde enums como QVariant, QgsWkbTypes.*,
+# QgsFeatureSink.Flag, QgsProcessingParameterField.DataType, QgsVectorLayerDirector.Direction e
+# QNetworkReply.NetworkError foram escopados ou alterados).
 
 import pathlib
 import re
@@ -44,6 +45,22 @@ class TestQt6Compat(unittest.TestCase):
         (
             r"\bQgsTask\.CanCancel\b",
             "Uso desescopado de QgsTask.CanCancel",
+        ),
+        (
+            r"\bQgsFeatureSink\.FastInsert\b",
+            "Uso desescopado de QgsFeatureSink.FastInsert",
+        ),
+        (
+            r"\bQgsProcessingParameterField\.(Numeric|Any|Boolean|String|DateTime|Binary|Date|Time)\b",
+            "Uso desescopado de QgsProcessingParameterField.*",
+        ),
+        (
+            r"\bQgsVectorLayerDirector\.Direction(Both|Forward|Backward)\b",
+            "Uso desescopado de QgsVectorLayerDirector.Direction*",
+        ),
+        (
+            r"\bQNetworkReply\.(?!NetworkError\b)[A-Z][A-Za-z]*Error\b",
+            "Uso desescopado de QNetworkReply.*Error",
         ),
     ]
 

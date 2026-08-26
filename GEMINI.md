@@ -203,7 +203,7 @@ logis/
 - Reprojetar para CRS métrico antes de cálculos de custo; devolver saídas em EPSG:4674.
 - Cache: `QStandardPaths.CacheLocation` → `.../logis/`. Nunca gravar fora do cache ou do GPKG escolhido pelo usuário.
 - Licença: GPL-3.0 (herdada da lógica do GisBR).
-- Compatibilidade Qt6/QGIS 4: todo acesso a enum do Qt/QGIS deve ser escopado (`Qt.DockWidgetArea.RightDockWidgetArea`, `QgsProcessing.SourceType.TypeVectorLine`, `QgsProcessingParameterNumber.Type.Double`, `QgsWkbTypes.Type.*` / `QgsWkbTypes.GeometryType.*`, `QgsTask.Flag.*`), tipos de campo só se criam via `core.qgis_compat.field_type()` (nunca `QVariant.*` direto).
+- Compatibilidade Qt6/QGIS 4: todo acesso a enum do Qt/QGIS deve ser escopado (`Qt.DockWidgetArea.RightDockWidgetArea`, `QgsProcessing.SourceType.TypeVectorLine`, `QgsProcessingParameterNumber.Type.Double`, `QgsProcessingParameterField.DataType.*`, `QgsFeatureSink.Flag.*`, `QgsVectorLayerDirector.Direction.*`, `QNetworkReply.NetworkError.*`, `QgsWkbTypes.Type.*` / `QgsWkbTypes.GeometryType.*`, `QgsTask.Flag.*`), tipos de campo só se criam via `core.qgis_compat.field_type()` (nunca `QVariant.*` direto). A lista de enums escopados é verificada estaticamente por `test_qt6_compat.py`; enum novo entra na regra **e** no teste.
 - Padrões de segurança e qualidade do código (validados estaticamente por `test_security_scan.py` e `test_qt6_compat.py`):
   - Proibido uso de `pickle` (usar JSON para cache e serialização).
   - Proibido `except Exception: pass` ou `except:` com `pass` silencioso.

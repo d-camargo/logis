@@ -24,4 +24,4 @@ logis reuses module **logic** from [GisBR](https://github.com/d-camargo/gisbr) �
 
 ## Status and license
 
-logis is at version **0.1.8**, marked as `experimental` in the official QGIS plugin repository. In this phase, internal APIs, algorithm identifiers, and output formats may change between releases without backward compatibility guarantees — experimental plugins must be enabled in the Plugin Manager to install it (see [Installation Guide](guias/instalacao.md)). The license is **GPL-3.0**, inherited from GisBR logic.
+logis is at version **0.1.9**, marked as `experimental` in the official QGIS plugin repository. In this phase, internal APIs, algorithm identifiers, and output formats may change between releases without backward compatibility guarantees — experimental plugins must be enabled in the Plugin Manager to install it (see [Installation Guide](guias/instalacao.md)). The license is **GPL-3.0**, inherited from GisBR logic.

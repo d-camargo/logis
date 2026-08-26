@@ -80,7 +80,7 @@ class UrbanGravityAccessibility(QgsProcessingAlgorithm):
             QgsProcessingParameterField(
                 self.FIELD_WEIGHT,
                 self.tr("Campo de peso/atratividade do destino (opcional, default 1 para todos)"),
-                type=QgsProcessingParameterField.Numeric,
+                type=QgsProcessingParameterField.DataType.Numeric,
                 parentLayerParameterName=self.INPUT_DESTINATIONS,
                 optional=True
             )
@@ -217,7 +217,7 @@ class UrbanGravityAccessibility(QgsProcessingAlgorithm):
             out_feature = QgsFeature(out_fields)
             out_feature.setGeometry(feature.geometry())
             out_feature.setAttributes(feature.attributes() + [score])
-            sink.addFeature(out_feature, QgsFeatureSink.FastInsert)
+            sink.addFeature(out_feature, QgsFeatureSink.Flag.FastInsert)
 
         feedback.pushInfo(
             self.tr("Acessibilidade gravitacional calculada para {count} origem(ns).").format(count=len(scores))

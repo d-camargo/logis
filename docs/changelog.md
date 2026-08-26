@@ -2,6 +2,11 @@
 
 Este documento registra as principais alterações e evoluções do plugin **logis** organizadas por versão.
 
+## 0.1.9
+
+- **Enums Escopados em Todo o Pacote**: os 40 acessos remanescentes a enums não escopados — `QgsFeatureSink`, `QgsProcessingParameterField`, `QgsVectorLayerDirector` e `QNetworkReply` — passam a usar o namespace completo (`QgsFeatureSink.Flag.FastInsert`, `QgsProcessingParameterField.DataType.*`, `QgsVectorLayerDirector.Direction.*` e `QNetworkReply.NetworkError.*`), requisito do PyQt6/QGIS 4; sem mudança de comportamento no QGIS 3.
+- **Guarda Automatizada de Compatibilidade**: `test_qt6_compat.py` passa a reprovar essas quatro famílias de enum, de modo que a forma antiga não volte em código novo.
+
 ## 0.1.8
 
 - **Instalação de Dependências por Comando**: O Gerenciador de Dependências deixa de executar o `pip` diretamente via subprocesso e passa a gerar e exibir o comando exato formatado para o interpretador do QGIS, com cópia em um clique para execução no terminal.

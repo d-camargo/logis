@@ -191,7 +191,7 @@ def build_graph(
         "F",
         "B",
         "T",
-        QgsVectorLayerDirector.DirectionBoth
+        QgsVectorLayerDirector.Direction.DirectionBoth
     )
 
     # 4. Add cost strategies

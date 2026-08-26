@@ -94,7 +94,7 @@ class WasteCollectionCoverage(QgsProcessingAlgorithm):
                 self.FIELD_COVERED_DEADHEAD,
                 self.tr("Campo indicador de deadhead/conector (opcional)"),
                 parentLayerParameterName=self.INPUT_COVERED_ROUTES,
-                type=QgsProcessingParameterField.Boolean,
+                type=QgsProcessingParameterField.DataType.Boolean,
                 defaultValue='route_is_deadhead',
                 optional=True
             )
@@ -293,7 +293,7 @@ class WasteCollectionCoverage(QgsProcessingAlgorithm):
                 cov_km,
                 cov_pct
             ])
-            sink.addFeature(out_feat, QgsFeatureSink.FastInsert)
+            sink.addFeature(out_feat, QgsFeatureSink.Flag.FastInsert)
 
             completed += 1
             feedback.setProgress(int((completed / total_sectors) * 100))
@@ -313,7 +313,7 @@ class WasteCollectionCoverage(QgsProcessingAlgorithm):
                 tot_cov,
                 tot_pct
             ])
-            sink.addFeature(total_feat, QgsFeatureSink.FastInsert)
+            sink.addFeature(total_feat, QgsFeatureSink.Flag.FastInsert)
 
         feedback.pushInfo(
             self.tr(

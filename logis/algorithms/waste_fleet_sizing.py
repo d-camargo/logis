@@ -255,7 +255,7 @@ class WasteFleetSizing(QgsProcessingAlgorithm):
                 fleet_res["total_route_time_h"],
                 fleet_res["avg_utilization"]
             ])
-            sink.addFeature(out_feat, QgsFeatureSink.FastInsert)
+            sink.addFeature(out_feat, QgsFeatureSink.Flag.FastInsert)
 
             completed_sectors += 1
             feedback.setProgress(int((completed_sectors / total_sectors) * 100))

@@ -105,7 +105,7 @@ class WasteDistricting(QgsProcessingAlgorithm):
             QgsProcessingParameterField(
                 self.FIELD_LOAD,
                 self.tr("Campo de carga (opcional, default=comprimento do trecho)"),
-                type=QgsProcessingParameterField.Numeric,
+                type=QgsProcessingParameterField.DataType.Numeric,
                 parentLayerParameterName=self.INPUT_STREETS,
                 optional=True
             )
@@ -255,7 +255,7 @@ class WasteDistricting(QgsProcessingAlgorithm):
             out_feature = QgsFeature(out_fields)
             out_feature.setGeometry(feature.geometry())
             out_feature.setAttributes(feature.attributes() + [sector_id])
-            sink.addFeature(out_feature, QgsFeatureSink.FastInsert)
+            sink.addFeature(out_feature, QgsFeatureSink.Flag.FastInsert)
 
             count += 1
             if total_features > 0:

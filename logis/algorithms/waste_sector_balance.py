@@ -81,7 +81,7 @@ class WasteSectorBalance(QgsProcessingAlgorithm):
                 self.FIELD_LOAD,
                 self.tr("Campo de carga da rota (kg)"),
                 parentLayerParameterName=self.INPUT_ROUTES,
-                type=QgsProcessingParameterField.Numeric,
+                type=QgsProcessingParameterField.DataType.Numeric,
                 defaultValue='route_load_kg',
                 optional=False
             )
@@ -91,7 +91,7 @@ class WasteSectorBalance(QgsProcessingAlgorithm):
                 self.FIELD_DISTANCE,
                 self.tr("Campo de distância da rota em km (opcional)"),
                 parentLayerParameterName=self.INPUT_ROUTES,
-                type=QgsProcessingParameterField.Numeric,
+                type=QgsProcessingParameterField.DataType.Numeric,
                 defaultValue='route_distance_km',
                 optional=True
             )
@@ -364,7 +364,7 @@ class WasteSectorBalance(QgsProcessingAlgorithm):
                 time_st["max_h"] if time_st else None,
                 time_st["cv"] if time_st else None,
             ])
-            sink.addFeature(out_feat, QgsFeatureSink.FastInsert)
+            sink.addFeature(out_feat, QgsFeatureSink.Flag.FastInsert)
 
             completed_sectors += 1
             feedback.setProgress(int((completed_sectors / total_sectors) * 100))

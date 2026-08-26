@@ -69,7 +69,7 @@ class WasteGenerationEstimate(QgsProcessingAlgorithm):
             QgsProcessingParameterField(
                 self.FIELD_SECTOR_ID,
                 self.tr("Campo de identificação do setor"),
-                type=QgsProcessingParameterField.Any,
+                type=QgsProcessingParameterField.DataType.Any,
                 parentLayerParameterName=self.INPUT_SECTORS
             )
         )
@@ -77,7 +77,7 @@ class WasteGenerationEstimate(QgsProcessingAlgorithm):
             QgsProcessingParameterField(
                 self.FIELD_POPULATION,
                 self.tr("Campo de população (habitantes)"),
-                type=QgsProcessingParameterField.Numeric,
+                type=QgsProcessingParameterField.DataType.Numeric,
                 parentLayerParameterName=self.INPUT_SECTORS
             )
         )
@@ -92,7 +92,7 @@ class WasteGenerationEstimate(QgsProcessingAlgorithm):
             QgsProcessingParameterField(
                 self.FIELD_STREET_SECTOR_ID,
                 self.tr("Campo de identificação do setor na camada de vias"),
-                type=QgsProcessingParameterField.Any,
+                type=QgsProcessingParameterField.DataType.Any,
                 parentLayerParameterName=self.INPUT_STREETS
             )
         )
@@ -217,7 +217,7 @@ class WasteGenerationEstimate(QgsProcessingAlgorithm):
             out_feature = QgsFeature(out_fields)
             out_feature.setGeometry(feature.geometry())
             out_feature.setAttributes(feature.attributes() + [waste_kg])
-            sink.addFeature(out_feature, QgsFeatureSink.FastInsert)
+            sink.addFeature(out_feature, QgsFeatureSink.Flag.FastInsert)
 
             count += 1
             if total_features > 0:

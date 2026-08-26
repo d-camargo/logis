@@ -114,7 +114,7 @@ class WasteCarpRoute(QgsProcessingAlgorithm):
                 self.FIELD_DEMAND,
                 self.tr("Campo de geração/demanda de resíduos (kg)"),
                 parentLayerParameterName=self.INPUT_STREETS,
-                type=QgsProcessingParameterField.Numeric,
+                type=QgsProcessingParameterField.DataType.Numeric,
                 optional=False
             )
         )
@@ -418,7 +418,7 @@ class WasteCarpRoute(QgsProcessingAlgorithm):
                             route_idx, visit_idx, sec_val, is_deadhead, load_kg, route_distance_km
                         ]
                     )
-                    sink.addFeature(out_feat, QgsFeatureSink.FastInsert)
+                    sink.addFeature(out_feat, QgsFeatureSink.Flag.FastInsert)
 
             completed_sectors += 1
             feedback.setProgress(int((completed_sectors / total_sectors) * 100))

@@ -75,7 +75,7 @@ class WasteDeadheadRatio(QgsProcessingAlgorithm):
                 self.FIELD_DEADHEAD,
                 self.tr("Campo indicador de deadhead/improdutivo"),
                 parentLayerParameterName=self.INPUT_ROUTES,
-                type=QgsProcessingParameterField.Boolean,
+                type=QgsProcessingParameterField.DataType.Boolean,
                 defaultValue='route_is_deadhead',
                 optional=False
             )
@@ -201,7 +201,7 @@ class WasteDeadheadRatio(QgsProcessingAlgorithm):
                 dh_km,
                 ratio
             ])
-            sink.addFeature(out_feat, QgsFeatureSink.FastInsert)
+            sink.addFeature(out_feat, QgsFeatureSink.Flag.FastInsert)
 
             completed += 1
             feedback.setProgress(int((completed / total_routes) * 100))
@@ -226,7 +226,7 @@ class WasteDeadheadRatio(QgsProcessingAlgorithm):
                 tot["deadhead_km"],
                 tot["deadhead_ratio"]
             ])
-            sink.addFeature(total_feat, QgsFeatureSink.FastInsert)
+            sink.addFeature(total_feat, QgsFeatureSink.Flag.FastInsert)
 
         feedback.setProgress(100)
         return {self.OUTPUT: dest_id}

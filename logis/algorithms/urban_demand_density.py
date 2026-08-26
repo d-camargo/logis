@@ -127,7 +127,7 @@ class UrbanDemandDensity(QgsProcessingAlgorithm):
             out_feature = QgsFeature(out_fields)
             out_feature.setGeometry(geom)
             out_feature.setAttributes(feature.attributes() + [density])
-            sink.addFeature(out_feature, QgsFeatureSink.FastInsert)
+            sink.addFeature(out_feature, QgsFeatureSink.Flag.FastInsert)
 
             count += 1
             if total_features > 0:

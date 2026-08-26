@@ -52,7 +52,7 @@ class RegionalPavementPercentage(QgsProcessingAlgorithm):
                 self.tr("Campo que indica o tipo de superfície (ex: 'ds_superfi')"),
                 defaultValue='ds_superfi',
                 parentLayerParameterName=self.INPUT_NETWORK,
-                type=QgsProcessingParameterField.Any,
+                type=QgsProcessingParameterField.DataType.Any,
                 optional=True
             )
         )

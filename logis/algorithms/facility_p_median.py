@@ -93,7 +93,7 @@ class FacilityPMedian(QgsProcessingAlgorithm):
             QgsProcessingParameterField(
                 self.FIELD_WEIGHT,
                 self.tr("Campo de peso da demanda (opcional, default=1.0)"),
-                type=QgsProcessingParameterField.Numeric,
+                type=QgsProcessingParameterField.DataType.Numeric,
                 parentLayerParameterName=self.INPUT_DEMAND,
                 optional=True
             )
@@ -333,7 +333,7 @@ class FacilityPMedian(QgsProcessingAlgorithm):
                     assigned_costs[cand_idx]
                 ])
                 new_feat.setAttributes(attrs)
-                sink_fac.addFeature(new_feat, QgsFeatureSink.FastInsert)
+                sink_fac.addFeature(new_feat, QgsFeatureSink.Flag.FastInsert)
 
         ass_fields = demand_source.fields()
         ass_fields.append(QgsField("assigned_facility_id", qgis_compat.field_type("int")))
@@ -358,7 +358,7 @@ class FacilityPMedian(QgsProcessingAlgorithm):
                 attrs = feat.attributes()
                 attrs.extend([cand_idx, cost, w_cost])
                 new_feat.setAttributes(attrs)
-                sink_ass.addFeature(new_feat, QgsFeatureSink.FastInsert)
+                sink_ass.addFeature(new_feat, QgsFeatureSink.Flag.FastInsert)
 
         return {
             self.OUTPUT_FACILITIES: dest_fac,

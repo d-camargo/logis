@@ -98,6 +98,12 @@ O PyQt6 removeu os enums não escopados. Sempre acesse os enums utilizando o nam
 - `QgsProcessingParameterNumber.Type.Double` (nunca `QgsProcessingParameterNumber.Double`)
 - `QgsWkbTypes.Type.LineString` / `QgsWkbTypes.GeometryType.Line` (nunca `QgsWkbTypes.LineString`)
 - `QgsTask.Flag.CanCancel` (nunca `QgsTask.CanCancel`)
+- `QgsFeatureSink.Flag.FastInsert` (nunca `QgsFeatureSink.FastInsert`)
+- `QgsProcessingParameterField.DataType.Numeric` (nunca `QgsProcessingParameterField.Numeric`)
+- `QgsVectorLayerDirector.Direction.DirectionBoth` (nunca `QgsVectorLayerDirector.DirectionBoth`)
+- `QNetworkReply.NetworkError.NoError` (nunca `QNetworkReply.NoError`)
+
+Em PyQt5, a forma antiga e a forma escopada escrevem o mesmo inteiro — o código funciona e ninguém percebe a diferença. Por isso essa lista não vive apenas nesta documentação: ela é verificada estaticamente por `test_qt6_compat.py`, que reprova qualquer forma desescopada (o QGIS 4/PyQt6 faria o código falhar em runtime).
 
 ### 2. Tipos de Campo via `field_type()`
 Em Qt6, a enumeração `QVariant.Type` foi substituída por `QMetaType.Type`. Para evitar quebras ao instanciar campos de vetores (`QgsField`), utilize **apenas** a função auxiliar compatível do projeto:
