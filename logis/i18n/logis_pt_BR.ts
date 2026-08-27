@@ -431,6 +431,11 @@ Saídas:
         <source>Coleta de Lixo</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <location filename="../logis_plugin.py" line="72"/>
+        <source>Documentação</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>LogisProvider</name>

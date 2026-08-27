@@ -3,3 +3,4 @@
 plugin_path: logis
 github_organization_slug: d-camargo
 project_slug: logis
+changelog_path: docs/changelog.md

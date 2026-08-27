@@ -2,7 +2,7 @@
 
 Complemento (plugin) do QGIS para apoiar projetos de logística no Brasil.
 
-**Versão:** 0.1.9 (`experimental`)  
+**Versão:** 0.1.10 (`experimental`)  
 **Licença:** GPL-3.0  
 **Idioma:** **Português** | [English](#english)
 
@@ -84,6 +84,7 @@ O plugin atua como um **Processing Provider** (`logis`), expondo os seguintes al
 - **Painel de Logística Regional** (`gui/regional_dock.py`): Interface dock dedicada a análises de redes rodoviárias estaduais e nacionais.
 - **Painel de Coleta de Lixo** (`gui/waste_dock.py`): Interface dock em quatro abas — Geração (estimativa de geração + setorização), Roteirização (CPP, RPP, CARP), Frota (dimensionamento) e Indicadores (deadhead ratio, equilíbrio entre setores, distância ao destino, cobertura por frequência) —, com rolagem por aba e painel de resultados único no rodapé, fora das abas.
 - **Diálogo de Dependências** (`gui/dependencies_dialog.py`): Verificação, diagnóstico visual e orientação de instalação de pacotes opcionais (`OR-Tools`, `pyarrow`).
+- **Documentação**: Item de menu (`Complementos → logis → Documentação`) que abre o site da documentação oficial no navegador padrão.
 
 ### Estrutura do Repositório
 
@@ -92,7 +93,7 @@ logis/
 ├── __init__.py               # Ponto de entrada do plugin
 ├── logis_plugin.py           # Registrador de GUI e Provider
 ├── provider.py               # Processing Provider "logis" (25 algoritmos)
-├── metadata.txt              # Metadados do plugin QGIS (versão 0.1.9)
+├── metadata.txt              # Metadados do plugin QGIS (versão 0.1.10)
 ├── Makefile                  # Comandos de deploy e testes de sintaxe
 ├── core/                     # Núcleo de lógica técnica
 │   ├── network/              # Pipelines OSM/SNV, construtor de grafos e matriz OD
@@ -223,6 +224,7 @@ The plugin acts as a **Processing Provider** (`logis`), exposing the following a
 - **Regional Logistics Panel** (`gui/regional_dock.py`): Dedicated dock interface for state and national road network analyses.
 - **Waste Collection Panel** (`gui/waste_dock.py`): Dock interface with four tabs — Generation (generation estimate + districting), Routing (CPP, RPP, CARP), Fleet (sizing), and Indicators (deadhead ratio, sector balance, waste destination distance, collection coverage) —, with tab scrolling and a single results panel at the footer, outside the tabs.
 - **Dependencies Dialog** (`gui/dependencies_dialog.py`): Visual check, diagnostics, and installation guidance for optional packages (`OR-Tools`, `pyarrow`).
+- **Documentation**: Menu item (`Plugins → logis → Documentation`) opening the official documentation website in the default browser.
 
 ### Repository Structure
 
@@ -231,7 +233,7 @@ logis/
 ├── __init__.py               # Plugin entry point
 ├── logis_plugin.py           # GUI and Provider registrar
 ├── provider.py               # Processing Provider "logis" (25 algorithms)
-├── metadata.txt              # QGIS plugin metadata (version 0.1.9)
+├── metadata.txt              # QGIS plugin metadata (version 0.1.10)
 ├── Makefile                  # Deployment and syntax testing commands
 ├── core/                     # Technical logic core
 │   ├── network/              # OSM/SNV pipelines, graph builder, and OD matrix

@@ -39,6 +39,7 @@ class TestLogisPlugin(unittest.TestCase):
         self.assertIsNone(self.plugin.action_urban)
         self.assertIsNone(self.plugin.action_regional)
         self.assertIsNone(self.plugin.action_waste)
+        self.assertIsNone(self.plugin.action_docs)
         self.assertIsNone(self.plugin.dialog)
         self.assertIsNone(self.plugin.dock_urban)
         self.assertIsNone(self.plugin.dock_regional)
@@ -54,17 +55,19 @@ class TestLogisPlugin(unittest.TestCase):
         # Call initGui
         self.plugin.initGui()
 
-        # Check that action, action_urban, action_regional and action_waste were created
+        # Check that action, action_urban, action_regional, action_waste and action_docs were created
         self.assertIsNotNone(self.plugin.action)
         self.assertIsNotNone(self.plugin.action_urban)
         self.assertIsNotNone(self.plugin.action_regional)
         self.assertIsNotNone(self.plugin.action_waste)
+        self.assertIsNotNone(self.plugin.action_docs)
 
         # Check that they were added to menu "logis"
         self.mock_iface.addPluginToMenu.assert_any_call("logis", self.plugin.action)
         self.mock_iface.addPluginToMenu.assert_any_call("logis", self.plugin.action_urban)
         self.mock_iface.addPluginToMenu.assert_any_call("logis", self.plugin.action_regional)
         self.mock_iface.addPluginToMenu.assert_any_call("logis", self.plugin.action_waste)
+        self.mock_iface.addPluginToMenu.assert_any_call("logis", self.plugin.action_docs)
 
     def test_show_dependencies(self):
         self.plugin.initGui()
@@ -128,6 +131,16 @@ class TestLogisPlugin(unittest.TestCase):
         self.plugin.show_waste_dock()
         self.assertEqual(self.plugin.dock_waste, dock_first)
 
+    def test_open_docs(self):
+        from unittest.mock import patch
+        from logis.logis_plugin import DOCS_URL
+
+        with patch("qgis.PyQt.QtGui.QDesktopServices.openUrl") as mock_open_url:
+            self.plugin.open_docs()
+            mock_open_url.assert_called_once()
+            args, _ = mock_open_url.call_args
+            self.assertEqual(args[0].toString(), DOCS_URL)
+
     def test_unload(self):
         # Setup GUI
         self.plugin.initGui()
@@ -140,6 +153,7 @@ class TestLogisPlugin(unittest.TestCase):
         action_urban = self.plugin.action_urban
         action_regional = self.plugin.action_regional
         action_waste = self.plugin.action_waste
+        action_docs = self.plugin.action_docs
         dialog = self.plugin.dialog
         dock_urban = self.plugin.dock_urban
         dock_regional = self.plugin.dock_regional
@@ -153,6 +167,7 @@ class TestLogisPlugin(unittest.TestCase):
         self.mock_iface.removePluginMenu.assert_any_call("logis", action_urban)
         self.mock_iface.removePluginMenu.assert_any_call("logis", action_regional)
         self.mock_iface.removePluginMenu.assert_any_call("logis", action_waste)
+        self.mock_iface.removePluginMenu.assert_any_call("logis", action_docs)
         
         # Check that docks are removed
         self.mock_iface.removeDockWidget.assert_any_call(dock_urban)
@@ -164,6 +179,7 @@ class TestLogisPlugin(unittest.TestCase):
         self.assertIsNone(self.plugin.action_urban)
         self.assertIsNone(self.plugin.action_regional)
         self.assertIsNone(self.plugin.action_waste)
+        self.assertIsNone(self.plugin.action_docs)
         self.assertIsNone(self.plugin.dialog)
         self.assertIsNone(self.plugin.dock_urban)
         self.assertIsNone(self.plugin.dock_regional)

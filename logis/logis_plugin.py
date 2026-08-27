@@ -11,6 +11,10 @@ except ImportError:
 
 from .provider import LogisProvider
 
+# O mesmo endereço está em metadata.txt (homepage=) e test_packaging.py verifica a igualdade.
+DOCS_URL = "https://logis.dcamargo.com.br"
+
+
 
 class LogisPlugin:
     def __init__(self, iface):
@@ -20,6 +24,7 @@ class LogisPlugin:
         self.action_urban = None
         self.action_regional = None
         self.action_waste = None
+        self.action_docs = None
         self.dialog = None
         self.dock_urban = None
         self.dock_regional = None
@@ -63,6 +68,13 @@ class LogisPlugin:
         # Registra a entrada no menu "logis"
         self.iface.addPluginToMenu("logis", self.action_waste)
 
+        # Cria a ação do menu "Documentação"
+        self.action_docs = QAction(self.tr("Documentação"), self.iface.mainWindow())
+        self.action_docs.triggered.connect(self.open_docs)
+        
+        # Registra a entrada no menu "logis"
+        self.iface.addPluginToMenu("logis", self.action_docs)
+
     def show_dependencies(self):
         from .gui.dependencies_dialog import DependenciesDialog
         if self.dialog is None:
@@ -94,6 +106,11 @@ class LogisPlugin:
             self.iface.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.dock_waste)
         self.dock_waste.show()
 
+    def open_docs(self):
+        from qgis.PyQt.QtCore import QUrl
+        from qgis.PyQt.QtGui import QDesktopServices
+        QDesktopServices.openUrl(QUrl(DOCS_URL))
+
     def unload(self):
         # Desregistra o Processing Provider
         if self.provider is not None:
@@ -121,6 +138,11 @@ class LogisPlugin:
         if self.action_waste is not None:
             self.iface.removePluginMenu("logis", self.action_waste)
             self.action_waste = None
+
+        # Remove o item de Documentação do menu
+        if self.action_docs is not None:
+            self.iface.removePluginMenu("logis", self.action_docs)
+            self.action_docs = None
 
         # Libera referência ao diálogo
         if self.dialog is not None:

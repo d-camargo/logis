@@ -212,3 +212,6 @@ logis/
   - Proibido gerador `random` da stdlib (sinalizado como B311 pelo scanner do `plugins.qgis.org`, que ignora `# nosec`; usar `logis.core.sampling.DeterministicRandom`).
   - Proibidos hashes fracos `hashlib.md5(` e `hashlib.sha1(` (usar `hashlib.sha256`).
   - Proibido `subprocess` em qualquer arquivo sob `logis/` — o plugin não executa processos externos (achado B603 do scanner do `plugins.qgis.org`) —, e `shell=True` proibido em qualquer lugar. O instalador do OR-Tools apenas **monta e exibe** o comando (`core.ortools_installer.build_command()` / `command_text()`), cabendo ao usuário executá-lo no console do ambiente Python do QGIS.
+- Padrões de empacotamento e documentação (validados estaticamente por `test_packaging.py`):
+  - O changelog do repositório é `docs/changelog.md`, com seções `## <versão> - <AAAA-MM-DD>`, e `logis/metadata.txt` mantém a linha `changelog=` vazia para o `qgis-plugin-ci` preencher no empacotamento — **não** se cria `CHANGELOG.md` na raiz.
+  - O endereço do site da documentação é a constante `DOCS_URL` de `logis/logis_plugin.py` e tem que ser idêntico ao `homepage=` do `metadata.txt`.

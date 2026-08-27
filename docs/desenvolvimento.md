@@ -217,3 +217,48 @@ make docs-build
 ```
 
 Esse alvo roda `mkdocs build --strict` com o bloco `validation:` do `mkdocs.yml` ativo, de modo que página órfã (fora da `nav`), link quebrado ou âncora quebrada derrubam o build.
+
+---
+
+## 7. Contrato do Changelog
+
+O `docs/changelog.md` não é só a página de histórico do site: ele é a **fonte do texto
+que vai para o `metadata.txt`** do pacote. Quem empacota é o `qgis-plugin-ci` (alvo `make
+package`), que lê o arquivo declarado em `.qgis-plugin-ci` e injeta a seção da versão
+sendo publicada na chave `changelog=`:
+
+```yaml
+# .qgis-plugin-ci
+changelog_path: docs/changelog.md
+```
+
+```ini
+; logis/metadata.txt — a chave fica vazia no repositório; o empacotador a preenche
+changelog=
+```
+
+Daí decorrem as quatro cláusulas do contrato:
+
+1. **Toda seção é `## X.Y.Z - AAAA-MM-DD`.** O `qgis-plugin-ci` usa o regex do
+   [Keep a Changelog](https://keepachangelog.com/), que **exige a data** depois do
+   número da versão. Cabeçalho sem data (a forma antiga, `## 0.1.9`) não casa, e a seção
+   simplesmente não entra no pacote — em silêncio, sem erro de build.
+2. **A chave `changelog=` existe no `metadata.txt`**, ainda que vazia. É o ponto onde a
+   injeção acontece; sem a linha, não há o que preencher.
+3. **A versão do `metadata.txt` tem seção correspondente no changelog.** Subir
+   `version=` sem escrever a seção da versão nova publica um pacote com o histórico da
+   versão anterior.
+4. **`homepage=` do `metadata.txt` é exatamente `logis.logis_plugin.DOCS_URL`.** É o
+   mesmo endereço que o item "Documentação" do menu do plugin abre no navegador; as duas
+   pontas não podem divergir.
+
+As quatro são verificadas estaticamente por `test_packaging.py`, que não precisa de QGIS
+rodando:
+
+```bash
+python3 -m pytest -q test_packaging.py
+```
+
+Na prática, ao preparar uma versão: escreva a seção nova no topo do `docs/changelog.md`
+com a data do dia, atualize `version=` no `logis/metadata.txt`, rode o teste acima e só
+então `make package`.

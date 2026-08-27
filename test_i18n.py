@@ -31,6 +31,15 @@ class TestI18n(unittest.TestCase):
             "A tradução de 'Calcular Indicadores' não corresponde ao esperado.",
         )
 
+        translated_docs = translator.translate(
+            "LogisPlugin", "Documentação".encode("utf-8")
+        )
+        self.assertEqual(
+            translated_docs,
+            "Documentation",
+            "A tradução de 'Documentação' não corresponde ao esperado.",
+        )
+
     def test_logis_pt_qm_does_not_exist(self):
         pt_qm_path = os.path.join(
             os.path.dirname(__file__), "logis", "i18n", "logis_pt.qm"

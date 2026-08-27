@@ -24,4 +24,4 @@ O logis reaproveita a **lógica** de módulos do [GisBR](https://github.com/d-ca
 
 ## Estado e licença
 
-O logis está na versão **0.1.9**, marcado como `experimental` no repositório oficial de plugins do QGIS. Nessa fase, API interna, nomes de algoritmos e resultados podem mudar entre versões sem aviso prévio de compatibilidade — é preciso habilitar plugins experimentais no Gerenciador de Complementos para instalá-lo (ver [Guia de Instalação](guias/instalacao.md)). A licença é **GPL-3.0**, herdada da lógica reaproveitada do GisBR.
+O logis está na versão **0.1.10**, marcado como `experimental` no repositório oficial de plugins do QGIS. Nessa fase, API interna, nomes de algoritmos e resultados podem mudar entre versões sem aviso prévio de compatibilidade — é preciso habilitar plugins experimentais no Gerenciador de Complementos para instalá-lo (ver [Guia de Instalação](guias/instalacao.md)). A licença é **GPL-3.0**, herdada da lógica reaproveitada do GisBR.

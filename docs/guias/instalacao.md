@@ -16,7 +16,7 @@ a ausência (ou a falha de instalação) dessas bibliotecas nunca impede o uso d
 ## Instalação pelo pacote ZIP
 
 O pacote distribuível é gerado em `dist/logis-<versão>.zip` (por exemplo,
-`dist/logis-0.1.9.zip`) — para gerá-lo a partir do código-fonte, use `make package`.
+`dist/logis-0.1.10.zip`) — para gerá-lo a partir do código-fonte, use `make package`.
 
 1. No QGIS, abra **Complementos → Gerenciar e Instalar Complementos…**
 2. Vá até a aba **Instalar a partir do ZIP**.
@@ -48,7 +48,7 @@ Depois de instalado e habilitado, o logis se expõe em três lugares:
   algoritmos (`logis:*`) agrupados por módulo. É a via scriptável, também acessível pelo
   Console Python via `processing.run("logis:...", {...})`.
 - **Menu Complementos → logis** — as entradas *Indicadores Urbanos*, *Indicadores
-  Regionais*, *Coleta de Lixo* e *Dependências…*.
+  Regionais*, *Coleta de Lixo*, *Dependências…* e *Documentação*.
 - **Painéis (docks)**, ancorados à **direita** da janela principal e abertos pelas
   entradas do menu acima:
   - *logis — Indicadores Urbanos*
@@ -61,6 +61,9 @@ Depois de instalado e habilitado, o logis se expõe em três lugares:
 O diálogo **logis — Gerenciador de Dependências** (menu **Complementos → logis →
 Dependências…**) mostra o estado de `OR-Tools` e `pyarrow` e oferece a instalação
 assistida do backend opcional de otimização.
+
+A entrada **Documentação** (menu **Complementos → logis → Documentação**) abre este site
+(<https://logis.dcamargo.com.br>) no navegador padrão do sistema.
 
 ## Ambientes validados
 

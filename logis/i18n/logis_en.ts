@@ -470,6 +470,11 @@ Outputs:
         <source>Coleta de Lixo</source>
         <translation>Waste Collection</translation>
     </message>
+    <message>
+        <location filename="../logis_plugin.py" line="72"/>
+        <source>Documentação</source>
+        <translation>Documentation</translation>
+    </message>
 </context>
 <context>
     <name>LogisProvider</name>
