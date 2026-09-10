@@ -101,6 +101,31 @@ class TestDockLayout(unittest.TestCase):
             f"Esperado exatamente 3 chamadas de layout.addStretch() no painel Urbano (1 por aba), encontrado {add_stretch_calls}."
         )
 
+    def test_routing_dock_has_two_tabs(self):
+        content = (pathlib.Path(__file__).parent / "logis/gui/routing_dock.py").read_text(
+            encoding="utf-8"
+        )
+
+        self.assertIn("QTabWidget(", content)
+        self.assertIn("def _new_tab", content)
+
+        new_tab_calls = len(re.findall(r"self\._new_tab\(", content))
+        self.assertEqual(
+            new_tab_calls, 2,
+            f"Esperado exatamente 2 chamadas de _new_tab, encontrado {new_tab_calls}."
+        )
+
+    def test_routing_dock_results_panel_outside_tabs(self):
+        content = (pathlib.Path(__file__).parent / "logis/gui/routing_dock.py").read_text(
+            encoding="utf-8"
+        )
+
+        self.assertTrue(
+            re.search(r"outer\.addWidget\(self\.txt_results\)", content),
+            "self.txt_results deve ser adicionado ao layout externo (outer), "
+            "fora de qualquer aba (painel de resultados compartilhado)."
+        )
+
     def test_routing_dock_controls(self):
         content = (pathlib.Path(__file__).parent / "logis/gui/routing_dock.py").read_text(
             encoding="utf-8"
@@ -110,8 +135,25 @@ class TestDockLayout(unittest.TestCase):
         self.assertIn("self.cmb_points", content)
         self.assertIn("self.cmb_end", content)
         self.assertIn("self.btn_run_tsp", content)
+        self.assertIn("self.cmb_depot", content)
+        self.assertIn("self.cmb_demand", content)
+        self.assertIn("self.cmb_demand_field", content)
+        self.assertIn("self.spin_capacity", content)
+        self.assertIn("self.chk_cvrp_improve", content)
+        self.assertIn("self.btn_run_cvrp", content)
         self.assertIn("logis:vrp_tsp", content)
+        self.assertIn("logis:vrp_cvrp", content)
         self.assertNotIn("ortools", content.lower())
+
+    def test_routing_dock_network_selector_is_unique(self):
+        content = (pathlib.Path(__file__).parent / "logis/gui/routing_dock.py").read_text(
+            encoding="utf-8"
+        )
+
+        self.assertEqual(
+            content.count("self.cmb_network = QgsMapLayerComboBox()"), 1,
+            "Esperado exatamente 1 seletor de rede viária (cmb_network) no painel de roteirização."
+        )
 
 
 if __name__ == "__main__":

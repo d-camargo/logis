@@ -22,7 +22,8 @@ try:
         QSpinBox,
         QComboBox,
         QScrollArea,
-        QCheckBox
+        QCheckBox,
+        QTabWidget
     )
 except ImportError:
     # Mocks para quando rodado fora do QGIS (ex: smoke tests ou CLI)
@@ -33,7 +34,7 @@ except ImportError:
             pass
     class QgsMapLayerComboBox:
         def __init__(self, parent=None):
-            pass
+            self.layerChanged = MockSignal()
         def setFilters(self, filters):
             pass
         def setAllowEmptyLayer(self, allow):
@@ -49,6 +50,8 @@ except ImportError:
         def __init__(self, parent=None):
             pass
         def setLayer(self, layer):
+            pass
+        def setAllowEmptyFieldName(self, allow):
             pass
         def currentField(self):
             return None
@@ -168,6 +171,16 @@ except ImportError:
             pass
         def setWidget(self, widget):
             pass
+    class QTabWidget:
+        def __init__(self, parent=None):
+            self._tabs = []
+        def addTab(self, widget, title):
+            self._tabs.append(title)
+            return len(self._tabs) - 1
+        def count(self):
+            return len(self._tabs)
+        def tabText(self, index):
+            return self._tabs[index]
 
 
 class RoutingDock(QgsDockWidget):
@@ -184,29 +197,69 @@ class RoutingDock(QgsDockWidget):
     def tr(self, string):
         return QCoreApplication.translate("RoutingDock", string)
 
+    def _new_tab(self, title):
+        """
+        Cria uma aba com rolagem própria e devolve o layout onde as seções entram.
+        """
+        page = QWidget()
+        page_layout = QVBoxLayout(page)
+        page_layout.setContentsMargins(10, 10, 10, 10)
+        page_layout.setSpacing(10)
+
+        tab_scroll = QScrollArea()
+        tab_scroll.setWidgetResizable(True)
+        tab_scroll.setWidget(page)
+
+        self.tabs.addTab(tab_scroll, title)
+        return page_layout
+
     def _build_ui(self):
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
 
         central = QWidget()
-        layout = QVBoxLayout(central)
-        layout.setContentsMargins(10, 10, 10, 10)
-        layout.setSpacing(10)
+        outer = QVBoxLayout(central)
+        outer.setContentsMargins(10, 10, 10, 10)
+        outer.setSpacing(10)
 
         # Título principal
         title_label = QLabel(self.tr("<b>Roteirização</b>"))
         title_label.setStyleSheet("font-size: 14px; color: #2b6cb0; margin-bottom: 2px;")
-        layout.addWidget(title_label)
+        outer.addWidget(title_label)
 
         desc_label = QLabel(
             self.tr(
-                "Selecione as camadas de origem, pontos a visitar e rede viária para "
-                "calcular a rota otimizada (Problema do Caixeiro Viajante - TSP)."
+                "O painel reúne o Caixeiro Viajante e a Roteirização de Veículos "
+                "Capacitados; a camada de rede viária escolhida abaixo vale para as duas abas."
             )
         )
         desc_label.setStyleSheet("color: #666; font-size: 11px; margin-bottom: 5px;")
         desc_label.setWordWrap(True)
-        layout.addWidget(desc_label)
+        outer.addWidget(desc_label)
+
+        # Seletor de Camada de Rede Viária (Linhas - opcional)
+        outer.addWidget(QLabel(self.tr("Camada de rede viária (Linhas - opcional):")))
+        self.cmb_network = QgsMapLayerComboBox()
+        self.cmb_network.setFilters(QgsMapLayerProxyModel.Filter.LineLayer)
+        if hasattr(self.cmb_network, 'setAllowEmptyLayer'):
+            self.cmb_network.setAllowEmptyLayer(True)
+        outer.addWidget(self.cmb_network)
+
+        self.tabs = QTabWidget()
+        outer.addWidget(self.tabs)
+
+        # Painel de resultados
+        outer.addWidget(QLabel(self.tr("Resultados da Roteirização:")))
+        self.txt_results = QTextEdit()
+        self.txt_results.setReadOnly(True)
+        self.txt_results.setMinimumHeight(150)
+        self.txt_results.setStyleSheet(
+            "font-family: monospace; font-size: 11px; background-color: #2d3748; color: #edf2f7; padding: 5px;"
+        )
+        outer.addWidget(self.txt_results)
+
+        # Aba: TSP
+        layout = self._new_tab(self.tr("TSP"))
 
         # Seletor de Camada do Ponto Inicial (Pontos)
         layout.addWidget(QLabel(self.tr("Camada do ponto inicial (Pontos):")))
@@ -228,14 +281,6 @@ class RoutingDock(QgsDockWidget):
             self.cmb_end.setAllowEmptyLayer(True)
         layout.addWidget(self.cmb_end)
 
-        # Seletor de Camada de Rede Viária (Linhas - opcional)
-        layout.addWidget(QLabel(self.tr("Camada de rede viária (Linhas - opcional):")))
-        self.cmb_network = QgsMapLayerComboBox()
-        self.cmb_network.setFilters(QgsMapLayerProxyModel.Filter.LineLayer)
-        if hasattr(self.cmb_network, 'setAllowEmptyLayer'):
-            self.cmb_network.setAllowEmptyLayer(True)
-        layout.addWidget(self.cmb_network)
-
         # Checkbox para busca local (2-opt e Or-opt)
         self.chk_improve = QCheckBox(self.tr("Aplicar busca local (2-opt e Or-opt)"))
         self.chk_improve.setChecked(True)
@@ -247,20 +292,81 @@ class RoutingDock(QgsDockWidget):
         self.btn_run_tsp.clicked.connect(self.run_tsp)
         layout.addWidget(self.btn_run_tsp)
 
-        # Painel de resultados
-        layout.addWidget(QLabel(self.tr("Resultados da Roteirização:")))
-        self.txt_results = QTextEdit()
-        self.txt_results.setReadOnly(True)
-        self.txt_results.setMinimumHeight(150)
-        self.txt_results.setStyleSheet(
-            "font-family: monospace; font-size: 11px; background-color: #2d3748; color: #edf2f7; padding: 5px;"
+        layout.addStretch()
+
+        # Aba: CVRP
+        layout = self._new_tab(self.tr("CVRP"))
+
+        cvrp_desc = QLabel(
+            self.tr("Resolve a roteirização de uma frota com capacidade a partir de um depósito.")
         )
-        layout.addWidget(self.txt_results)
+        cvrp_desc.setStyleSheet("color: #666; font-size: 11px;")
+        cvrp_desc.setWordWrap(True)
+        layout.addWidget(cvrp_desc)
+
+        cvrp_net_desc = QLabel(
+            self.tr("Nota: A camada de rede viária utilizada é a selecionada no topo do painel.")
+        )
+        cvrp_net_desc.setStyleSheet("color: #666; font-size: 11px; font-style: italic;")
+        cvrp_net_desc.setWordWrap(True)
+        layout.addWidget(cvrp_net_desc)
+
+        # Seletor de Camada de Depósito (Pontos)
+        layout.addWidget(QLabel(self.tr("Camada de depósito (Pontos):")))
+        self.cmb_depot = QgsMapLayerComboBox()
+        self.cmb_depot.setFilters(QgsMapLayerProxyModel.Filter.PointLayer)
+        layout.addWidget(self.cmb_depot)
+
+        # Seletor de Camada de Demanda / Clientes (Pontos)
+        layout.addWidget(QLabel(self.tr("Camada de demanda / clientes (Pontos):")))
+        self.cmb_demand = QgsMapLayerComboBox()
+        self.cmb_demand.setFilters(QgsMapLayerProxyModel.Filter.PointLayer)
+        layout.addWidget(self.cmb_demand)
+
+        # Seletor de Campo de Peso/Demanda (opcional)
+        layout.addWidget(QLabel(self.tr("Campo de peso/demanda (opcional, default = 1,0):")))
+        self.cmb_demand_field = QgsFieldComboBox()
+        if hasattr(self.cmb_demand_field, 'setAllowEmptyFieldName'):
+            self.cmb_demand_field.setAllowEmptyFieldName(True)
+        self.cmb_demand_field.setLayer(self.cmb_demand.currentLayer())
+        self.cmb_demand.layerChanged.connect(self.cmb_demand_field.setLayer)
+        layout.addWidget(self.cmb_demand_field)
+
+        # Capacidade do Veículo
+        layout.addWidget(QLabel(self.tr("Capacidade do veículo:")))
+        self.spin_capacity = QDoubleSpinBox()
+        self.spin_capacity.setRange(0.0001, 1e9)
+        self.spin_capacity.setValue(100.0)
+        self.spin_capacity.setSingleStep(10.0)
+        layout.addWidget(self.spin_capacity)
+
+        # Checkbox para busca local (2-opt e Or-opt)
+        self.chk_cvrp_improve = QCheckBox(self.tr("Aplicar busca local (2-opt e Or-opt)"))
+        self.chk_cvrp_improve.setChecked(True)
+        layout.addWidget(self.chk_cvrp_improve)
+
+        # Botão Executar Roteirização (CVRP)
+        self.btn_run_cvrp = QPushButton(self.tr("Executar Roteirização (CVRP)"))
+        self.btn_run_cvrp.setStyleSheet("font-weight: bold; padding: 6px; font-size: 12px;")
+        self.btn_run_cvrp.clicked.connect(self.run_cvrp)
+        layout.addWidget(self.btn_run_cvrp)
 
         layout.addStretch()
 
         scroll.setWidget(central)
         self.setWidget(scroll)
+
+    def _attr(self, feat, fields, name, default):
+        """
+        Helper para leitura de atributo de uma feição por nome de campo.
+        """
+        if fields is not None and hasattr(fields, 'indexOf'):
+            idx = fields.indexOf(name)
+            if idx >= 0 and hasattr(feat, 'attributes'):
+                attrs = feat.attributes()
+                if 0 <= idx < len(attrs) and attrs[idx] is not None:
+                    return attrs[idx]
+        return default
 
     def run_tsp(self):
         """
@@ -340,23 +446,14 @@ class RoutingDock(QgsDockWidget):
                     feat = feats[0]
                     fields = route_layer.fields() if hasattr(route_layer, 'fields') else None
 
-                    def _get_val(name, default):
-                        if fields is not None and hasattr(fields, 'indexOf'):
-                            idx = fields.indexOf(name)
-                            if idx >= 0 and hasattr(feat, 'attributes'):
-                                attrs = feat.attributes()
-                                if 0 <= idx < len(attrs) and attrs[idx] is not None:
-                                    return attrs[idx]
-                        return default
-
-                    num_visited = _get_val('stop_count', 0)
-                    tour_dist = _get_val('tour_dist', 0.0)
-                    access_dist = _get_val('access_dist', 0.0)
-                    return_dist = _get_val('return_dist', 0.0)
-                    dead_ratio = _get_val('dead_ratio', 0.0)
-                    closed_val = _get_val('closed', 1)
+                    num_visited = self._attr(feat, fields, 'stop_count', 0)
+                    tour_dist = self._attr(feat, fields, 'tour_dist', 0.0)
+                    access_dist = self._attr(feat, fields, 'access_dist', 0.0)
+                    return_dist = self._attr(feat, fields, 'return_dist', 0.0)
+                    dead_ratio = self._attr(feat, fields, 'dead_ratio', 0.0)
+                    closed_val = self._attr(feat, fields, 'closed', 1)
                     is_closed = bool(closed_val)
-                    backend_str = str(_get_val('backend', 'N/A'))
+                    backend_str = str(self._attr(feat, fields, 'backend', 'N/A'))
 
             if num_visited == 0 and order_layer is not None and hasattr(order_layer, 'featureCount'):
                 count = order_layer.featureCount()
@@ -394,3 +491,120 @@ class RoutingDock(QgsDockWidget):
 
         self.txt_results.append(self.tr("<b>=== CÁLCULO CONCLUÍDO ===</b>"))
         self.btn_run_tsp.setEnabled(True)
+
+    def run_cvrp(self):
+        """
+        Executa o algoritmo de Roteirização de Veículos Capacitados (CVRP) e exibe os resultados.
+        """
+        self.txt_results.clear()
+
+        depot_layer = self.cmb_depot.currentLayer()
+        demand_layer = self.cmb_demand.currentLayer()
+        demand_field = self.cmb_demand_field.currentField()
+        capacity = self.spin_capacity.value()
+        network_layer = self.cmb_network.currentLayer()
+        improve = self.chk_cvrp_improve.isChecked()
+
+        if not depot_layer:
+            QMessageBox.warning(
+                self,
+                self.tr("Aviso"),
+                self.tr("Por favor, selecione a camada de depósito.")
+            )
+            self.txt_results.append(self.tr("<span style='color: #fc8181;'>Erro: Depósito não selecionado.</span>"))
+            return
+
+        if not demand_layer:
+            QMessageBox.warning(
+                self,
+                self.tr("Aviso"),
+                self.tr("Por favor, selecione a camada de demanda / clientes.")
+            )
+            self.txt_results.append(self.tr("<span style='color: #fc8181;'>Erro: Camada de demanda não selecionada.</span>"))
+            return
+
+        try:
+            import processing
+        except ImportError:
+            QMessageBox.critical(
+                self,
+                self.tr("Erro"),
+                self.tr("QGIS Processing não está disponível no ambiente atual.")
+            )
+            self.txt_results.append(self.tr("<span style='color: #fc8181;'>Erro: QGIS Processing não disponível.</span>"))
+            return
+
+        self.btn_run_cvrp.setEnabled(False)
+        self.txt_results.append(self.tr("<b>=== EXECUTANDO ROTEIRIZAÇÃO (CVRP) ===</b><br>"))
+
+        try:
+            params = {
+                'INPUT_DEPOT': depot_layer,
+                'INPUT_DEMAND': demand_layer,
+                'FIELD_DEMAND': demand_field or '',
+                'CAPACITY': capacity,
+                'INPUT_NETWORK': network_layer if network_layer else None,
+                'IMPROVE': improve,
+                'OUTPUT_ROUTES': 'memory:',
+                'OUTPUT_STOPS': 'memory:'
+            }
+            res = processing.run("logis:vrp_cvrp", params)
+
+            routes_layer = res.get('OUTPUT_ROUTES')
+            stops_layer = res.get('OUTPUT_STOPS')
+
+            if routes_layer is not None:
+                QgsProject.instance().addMapLayer(routes_layer)
+            if stops_layer is not None:
+                QgsProject.instance().addMapLayer(stops_layer)
+
+            total_routes = 0
+            total_stops = 0
+            total_load = 0.0
+            total_dist = 0.0
+            route_lines = []
+
+            if routes_layer is not None and hasattr(routes_layer, 'getFeatures'):
+                fields = routes_layer.fields() if hasattr(routes_layer, 'fields') else None
+                for feat in routes_layer.getFeatures():
+                    r_id = self._attr(feat, fields, 'route_id', 0)
+                    s_count = self._attr(feat, fields, 'stop_count', 0)
+                    r_load = float(self._attr(feat, fields, 'route_load', 0.0))
+                    r_dist = float(self._attr(feat, fields, 'route_dist', 0.0))
+
+                    total_routes += 1
+                    total_stops += s_count
+                    total_load += r_load
+                    total_dist += r_dist
+
+                    line_str = self.tr("Rota {id}: {n} paradas | carga {load:.2f} | distância {dist:.2f}").format(
+                        id=r_id, n=s_count, load=r_load, dist=r_dist
+                    )
+                    route_lines.append(line_str)
+
+            self.txt_results.append(
+                self.tr("-> <b>Rotas geradas:</b> {n}").format(n=total_routes)
+            )
+            self.txt_results.append(
+                self.tr("-> <b>Paradas atendidas:</b> {n}").format(n=total_stops)
+            )
+            self.txt_results.append(
+                self.tr("-> <b>Carga total:</b> {load:.2f}").format(load=total_load)
+            )
+            self.txt_results.append(
+                self.tr("-> <b>Distância total:</b> {dist:.2f}<br>").format(dist=total_dist)
+            )
+
+            for line in route_lines:
+                self.txt_results.append(line)
+            if route_lines:
+                self.txt_results.append("")
+
+        except Exception as e:
+            self.txt_results.append(
+                self.tr("<span style='color: #fc8181;'>Erro ao executar CVRP: {error}</span><br>").format(error=str(e))
+            )
+
+        self.txt_results.append(self.tr("<b>=== CÁLCULO CONCLUÍDO ===</b>"))
+        self.btn_run_cvrp.setEnabled(True)
+

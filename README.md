@@ -83,7 +83,7 @@ O plugin atua como um **Processing Provider** (`logis`), expondo os seguintes al
 
 - **Painel de Logística Urbana** (`gui/urban_dock.py`): Interface dock interativa em três abas — Rede, Demanda e Carga —, com o seletor de rede viária e o painel de resultados compartilhados fora das abas. A restrição de circulação de carga tem botão e campo de expressão próprios na aba Carga, executada de forma independente do pacote de indicadores de rede. A centralidade de intermediação (aba Rede) aceita uma semente opcional de amostragem, para tornar o resultado reproduzível entre execuções.
 - **Painel de Logística Regional** (`gui/regional_dock.py`): Interface dock dedicada a análises de redes rodoviárias estaduais e nacionais.
-- **Painel de Roteirização** (`gui/routing_dock.py`): Interface dock dedicada a sequenciamento e otimização de rotas de transporte (TSP/VRP).
+- **Painel de Roteirização** (`gui/routing_dock.py`): Interface dock em duas abas — TSP e CVRP —, com seletor de rede viária compartilhado e painel de resultados único no rodapé.
 - **Painel de Coleta de Lixo** (`gui/waste_dock.py`): Interface dock em quatro abas — Geração (estimativa de geração + setorização), Roteirização (CPP, RPP, CARP), Frota (dimensionamento) e Indicadores (deadhead ratio, equilíbrio entre setores, distância ao destino, cobertura por frequência) —, com rolagem por aba e painel de resultados único no rodapé, fora das abas.
 - **Diálogo de Dependências** (`gui/dependencies_dialog.py`): Verificação, diagnóstico visual e orientação de instalação de pacotes opcionais (`OR-Tools`, `pyarrow`).
 - **Documentação**: Item de menu (`Complementos → logis → Documentação`) que abre o site da documentação oficial no navegador padrão.
@@ -225,7 +225,7 @@ The plugin acts as a **Processing Provider** (`logis`), exposing the following a
 
 - **Urban Logistics Panel** (`gui/urban_dock.py`): Interactive dock interface with three tabs — Network, Demand, and Cargo —, with the road network selector and the results panel shared outside the tabs. Freight vehicle circulation restriction has its own button and expression field in the Cargo tab, run independently of the network indicators batch. Betweenness centrality (Network tab) accepts an optional sampling seed to make the result reproducible across runs.
 - **Regional Logistics Panel** (`gui/regional_dock.py`): Dedicated dock interface for state and national road network analyses.
-- **Routing Panel** (`gui/routing_dock.py`): Dedicated dock interface for transport route sequencing and optimization (TSP/VRP).
+- **Routing Panel** (`gui/routing_dock.py`): Dock interface with two tabs — TSP and CVRP —, with shared road network selector and single results panel at the footer.
 - **Waste Collection Panel** (`gui/waste_dock.py`): Dock interface with four tabs — Generation (generation estimate + districting), Routing (CPP, RPP, CARP), Fleet (sizing), and Indicators (deadhead ratio, sector balance, waste destination distance, collection coverage) —, with tab scrolling and a single results panel at the footer, outside the tabs.
 - **Dependencies Dialog** (`gui/dependencies_dialog.py`): Visual check, diagnostics, and installation guidance for optional packages (`OR-Tools`, `pyarrow`).
 - **Documentation**: Menu item (`Plugins → logis → Documentation`) opening the official documentation website in the default browser.

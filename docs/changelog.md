@@ -6,6 +6,7 @@ Este documento registra as principais alterações e evoluções do plugin **log
 
 - **Caixeiro Viajante (TSP)** — novo algoritmo `logis:vrp_tsp`, que recebe a camada de pontos a visitar, a camada do ponto inicial e, opcionalmente, a do ponto final, e devolve a ordem de visita na tabela de atributos (`visit_seq`) mais a camada de trechos, que separa os deslocamentos improdutivos de acesso e retorno dos trechos de rota.
 - **Painel de Roteirização** — nova entrada **Roteirização** no menu `logis`, com o painel que executa o TSP e publica as camadas no projeto.
+- **Aba CVRP no Painel de Roteirização** — o painel passa a ter duas abas, TSP e CVRP, com o seletor de rede viária compartilhado e o painel de resultados único no rodapé; a aba CVRP executa o `logis:vrp_cvrp`, publica as camadas de rotas e de paradas no projeto e resume a carga e a distância de cada rota.
 - **Ação de Documentação na Interface**: Novo item "Documentação" no menu do plugin para abrir a documentação oficial no navegador.
 - **Integração de Changelog no Empacotamento**: Configuração de `changelog_path` em `.qgis-plugin-ci` e injeção do changelog no `metadata.txt`.
 - **Testes de Empacotamento**: Adição da suíte `test_packaging.py` para validação de changelog, metadata e links de documentação.

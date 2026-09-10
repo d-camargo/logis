@@ -1028,6 +1028,111 @@ Retornos:
         <source>&lt;b&gt;=== CÁLCULO CONCLUÍDO ===&lt;/b&gt;</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <location filename="../gui/routing_dock.py" line="234"/>
+        <source>O painel reúne o Caixeiro Viajante e a Roteirização de Veículos Capacitados; a camada de rede viária escolhida abaixo vale para as duas abas.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../gui/routing_dock.py" line="265"/>
+        <source>TSP</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../gui/routing_dock.py" line="301"/>
+        <source>CVRP</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../gui/routing_dock.py" line="304"/>
+        <source>Resolve a roteirização de uma frota com capacidade a partir de um depósito.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../gui/routing_dock.py" line="311"/>
+        <source>Nota: A camada de rede viária utilizada é a selecionada no topo do painel.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../gui/routing_dock.py" line="318"/>
+        <source>Camada de depósito (Pontos):</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../gui/routing_dock.py" line="324"/>
+        <source>Camada de demanda / clientes (Pontos):</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../gui/routing_dock.py" line="330"/>
+        <source>Campo de peso/demanda (opcional, default = 1,0):</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../gui/routing_dock.py" line="339"/>
+        <source>Capacidade do veículo:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../gui/routing_dock.py" line="352"/>
+        <source>Executar Roteirização (CVRP)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../gui/routing_dock.py" line="515"/>
+        <source>Por favor, selecione a camada de depósito.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../gui/routing_dock.py" line="517"/>
+        <source>&lt;span style=&apos;color: #fc8181;&apos;&gt;Erro: Depósito não selecionado.&lt;/span&gt;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../gui/routing_dock.py" line="524"/>
+        <source>Por favor, selecione a camada de demanda / clientes.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../gui/routing_dock.py" line="526"/>
+        <source>&lt;span style=&apos;color: #fc8181;&apos;&gt;Erro: Camada de demanda não selecionada.&lt;/span&gt;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../gui/routing_dock.py" line="541"/>
+        <source>&lt;b&gt;=== EXECUTANDO ROTEIRIZAÇÃO (CVRP) ===&lt;/b&gt;&lt;br&gt;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../gui/routing_dock.py" line="583"/>
+        <source>Rota {id}: {n} paradas | carga {load:.2f} | distância {dist:.2f}</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../gui/routing_dock.py" line="589"/>
+        <source>-&gt; &lt;b&gt;Rotas geradas:&lt;/b&gt; {n}</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../gui/routing_dock.py" line="592"/>
+        <source>-&gt; &lt;b&gt;Paradas atendidas:&lt;/b&gt; {n}</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../gui/routing_dock.py" line="595"/>
+        <source>-&gt; &lt;b&gt;Carga total:&lt;/b&gt; {load:.2f}</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../gui/routing_dock.py" line="598"/>
+        <source>-&gt; &lt;b&gt;Distância total:&lt;/b&gt; {dist:.2f}&lt;br&gt;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../gui/routing_dock.py" line="608"/>
+        <source>&lt;span style=&apos;color: #fc8181;&apos;&gt;Erro ao executar CVRP: {error}&lt;/span&gt;&lt;br&gt;</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>UrbanCargoRestriction</name>
