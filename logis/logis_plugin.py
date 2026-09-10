@@ -24,11 +24,13 @@ class LogisPlugin:
         self.action_urban = None
         self.action_regional = None
         self.action_waste = None
+        self.action_routing = None
         self.action_docs = None
         self.dialog = None
         self.dock_urban = None
         self.dock_regional = None
         self.dock_waste = None
+        self.dock_routing = None
 
     def tr(self, s):
         return QCoreApplication.translate("LogisPlugin", s)
@@ -68,6 +70,13 @@ class LogisPlugin:
         # Registra a entrada no menu "logis"
         self.iface.addPluginToMenu("logis", self.action_waste)
 
+        # Cria a ação do menu "Roteirização"
+        self.action_routing = QAction(self.tr("Roteirização"), self.iface.mainWindow())
+        self.action_routing.triggered.connect(self.show_routing_dock)
+
+        # Registra a entrada no menu "logis"
+        self.iface.addPluginToMenu("logis", self.action_routing)
+
         # Cria a ação do menu "Documentação"
         self.action_docs = QAction(self.tr("Documentação"), self.iface.mainWindow())
         self.action_docs.triggered.connect(self.open_docs)
@@ -106,6 +115,14 @@ class LogisPlugin:
             self.iface.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.dock_waste)
         self.dock_waste.show()
 
+    def show_routing_dock(self):
+        from qgis.PyQt.QtCore import Qt
+        from .gui.routing_dock import RoutingDock
+        if self.dock_routing is None:
+            self.dock_routing = RoutingDock(self.iface, self.iface.mainWindow())
+            self.iface.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.dock_routing)
+        self.dock_routing.show()
+
     def open_docs(self):
         from qgis.PyQt.QtCore import QUrl
         from qgis.PyQt.QtGui import QDesktopServices
@@ -139,6 +156,11 @@ class LogisPlugin:
             self.iface.removePluginMenu("logis", self.action_waste)
             self.action_waste = None
 
+        # Remove o item de Roteirização do menu
+        if self.action_routing is not None:
+            self.iface.removePluginMenu("logis", self.action_routing)
+            self.action_routing = None
+
         # Remove o item de Documentação do menu
         if self.action_docs is not None:
             self.iface.removePluginMenu("logis", self.action_docs)
@@ -171,3 +193,10 @@ class LogisPlugin:
             if not sip.isdeleted(self.dock_waste):
                 self.iface.removeDockWidget(self.dock_waste)
             self.dock_waste = None
+
+        # Remove e libera o dock de roteirização widget
+        if self.dock_routing is not None:
+            from qgis.PyQt import sip
+            if not sip.isdeleted(self.dock_routing):
+                self.iface.removeDockWidget(self.dock_routing)
+            self.dock_routing = None

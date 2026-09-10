@@ -31,6 +31,7 @@ nav:
       - OR-Tools (opcional): ortools.md
       - Logística Urbana: guias/urbano.md
       - Logística Regional: guias/regional.md
+      - Roteirização: guias/roteirizacao.md
       - Coleta de Lixo: guias/residuos.md
   - Algoritmos:
       - Visão geral: algoritmos/index.md

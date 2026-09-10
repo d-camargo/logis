@@ -14,6 +14,7 @@ class TestDockLayout(unittest.TestCase):
         "logis/gui/urban_dock.py",
         "logis/gui/regional_dock.py",
         "logis/gui/waste_dock.py",
+        "logis/gui/routing_dock.py",
     ]
 
     REQUIRED_PATTERNS = [
@@ -99,6 +100,18 @@ class TestDockLayout(unittest.TestCase):
             add_stretch_calls, 3,
             f"Esperado exatamente 3 chamadas de layout.addStretch() no painel Urbano (1 por aba), encontrado {add_stretch_calls}."
         )
+
+    def test_routing_dock_controls(self):
+        content = (pathlib.Path(__file__).parent / "logis/gui/routing_dock.py").read_text(
+            encoding="utf-8"
+        )
+
+        self.assertIn("self.cmb_start", content)
+        self.assertIn("self.cmb_points", content)
+        self.assertIn("self.cmb_end", content)
+        self.assertIn("self.btn_run_tsp", content)
+        self.assertIn("logis:vrp_tsp", content)
+        self.assertNotIn("ortools", content.lower())
 
 
 if __name__ == "__main__":

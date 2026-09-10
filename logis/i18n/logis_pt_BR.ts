@@ -432,6 +432,11 @@ Saídas:
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <location filename="../logis_plugin.py" line="74"/>
+        <source>Roteirização</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <location filename="../logis_plugin.py" line="72"/>
         <source>Documentação</source>
         <translation type="unfinished"></translation>
@@ -868,6 +873,159 @@ Parâmetros:
 Retornos:
 - Percentual da malha pavimentada (%).
 - Percentual da malha duplicada (%).</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>RoutingDock</name>
+    <message>
+        <location filename="../gui/routing_dock.py" line="180"/>
+        <source>logis — Roteirização</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../gui/routing_dock.py" line="197"/>
+        <source>&lt;b&gt;Roteirização&lt;/b&gt;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../gui/routing_dock.py" line="202"/>
+        <source>Selecione as camadas de origem, pontos a visitar e rede viária para calcular a rota otimizada (Problema do Caixeiro Viajante - TSP).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../gui/routing_dock.py" line="212"/>
+        <source>Camada do ponto inicial (Pontos):</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../gui/routing_dock.py" line="218"/>
+        <source>Camada de pontos a visitar (Pontos):</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../gui/routing_dock.py" line="224"/>
+        <source>Camada do ponto final (Pontos - opcional, vazio fecha no ponto inicial):</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../gui/routing_dock.py" line="232"/>
+        <source>Camada de rede viária (Linhas - opcional):</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../gui/routing_dock.py" line="240"/>
+        <source>Aplicar busca local (2-opt e Or-opt)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../gui/routing_dock.py" line="245"/>
+        <source>Calcular Rota (TSP)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../gui/routing_dock.py" line="251"/>
+        <source>Resultados da Roteirização:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../gui/routing_dock.py" line="280"/>
+        <source>Aviso</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../gui/routing_dock.py" line="281"/>
+        <source>Por favor, selecione a camada do ponto inicial.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../gui/routing_dock.py" line="283"/>
+        <source>&lt;span style=&apos;color: #fc8181;&apos;&gt;Erro: Ponto inicial não selecionado.&lt;/span&gt;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../gui/routing_dock.py" line="289"/>
+        <source>Por favor, selecione a camada de pontos a visitar.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../gui/routing_dock.py" line="292"/>
+        <source>&lt;span style=&apos;color: #fc8181;&apos;&gt;Erro: Pontos a visitar não selecionados.&lt;/span&gt;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../gui/routing_dock.py" line="300"/>
+        <source>Erro</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../gui/routing_dock.py" line="301"/>
+        <source>QGIS Processing não está disponível no ambiente atual.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../gui/routing_dock.py" line="303"/>
+        <source>&lt;span style=&apos;color: #fc8181;&apos;&gt;Erro: QGIS Processing não disponível.&lt;/span&gt;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../gui/routing_dock.py" line="307"/>
+        <source>&lt;b&gt;=== CALCULANDO ROTA (TSP) ===&lt;/b&gt;&lt;br&gt;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../gui/routing_dock.py" line="368"/>
+        <source>-&gt; &lt;b&gt;Pontos visitados:&lt;/b&gt; {n}</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../gui/routing_dock.py" line="371"/>
+        <source>-&gt; &lt;b&gt;Distância total do tour:&lt;/b&gt; {dist:.2f}</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../gui/routing_dock.py" line="374"/>
+        <source>-&gt; &lt;b&gt;Custo de acesso:&lt;/b&gt; {acc:.2f}</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../gui/routing_dock.py" line="377"/>
+        <source>-&gt; &lt;b&gt;Custo de retorno:&lt;/b&gt; {ret:.2f}</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../gui/routing_dock.py" line="380"/>
+        <source>-&gt; &lt;b&gt;Razão de deadhead (dead_ratio):&lt;/b&gt; {dr:.4f}</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../gui/routing_dock.py" line="382"/>
+        <source>Sim (fecha no ponto inicial)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../gui/routing_dock.py" line="382"/>
+        <source>Não (termina no ponto final)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../gui/routing_dock.py" line="384"/>
+        <source>-&gt; &lt;b&gt;Fechamento:&lt;/b&gt; {closed}</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../gui/routing_dock.py" line="387"/>
+        <source>-&gt; &lt;b&gt;Backend de otimização:&lt;/b&gt; {backend}&lt;br&gt;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../gui/routing_dock.py" line="392"/>
+        <source>&lt;span style=&apos;color: #fc8181;&apos;&gt;Erro ao calcular rota: {error}&lt;/span&gt;&lt;br&gt;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../gui/routing_dock.py" line="395"/>
+        <source>&lt;b&gt;=== CÁLCULO CONCLUÍDO ===&lt;/b&gt;</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -2261,6 +2419,137 @@ Parâmetros:
 Saídas:
 - Rotas geradas: camada de linhas com a geometria das rotas e estatísticas de carga e distância.
 - Paradas por rota: camada de pontos ordenada com atribuição de rota e carga acumulada.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>VrpTsp</name>
+    <message>
+        <location filename="../algorithms/vrp_tsp.py" line="97"/>
+        <source>Camada do ponto inicial</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../algorithms/vrp_tsp.py" line="104"/>
+        <source>Camada de pontos a visitar</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../algorithms/vrp_tsp.py" line="111"/>
+        <source>Camada do ponto final (opcional; vazia = a rota fecha no ponto inicial)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../algorithms/vrp_tsp.py" line="119"/>
+        <source>Camada de rede viária (Linhas) (opcional)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../algorithms/vrp_tsp.py" line="127"/>
+        <source>Aplicar busca local (2-opt e Or-opt)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../algorithms/vrp_tsp.py" line="134"/>
+        <source>Ordem de visita</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../algorithms/vrp_tsp.py" line="140"/>
+        <source>Rota (trechos)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../algorithms/vrp_tsp.py" line="153"/>
+        <source>Camada do ponto inicial inválida.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../algorithms/vrp_tsp.py" line="155"/>
+        <source>Camada de pontos a visitar inválida.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../algorithms/vrp_tsp.py" line="179"/>
+        <source>Nenhum ponto inicial válido encontrado.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../algorithms/vrp_tsp.py" line="184"/>
+        <source>Lendo pontos a visitar...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../algorithms/vrp_tsp.py" line="196"/>
+        <source>A camada de pontos a visitar está vazia.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../algorithms/vrp_tsp.py" line="208"/>
+        <source>Nenhum ponto final válido encontrado na camada fornecida.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../algorithms/vrp_tsp.py" line="223"/>
+        <source>Construindo o grafo e calculando a matriz OD na rede...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../algorithms/vrp_tsp.py" line="227"/>
+        <source>Erro ao construir o grafo: {}</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../algorithms/vrp_tsp.py" line="233"/>
+        <source>O grafo construído possui menos de 2 vértices.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../algorithms/vrp_tsp.py" line="246"/>
+        <source>Erro ao calcular a matriz OD: {}</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../algorithms/vrp_tsp.py" line="248"/>
+        <source>Calculando matriz de distâncias euclidianas...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../algorithms/vrp_tsp.py" line="258"/>
+        <source>Executando a otimização TSP...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../algorithms/vrp_tsp.py" line="270"/>
+        <source>Otimização TSP concluída. Pontos: {count} | Backend: {backend} | Distância Total: {dist:.2f}</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../algorithms/vrp_tsp.py" line="438"/>
+        <source>Caixeiro Viajante (TSP)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../algorithms/vrp_tsp.py" line="441"/>
+        <source>Roteirização</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../algorithms/vrp_tsp.py" line="447"/>
+        <source>Resolve o Problema do Caixeiro Viajante (TSP) a partir de um ponto inicial, uma camada de pontos a visitar e, opcionalmente, um ponto final ou rede viária.
+
+Determina a sequência de visita de menor distância total utilizando as heurísticas do Vizinho Mais Próximo (Flood, 1956) com refinamento opcional por busca local 2-opt (Lin, 1965) e Or-opt (Or, 1976), ou o solver de programação por restrições do Google OR-Tools.
+
+Parâmetros:
+- Camada do ponto inicial: feição de ponto/polígono do local de partida.
+- Camada de pontos a visitar: feições de pontos/polígonos a serem visitadas.
+- Camada do ponto final (opcional): feição do ponto de chegada (se omitida ou vazia, a rota fecha no ponto inicial).
+- Camada de rede viária: rede viária para distâncias reais (opcional, usa distância euclidiana se omitida).
+- Aplicar busca local: se verdadeiro, aplica 2-opt e Or-opt para otimização da rota.
+
+Saídas:
+- Ordem de visita: camada de pontos ordenada com a ordem de visita na tabela de atributos em &apos;visit_seq&apos;, nó (&apos;node_role&apos;), papel da perna (&apos;leg_role&apos;), distância da perna (&apos;leg_dist&apos;) e distância acumulada (&apos;cum_dist&apos;).
+- Rota (trechos): camada de linhas com a geometria das pernas da rota classificadas (&apos;leg_role&apos;: &apos;acesso&apos;, &apos;rota&apos;, &apos;retorno&apos;). Os trechos &apos;acesso&apos; e &apos;retorno&apos; da camada de rota são os deslocamentos improdutivos (do ponto inicial ao primeiro ponto a visitar e do último ao ponto final), somados em &apos;access_dist&apos; e &apos;return_dist&apos;, com os totais de distância (&apos;tour_dist&apos;, &apos;service_dist&apos;) e a taxa improdutiva (&apos;dead_ratio&apos;) repetidos em todas as feições.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

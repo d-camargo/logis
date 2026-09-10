@@ -48,12 +48,13 @@ Depois de instalado e habilitado, o logis se expõe em três lugares:
   algoritmos (`logis:*`) agrupados por módulo. É a via scriptável, também acessível pelo
   Console Python via `processing.run("logis:...", {...})`.
 - **Menu Complementos → logis** — as entradas *Indicadores Urbanos*, *Indicadores
-  Regionais*, *Coleta de Lixo*, *Dependências…* e *Documentação*.
+  Regionais*, *Coleta de Lixo*, *Roteirização*, *Dependências…* e *Documentação*.
 - **Painéis (docks)**, ancorados à **direita** da janela principal e abertos pelas
   entradas do menu acima:
   - *logis — Indicadores Urbanos*
   - *logis — Indicadores Regionais*
   - *logis — Coleta de Lixo*
+  - *logis — Roteirização*
 
   Se um painel for fechado, reabra-o pela entrada correspondente no menu **Complementos
   → logis** (ou por **Ver → Painéis**).

@@ -21,6 +21,7 @@ from .algorithms.facility_p_median import FacilityPMedian
 from .algorithms.facility_mclp import FacilityMCLP
 from .algorithms.facility_lscp import FacilityLSCP
 from .algorithms.vrp_cvrp import VrpCvrp
+from .algorithms.vrp_tsp import VrpTsp
 from .algorithms.waste_generation_estimate import WasteGenerationEstimate
 from .algorithms.waste_districting import WasteDistricting
 from .algorithms.waste_cpp_route import WasteCppRoute
@@ -50,6 +51,7 @@ class LogisProvider(QgsProcessingProvider):
         self.addAlgorithm(FacilityMCLP())
         self.addAlgorithm(FacilityLSCP())
         self.addAlgorithm(VrpCvrp())
+        self.addAlgorithm(VrpTsp())
         self.addAlgorithm(WasteGenerationEstimate())
         self.addAlgorithm(WasteDistricting())
         self.addAlgorithm(WasteCppRoute())
