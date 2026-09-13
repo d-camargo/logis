@@ -17,6 +17,8 @@ from logis.core.ortools_installer import (
     command_text,
     installed_versions,
     is_installed,
+    pip_args,
+    python_executable,
 )
 from logis.core.optim_backend import has_ortools
 
@@ -126,7 +128,12 @@ class TestInstallCommand(unittest.TestCase):
 
     def test_build_command_matches_pip_prefix(self):
         cmd = build_command()
-        self.assertEqual(cmd[:4], [sys.executable, "-m", "pip", "install"])
+        self.assertEqual(cmd[:4], [python_executable(), "-m", "pip", "install"])
+
+    def test_pip_args_flags(self):
+        self.assertNotIn("--user", pip_args(user_site=False))
+        self.assertIn("--user", pip_args(user_site=True))
+        self.assertIn("--disable-pip-version-check", pip_args())
 
     def test_command_text_returns_formatted_string(self):
         versions = {"numpy": "1.26.4"}
@@ -146,11 +153,10 @@ class TestInstallCommand(unittest.TestCase):
         res = is_installed()
         self.assertIsInstance(res, bool)
 
-    def test_module_has_no_subprocess_and_no_installer_api(self):
-        """O módulo não roda processo externo: sem subprocess, sem install/Task."""
+    def test_module_has_no_subprocess(self):
+        """O módulo não cria processo externo; a instalação é em processo."""
         self.assertFalse(hasattr(ortools_installer, "subprocess"))
-        self.assertFalse(hasattr(ortools_installer, "install"))
-        self.assertFalse(hasattr(ortools_installer, "ORToolsInstallTask"))
+        self.assertTrue(hasattr(ortools_installer, "install_ortools"))
 
 
 class TestHasORTools(unittest.TestCase):
@@ -185,5 +191,94 @@ class TestHasORTools(unittest.TestCase):
                 self.assertFalse(has_ortools())
 
 
+class TestEnvironmentDetection(unittest.TestCase):
+    def test_python_executable_returns_non_empty_string(self):
+        exe = ortools_installer.python_executable()
+        self.assertIsInstance(exe, str)
+        self.assertTrue(len(exe) > 0)
+
+    def test_python_executable_on_windows_with_qgis_bin(self):
+        with mock.patch("sys.executable", "/x/qgis-bin"), mock.patch("sys.platform", "win32"):
+            exe = ortools_installer.python_executable()
+            self.assertNotEqual(exe, "/x/qgis-bin")
+            self.assertIsInstance(exe, str)
+            self.assertTrue(len(exe) > 0)
+
+    def test_detect_environment_returns_eight_keys_with_correct_types(self):
+        env = ortools_installer.detect_environment()
+        self.assertIsInstance(env, dict)
+        expected_keys = {
+            "os_name",
+            "python_version",
+            "executable",
+            "sys_executable",
+            "pip_available",
+            "user_site",
+            "externally_managed",
+            "sandbox",
+        }
+        self.assertEqual(set(env.keys()), expected_keys)
+        self.assertIsInstance(env["os_name"], str)
+        self.assertIsInstance(env["python_version"], str)
+        self.assertIsInstance(env["executable"], str)
+        self.assertIsInstance(env["sys_executable"], str)
+        self.assertIsInstance(env["pip_available"], bool)
+        self.assertIsInstance(env["user_site"], bool)
+        self.assertIsInstance(env["externally_managed"], bool)
+        self.assertTrue(env["sandbox"] is None or isinstance(env["sandbox"], str))
+
+    def test_detect_environment_os_name_responds_to_platform(self):
+        with mock.patch("sys.platform", "win32"):
+            self.assertEqual(ortools_installer.detect_environment()["os_name"], "Windows")
+        with mock.patch("sys.platform", "darwin"):
+            self.assertEqual(ortools_installer.detect_environment()["os_name"], "macOS")
+        with mock.patch("sys.platform", "linux"):
+            self.assertEqual(ortools_installer.detect_environment()["os_name"], "Linux")
+
+
+class TestInstallORTools(unittest.TestCase):
+    """install_ortools roda o pip em processo; nada é instalado de verdade."""
+
+    def test_pip_main_none_reports_missing_pip(self):
+        with mock.patch.object(ortools_installer, "_pip_main", return_value=None):
+            ok, log = ortools_installer.install_ortools()
+            self.assertFalse(ok)
+            self.assertIn("pip", log)
+
+    def test_success_returns_true_with_output_in_log(self):
+        def fake_pip(args):
+            print("Looking in indexes: example")
+            return 0
+
+        with mock.patch.object(ortools_installer, "_pip_main", return_value=fake_pip):
+            ok, log = ortools_installer.install_ortools()
+            self.assertTrue(ok)
+            self.assertIn("Looking in indexes", log)
+
+    def test_nonzero_exit_returns_false(self):
+        with mock.patch.object(
+            ortools_installer, "_pip_main", return_value=lambda args: 1
+        ):
+            ok, _log = ortools_installer.install_ortools()
+            self.assertFalse(ok)
+
+    def test_system_exit_returns_false_without_raising(self):
+        def fake_pip(args):
+            raise SystemExit(2)
+
+        with mock.patch.object(ortools_installer, "_pip_main", return_value=fake_pip):
+            ok, _log = ortools_installer.install_ortools()
+            self.assertFalse(ok)
+
+    def test_runtime_error_returns_false_with_message_in_log(self):
+        def fake_pip(args):
+            raise RuntimeError("boom")
+
+        with mock.patch.object(ortools_installer, "_pip_main", return_value=fake_pip):
+            ok, log = ortools_installer.install_ortools()
+            self.assertFalse(ok)
+            self.assertIn("boom", log)
+
 if __name__ == "__main__":
     unittest.main()
+

@@ -2,6 +2,12 @@
 
 Este documento registra as principais alterações e evoluções do plugin **logis** organizadas por versão.
 
+## 0.1.11 - 2026-09-13
+
+- **Instalação do OR-Tools em um clique** — o Gerenciador de Dependências passa a instalar a biblioteca no Python do próprio QGIS, sem abrir terminal nem executar processo externo.
+- **Detecção de ambiente** — o diálogo mostra sistema operacional, versão do Python, interpretador, disponibilidade do pip e restrições (PEP 668, Flatpak/Snap), e usa isso para decidir as opções do pip.
+- **Correção do comando no Windows** — o comando exibido passa a apontar para o `python.exe` do QGIS em vez do `qgis-bin.exe`, que não executa o pip.
+
 ## 0.1.10 - 2026-09-10
 
 - **Caixeiro Viajante (TSP)** — novo algoritmo `logis:vrp_tsp`, que recebe a camada de pontos a visitar, a camada do ponto inicial e, opcionalmente, a do ponto final, e devolve a ordem de visita na tabela de atributos (`visit_seq`) mais a camada de trechos, que separa os deslocamentos improdutivos de acesso e retorno dos trechos de rota.

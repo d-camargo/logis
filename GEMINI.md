@@ -41,7 +41,7 @@ Consequências práticas:
 
 ### 2.1 OR-Tools — como instalar (e por que o comando cru quebra o QGIS)
 
-O OR-Tools é backend **opcional**. Quando o plugin oferecer ao usuário o **comando** pronto para instalá-lo e obter a solução ótima, o comando normativo passa a ser descrito como uma **regra** — `ortools` mais `nome==versão_instalada` para `numpy`, `pandas` e `typing_extensions` quando presentes no ambiente Python do QGIS, mais `--only-binary=:all:` —, em vez do comando literal estático.
+O OR-Tools é backend **opcional**. Quando o plugin oferecer ao usuário o **comando** pronto para instalá-lo e obter a solução ótima, o comando normativo passa a ser descrito como uma **regra** — `ortools` mais `nome==versão_instalada` para `numpy`, `pandas` e `typing_extensions` quando presentes no ambiente Python do QGIS, mais `--only-binary=:all:` —, em vez do comando literal estático. O comando montado usa o **interpretador resolvido** (`python_executable()`), e não o `sys.executable` cru, porque no Windows o QGIS embarca o Python e `sys.executable` aponta para o `qgis-bin.exe`.
 
 Fixar `nome==versão_instalada` garante que o pip não substitua nem altere as versões de pacotes que o QGIS já utiliza e possui em seu `sys.path`.
 
@@ -203,7 +203,7 @@ logis/
 - Reprojetar para CRS métrico antes de cálculos de custo; devolver saídas em EPSG:4674.
 - Cache: `QStandardPaths.CacheLocation` → `.../logis/`. Nunca gravar fora do cache ou do GPKG escolhido pelo usuário.
 - Licença: GPL-3.0 (herdada da lógica do GisBR).
-- Compatibilidade Qt6/QGIS 4: todo acesso a enum do Qt/QGIS deve ser escopado (`Qt.DockWidgetArea.RightDockWidgetArea`, `QgsProcessing.SourceType.TypeVectorLine`, `QgsProcessingParameterNumber.Type.Double`, `QgsProcessingParameterField.DataType.*`, `QgsFeatureSink.Flag.*`, `QgsVectorLayerDirector.Direction.*`, `QNetworkReply.NetworkError.*`, `QgsWkbTypes.Type.*` / `QgsWkbTypes.GeometryType.*`, `QgsTask.Flag.*`), tipos de campo só se criam via `core.qgis_compat.field_type()` (nunca `QVariant.*` direto). A lista de enums escopados é verificada estaticamente por `test_qt6_compat.py`; enum novo entra na regra **e** no teste.
+- Compatibilidade Qt6/QGIS 4: todo acesso a enum do Qt/QGIS deve ser escopado (`Qt.DockWidgetArea.RightDockWidgetArea`, `Qt.CursorShape.*`, `QMessageBox.StandardButton.*`, `QgsProcessing.SourceType.TypeVectorLine`, `QgsProcessingParameterNumber.Type.Double`, `QgsProcessingParameterField.DataType.*`, `QgsFeatureSink.Flag.*`, `QgsVectorLayerDirector.Direction.*`, `QNetworkReply.NetworkError.*`, `QgsWkbTypes.Type.*` / `QgsWkbTypes.GeometryType.*`, `QgsTask.Flag.*`), tipos de campo só se criam via `core.qgis_compat.field_type()` (nunca `QVariant.*` direto). A lista de enums escopados é verificada estaticamente por `test_qt6_compat.py`; enum novo entra na regra **e** no teste.
 - Padrões de segurança e qualidade do código (validados estaticamente por `test_security_scan.py` e `test_qt6_compat.py`):
   - Proibido uso de `pickle` (usar JSON para cache e serialização).
   - Proibido `except Exception: pass` ou `except:` com `pass` silencioso.
@@ -211,7 +211,7 @@ logis/
   - Proibido bypass de verificação SSL (`PeerVerifyMode` + `VerifyNone`).
   - Proibido gerador `random` da stdlib (sinalizado como B311 pelo scanner do `plugins.qgis.org`, que ignora `# nosec`; usar `logis.core.sampling.DeterministicRandom`).
   - Proibidos hashes fracos `hashlib.md5(` e `hashlib.sha1(` (usar `hashlib.sha256`).
-  - Proibido `subprocess` em qualquer arquivo sob `logis/` — o plugin não executa processos externos (achado B603 do scanner do `plugins.qgis.org`) —, e `shell=True` proibido em qualquer lugar. O instalador do OR-Tools apenas **monta e exibe** o comando (`core.ortools_installer.build_command()` / `command_text()`), cabendo ao usuário executá-lo no console do ambiente Python do QGIS.
+  - Proibido `subprocess` em qualquer arquivo sob `logis/` — o plugin não executa processos externos (achado B603 do scanner do `plugins.qgis.org`) —, e `shell=True` proibido em qualquer lugar. O instalador do OR-Tools **também instala**, chamando a API do pip **dentro do processo do QGIS** (`core.ortools_installer.install_ortools()`), com o ponto de entrada resolvido em `try/except` e fallback para o comando manual (`build_command()` / `command_text()`) — sem criar processo externo, que é o que o B603 proíbe.
 - Padrões de empacotamento e documentação (validados estaticamente por `test_packaging.py`):
   - O changelog do repositório é `docs/changelog.md`, com seções `## <versão> - <AAAA-MM-DD>`, e `logis/metadata.txt` mantém a linha `changelog=` vazia para o `qgis-plugin-ci` preencher no empacotamento — **não** se cria `CHANGELOG.md` na raiz.
   - O endereço do site da documentação é a constante `DOCS_URL` de `logis/logis_plugin.py` e tem que ser idêntico ao `homepage=` do `metadata.txt`.

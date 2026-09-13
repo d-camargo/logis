@@ -158,13 +158,14 @@ arquivo sob `logis/`, e `shell=True` é proibido em qualquer lugar do repositór
 proibição elimina o achado **B603** (*subprocesso com entrada não confiável*) do scanner
 do `plugins.qgis.org`, que ignora comentários `# nosec`.
 
-A consequência prática está no instalador opcional do OR-Tools: em vez de rodar o `pip`,
-`logis/core/ortools_installer.py` apenas **monta e exibe** o comando, e quem o executa é
-o usuário, no console do ambiente Python do QGIS (ver
-[Instalação do OR-Tools](ortools.md)). `build_command()` devolve a lista de argumentos a
-partir de literais, de `sys.executable` e das versões detectadas por
-`installed_versions()`; `command_text()` transforma essa lista na linha pronta para
-cópia, entre aspas quando o token contém espaço.
+No instalador opcional do OR-Tools (`logis/core/ortools_installer.py`), `install_ortools()`
+chama o `pip` **em processo** com o ponto de entrada resolvido por `_pip_main()` em
+`try/except` (API privada, por isso tolerante a versão), a saída é capturada por
+`redirect_stdout`/`redirect_stderr`, e `refresh_import_path()` confere se o `import ortools`
+passou a funcionar (ver [Instalação do OR-Tools](ortools.md)). Em paralelo, `build_command()`
+e `command_text()` continuam existindo como caminho manual, agora sobre `python_executable()`
+em vez de `sys.executable` (pois no Windows o `sys.executable` dentro do QGIS aponta para
+`qgis-bin.exe`, que não reconhece `-m pip`).
 
 Versão lida de metadados de terceiros continua validada por expressão regular — a que
 não casar com `^[A-Za-z0-9][A-Za-z0-9._+!-]*$` é descartada, para que uma string

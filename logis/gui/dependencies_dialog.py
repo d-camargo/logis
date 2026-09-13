@@ -31,12 +31,25 @@ except ImportError:
         @staticmethod
         def clipboard():
             return MockClipboard()
+        @staticmethod
+        def setOverrideCursor(cursor):
+            pass
+        @staticmethod
+        def restoreOverrideCursor():
+            pass
+        @staticmethod
+        def processEvents():
+            pass
+
     class Qt:
         Window = 0
 
         class WindowType:
             WindowMinMaxButtonsHint = 0
             WindowCloseButtonHint = 0
+
+        class CursorShape:
+            WaitCursor = 0
 
     class QDialog:
         def __init__(self, parent=None, flags=0):
@@ -102,6 +115,8 @@ except ImportError:
             self.clicked = MockSignal()
         def setEnabled(self, enabled):
             pass
+        def isEnabled(self):
+            return True
         def setText(self, text):
             self._text = text
         def setStyleSheet(self, style):
@@ -123,6 +138,8 @@ except ImportError:
         def clear(self):
             self._text = ""
         def setVisible(self, visible):
+            pass
+        def setStyleSheet(self, style):
             pass
         def setMaximumHeight(self, h):
             pass
@@ -155,6 +172,10 @@ except ImportError:
             pass
 
     class QMessageBox:
+        class StandardButton:
+            Yes = 1
+            No = 0
+
         @staticmethod
         def information(parent, title, text):
             pass
@@ -164,11 +185,20 @@ except ImportError:
         @staticmethod
         def critical(parent, title, text):
             pass
+        @staticmethod
+        def question(parent, title, text, *args, **kwargs):
+            return QMessageBox.StandardButton.No
     iface = None
 
 from ..core.data_backend import has_gisbr
 from ..core.optim_backend import has_ortools
-from ..core.ortools_installer import command_text
+# Importa install_ortools como run_install do core para evitar colisão com o método da classe
+from ..core.ortools_installer import (
+    command_text,
+    detect_environment,
+    install_ortools as run_install,
+    refresh_import_path,
+)
 
 
 class DependenciesDialog(QDialog):
@@ -271,17 +301,43 @@ class DependenciesDialog(QDialog):
             "O OR-Tools é uma biblioteca do Google para resolver problemas complexos de otimização de rotas "
             "e localização de instalações. O logis possui heurísticas internas em Python puro, mas o "
             "OR-Tools é recomendado para maior velocidade e precisão.\n\n"
-            "Por segurança, o plugin não executa comandos externos: ele monta o comando "
-            "correto para ESTE ambiente Python do QGIS e cabe a você executá-lo. O comando "
-            "fixa numpy, pandas e typing_extensions nas versões já instaladas no QGIS, "
-            "para não danificar a instalação existente.\n\n"
-            "Em instalações isoladas (Flatpak/Snap) a instalação pode não ser possível por "
-            "falta de pacote binário para o Python do QGIS; nesse caso o plugin continua "
-            "funcionando normalmente com as heurísticas em Python puro."
+            "Você pode instalar o pacote diretamente pelo botão abaixo ou executar o comando manual no terminal do seu sistema."
         )
         ortools_desc.setStyleSheet("font-weight: normal; color: #555; font-size: 11px;")
         ortools_desc.setWordWrap(True)
         ortools_layout.addWidget(ortools_desc)
+
+        # (a) Linha de ambiente
+        self.lbl_env = QLabel()
+        self.lbl_env.setStyleSheet("font-weight: normal; color: #555; font-size: 11px;")
+        self.lbl_env.setWordWrap(True)
+        ortools_layout.addWidget(self.lbl_env)
+
+        # (b) Botão de instalação + Dica
+        install_btn_layout = QHBoxLayout()
+        self.btn_install = QPushButton("Instalar OR-Tools agora")
+        self.btn_install.setStyleSheet("font-weight: bold; padding: 6px; font-size: 12px;")
+        self.btn_install.clicked.connect(self.install_ortools)
+        install_btn_layout.addWidget(self.btn_install)
+
+        self.lbl_install_hint = QLabel(
+            "A instalação é realizada no Python do próprio QGIS e pode deixar a janela sem resposta por alguns instantes."
+        )
+        self.lbl_install_hint.setStyleSheet("font-weight: normal; color: #555; font-size: 11px;")
+        self.lbl_install_hint.setWordWrap(True)
+        install_btn_layout.addWidget(self.lbl_install_hint)
+        install_btn_layout.addStretch()
+        ortools_layout.addLayout(install_btn_layout)
+
+        # (c) TextEdit de log
+        self.txt_install_log = QTextEdit()
+        self.txt_install_log.setReadOnly(True)
+        self.txt_install_log.setMaximumHeight(140)
+        self.txt_install_log.setStyleSheet(
+            "font-family: monospace; font-size: 10px; background-color: #2d3748; color: #edf2f7;"
+        )
+        self.txt_install_log.setVisible(False)
+        ortools_layout.addWidget(self.txt_install_log)
         
         self.txt_command = QTextEdit()
         self.txt_command.setReadOnly(True)
@@ -300,14 +356,12 @@ class DependenciesDialog(QDialog):
         ortools_layout.addLayout(btn_cmd_layout)
 
         self.lbl_instructions = QLabel(
-            "<b>Instruções de Instalação:</b><br>"
+            "<b>Instruções para Instalação Manual (Alternativa):</b><br>"
+            "Se o botão acima não funcionar ou se preferir instalar manualmente:<br>"
             "1. Clique em <b>Copiar Comando</b> acima.<br>"
-            "2. Abra o console do Python que o QGIS usa — no Windows, o "
-            "<i>OSGeo4W Shell</i>; no macOS, o Python embarcado do QGIS; no Linux, "
-            "o terminal.<br>"
-            "3. Cole e execute o comando. No Debian/Ubuntu, se o pip recusar com "
-            "<i>externally-managed-environment</i>, acrescente "
-            "<code>--break-system-packages</code> ao final e repita.<br>"
+            "2. Abra o terminal ou Prompt de Comando — no Windows, o comando já traz o caminho completo "
+            "do <i>python.exe</i> do QGIS (ou utilize o <i>OSGeo4W Shell</i>); no macOS e Linux, abra o Terminal.<br>"
+            "3. Cole e execute o comando.<br>"
             "4. Reinicie o QGIS para carregar a biblioteca."
         )
         self.lbl_instructions.setStyleSheet("font-weight: normal; color: #555; font-size: 11px;")
@@ -339,19 +393,132 @@ class DependenciesDialog(QDialog):
             self.gisbr_status_val.setStyleSheet("color: #c53030; font-weight: bold;")
             
         # 2. OR-Tools
-        self.txt_command.setText(command_text())
+        self.env = detect_environment()
+
+        parts = ["Ambiente detectado: " + self.env.get("os_name", "Linux")]
+        if self.env.get("python_version"):
+            parts.append(f"Python {self.env['python_version']}")
+        if self.env.get("executable"):
+            parts.append(self.env["executable"])
+        parts.append("pip disponível" if self.env.get("pip_available") else "pip indisponível")
+        parts.append("user site ativo" if self.env.get("user_site") else "user site inativo")
+        if self.env.get("externally_managed"):
+            parts.append("PEP 668")
+        sandbox = self.env.get("sandbox")
+        if sandbox == "flatpak":
+            parts.append("Flatpak")
+        elif sandbox == "snap":
+            parts.append("Snap")
+        elif sandbox:
+            parts.append(str(sandbox).capitalize())
+
+        self.lbl_env.setText(" • ".join(parts))
+
+        ext_managed = bool(self.env.get("externally_managed"))
+        self.txt_command.setText(command_text(break_system_packages=ext_managed))
         self.btn_copy_cmd.setText("Copiar Comando")
+
         instalado = has_ortools()
-        # Com o OR-Tools presente, o comando só polui a tela.
+        
+        self.btn_install.setVisible(not instalado)
+        self.lbl_install_hint.setVisible(not instalado)
         self.txt_command.setVisible(not instalado)
         self.btn_copy_cmd.setVisible(not instalado)
         self.lbl_instructions.setVisible(not instalado)
+
         if instalado:
             self.ortools_status_val.setText("Instalado (Disponível)")
             self.ortools_status_val.setStyleSheet("color: #2f855a; font-weight: bold;")
         else:
             self.ortools_status_val.setText("Não instalado (Heurística pura ativada)")
             self.ortools_status_val.setStyleSheet("color: #dd6b20; font-weight: bold;")
+
+            pip_avail = bool(self.env.get("pip_available"))
+            self.btn_install.setEnabled(pip_avail)
+            if not pip_avail:
+                self.lbl_install_hint.setText(
+                    "pip não está disponível neste ambiente. Utilize o comando manual abaixo."
+                )
+            else:
+                self.lbl_install_hint.setText(
+                    "A instalação é realizada no Python do próprio QGIS e pode deixar a janela sem resposta por alguns instantes."
+                )
+
+    def install_ortools(self):
+        # (a) Solicita confirmação ao usuário explicando o processo e os impactos
+        reply = QMessageBox.question(
+            self,
+            "Confirmar Instalação",
+            "O pip vai instalar o OR-Tools no ambiente Python do QGIS, baixando algumas dezenas de MB. "
+            "A janela do QGIS pode ficar sem resposta durante o processo. Deseja continuar?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No,
+        )
+        if reply != QMessageBox.StandardButton.Yes:
+            return
+
+        # (b) Atualiza estado da UI para refletir progresso da instalação
+        self.txt_install_log.clear()
+        self.txt_install_log.setVisible(True)
+        self.txt_install_log.setText("Instalando OR-Tools… aguarde.")
+        self.btn_install.setEnabled(False)
+        self.btn_copy_cmd.setEnabled(False)
+        self.btn_install.setText("Instalando…")
+        QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
+        QApplication.processEvents()
+
+        # (c) Executa a instalação dentro de try/finally garantindo restauração da UI
+        ok = False
+        log = ""
+        unexpected = None
+        try:
+            ok, log = run_install()
+        except Exception as e:
+            ok = False
+            unexpected = e
+            log = f"Erro inesperado durante a instalação: {e}"
+        finally:
+            QApplication.restoreOverrideCursor()
+            self.btn_install.setText("Instalar OR-Tools agora")
+            self.btn_install.setEnabled(True)
+            self.btn_copy_cmd.setEnabled(True)
+
+        # (d) Exibe o log no campo de texto
+        if log:
+            self.txt_install_log.setText(log)
+
+        # (e) Desfecho: exceção inesperada vai para o critical; nos três
+        # ramos de D-F o refresh_import_path() reconfere o import
+        if unexpected is not None:
+            QMessageBox.critical(
+                self,
+                "Erro Inesperado",
+                f"Ocorreu um erro inesperado durante a instalação: {unexpected}",
+            )
+        elif ok and refresh_import_path():
+            QMessageBox.information(
+                self,
+                "Instalação Concluída",
+                "OR-Tools instalado e já disponível.",
+            )
+        elif ok:
+            QMessageBox.information(
+                self,
+                "Instalação Concluída",
+                "OR-Tools instalado com sucesso. Reinicie o QGIS para concluir a ativação.",
+            )
+        else:
+            QMessageBox.warning(
+                self,
+                "Falha na Instalação",
+                "A instalação do OR-Tools falhou. O log de instalação está visível na tela e "
+                "o comando manual abaixo continua valendo — e o plugin segue funcionando com as "
+                "heurísticas em Python puro.",
+            )
+
+        # (f) Atualiza status e restaura a visibilidade do log no fim
+        self.refresh_status()
+        self.txt_install_log.setVisible(True)
 
     def open_plugin_manager(self):
         if iface is not None:
@@ -368,3 +535,4 @@ class DependenciesDialog(QDialog):
         if cmd:
             QApplication.clipboard().setText(cmd)
             self.btn_copy_cmd.setText("Comando copiado!")
+

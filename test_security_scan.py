@@ -228,9 +228,9 @@ class TestSecurityScan(unittest.TestCase):
             msg = (
                 f"Encontradas {len(violations)} violações de subprocess/shell=True em logis/:\n"
                 + "\n".join(violations)
-                + "\n\nO plugin não executa processos externos: o comando de instalação do "
-                "OR-Tools apenas é exibido ao usuário, via "
-                "core/ortools_installer.command_text()."
+                + "\n\nO plugin não executa processos externos: a instalação do OR-Tools "
+                "roda em processo, via core.ortools_installer.install_ortools(), e o "
+                "comando manual é apenas exibido."
             )
             self.fail(msg)
 
