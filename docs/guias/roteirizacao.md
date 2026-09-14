@@ -25,7 +25,7 @@ vale também para a aba **CVRP**, cujos insumos estão na
 | **Camada do ponto inicial (Pontos)** | Sim | O algoritmo usa a **primeira feição válida** da camada; o ideal é uma camada com uma única feição (garagem, CD, depósito). |
 | **Camada de pontos a visitar (Pontos)** | Sim | Cada feição é uma parada visitada exatamente uma vez. Os atributos originais são preservados na saída. |
 | **Camada do ponto final (Pontos)** | Não | Se vazia, a rota **fecha no ponto inicial** (tour fechado). Se preenchida, a rota termina nesse ponto (caminho aberto — garagem diferente, aterro, transbordo, CD de destino). Também usa a primeira feição válida. |
-| **Camada de rede viária (Linhas)** | Não | Com rede, as distâncias são reais (Dijkstra sobre `QgsGraph`, matriz OD) e os trechos da saída seguem a geometria das ruas; sem rede, tudo é **distância euclidiana** e os trechos são segmentos retos. A rede pode ser a `osm_links_<code_muni>` do pipeline OSM — ver o [Guia de Logística Urbana](urbano.md#1-obter-a-rede-viária-osm-do-município). |
+| **Camada de rede viária (Linhas)** | Não | Na aba **TSP** a camada só entra no cálculo quando o **Modo de cálculo da distância** está em *Pela rede viária (Dijkstra)*; no modo padrão, *Linha reta (euclidiana)*, ela é ignorada mesmo se estiver selecionada (na aba CVRP vale sempre). Com rede, as distâncias são reais (Dijkstra sobre `QgsGraph`, matriz OD) e os trechos da saída seguem a geometria das ruas; sem rede, tudo é **distância euclidiana** e os trechos são segmentos retos. A rede pode ser a `osm_links_<code_muni>` do pipeline OSM — ver o [Guia de Logística Urbana](urbano.md#1-obter-a-rede-viária-osm-do-município). |
 
 > **CRS de cálculo.** O cálculo é feito em CRS métrico. Quando há rede viária, ou quando
 > a camada de pontos está em coordenadas geográficas, o algoritmo reprojeta para
@@ -42,9 +42,10 @@ QGIS; se for fechado, reabra pela mesma entrada de menu (ou por **Ver → Painé
 
 O painel tem **duas abas**: **TSP** (um único veículo, sem capacidade) e **CVRP** (frota
 com capacidade a partir de um depósito). O seletor **Camada de rede viária (Linhas -
-opcional)** fica **no topo do painel, fora das abas**, e vale para as duas; o painel
-**Resultados da Roteirização**, logo abaixo das abas, também é compartilhado e é limpo a
-cada execução, seja de qual aba for.
+opcional)** fica **no topo do painel, fora das abas**, e vale para as duas — na aba
+CVRP sempre, na aba TSP quando o **Modo de cálculo da distância** está em *Pela rede
+viária (Dijkstra)*; o painel **Resultados da Roteirização**, logo abaixo das abas,
+também é compartilhado e é limpo a cada execução, seja de qual aba for.
 
 ---
 
@@ -58,10 +59,16 @@ Os controles aparecem nesta ordem:
    seletor aceita entrada vazia.
 4. **Camada de rede viária (Linhas - opcional)** — no topo do painel, fora das abas;
    também aceita vazia.
-5. **Aplicar busca local (2-opt e Or-opt)** — caixa marcada por padrão; refina a
+5. **Modo de cálculo da distância** — seletor da aba TSP, com duas opções: **Linha reta
+   (euclidiana)**, o padrão, e **Pela rede viária (Dijkstra)**. É ele que decide se a
+   camada de rede do topo do painel entra no cálculo: no modo padrão a camada é
+   ignorada; no modo pela rede ela é obrigatória — sem camada escolhida, o painel abre o
+   aviso "O modo pela rede viária exige uma camada de rede viária no topo do painel" e
+   não executa.
+6. **Aplicar busca local (2-opt e Or-opt)** — caixa marcada por padrão; refina a
    sequência inicial do Vizinho Mais Próximo. Desmarcar entrega a rota bruta do Vizinho
    Mais Próximo, mais rápida e pior.
-6. Botão **Calcular Rota (TSP)**.
+7. Botão **Calcular Rota (TSP)**.
 
 O painel **limpa** os resultados a cada execução. As duas camadas de saída (**Ordem de
 visita** e **Rota (trechos)**) são criadas **em memória** e adicionadas automaticamente
@@ -83,7 +90,14 @@ silencioso para a heurística Python — o backend efetivamente usado aparece no
 | **Custo de retorno** | `return_dist` | Distância da perna final, de volta ao ponto inicial (tour fechado) ou até o ponto final (caminho aberto) — também improdutiva. |
 | **Razão de deadhead (dead_ratio)** | `dead_ratio` | Fração do percurso que é deslocamento improdutivo, entre 0 e 1. |
 | **Fechamento** | `closed` | "Sim (fecha no ponto inicial)" ou "Não (termina no ponto final)". |
+| **Modo de distância** | `dist_mode` | `rede` quando o cálculo correu sobre a rede viária (Dijkstra), `euclidiana` quando correu em linha reta — confirma qual modo o algoritmo de fato usou. |
 | **Backend de otimização** | `backend` | `ortools` quando o OR-Tools resolveu a instância, ou `python` quando caiu no fallback da heurística nativa. |
+
+> **Aviso de trechos retos.** No modo pela rede, quando alguma perna não teve o caminho
+> reconstruído na malha (campo `leg_geom` da camada **Rota (trechos)** em `reta`, em vez
+> de `rede`), o painel acrescenta em amarelo a linha "Aviso: N trecho(s) caíram no
+> segmento reto por falta de caminho na malha." — as distâncias continuam vindo da rede,
+> mas a geometria desses N trechos é o segmento reto entre os dois nós.
 
 ---
 
@@ -263,8 +277,8 @@ OR-Tools, complexidade e bibliografia — está em
   com o quadrado do número de pontos (matriz de distâncias N×N).
 - Sem rede viária, as distâncias são **euclidianas** e subestimam o percurso real.
 - Com rede viária, os pontos são **aproximados (snap)** ao vértice mais próximo do
-  grafo; par inalcançável na rede cai no **segmento reto** entre os dois nós como
-  *fallback*.
+  grafo; ponto que não se amarra à rede e par de pontos sem caminho entre si
+  **interrompem a execução com erro**, em vez de entrar no cálculo como custo enorme.
 - Ponto inicial e ponto final usam apenas a **primeira feição válida** da camada —
   feições extras são ignoradas em silêncio.
 - Feições de geometria vazia na camada de pontos a visitar são puladas; polígonos
@@ -291,5 +305,5 @@ OR-Tools, complexidade e bibliografia — está em
 | "QGIS Processing não está disponível no ambiente atual." | O painel foi instanciado fora de uma sessão do QGIS Desktop. |
 | "A camada de pontos a visitar está vazia." | Nenhuma feição com geometria válida na camada de pontos a visitar. |
 | "Nenhum ponto final válido encontrado na camada fornecida." | A camada de ponto final foi selecionada, mas nenhuma feição nela tem geometria válida. |
-| Trechos retos na saída apesar de haver rede selecionada | Par de nós inalcançável na rede (fallback para o segmento reto), ou pontos longe demais da malha viária. |
+| Trechos retos na saída apesar de haver rede selecionada | O **Modo de cálculo da distância** ficou em *Linha reta (euclidiana)*, que é o padrão — nesse modo a camada de rede do topo do painel é ignorada. No modo pela rede, são pernas isoladas cujo caminho não pôde ser reconstruído na malha (`leg_geom` = `reta`), contadas no aviso do painel de resultados. |
 | A rota muda de uma execução para outra com OR-Tools instalado | A metaheurística `GUIDED_LOCAL_SEARCH` roda até o limite de 10 segundos; pequenas variações de tempo podem mudar o resultado entre rodadas. |

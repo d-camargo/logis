@@ -14,6 +14,8 @@
 Algoritmo de processamento para Caixeiro Viajante (TSP).
 """
 
+import math
+
 from qgis.core import (
     QgsProcessing,
     QgsProcessingAlgorithm,
@@ -44,6 +46,9 @@ except ImportError:
     from core.optim_backend import pick_backend
     from core.network.graph_builder import build_graph
     from core.network.od_matrix import compute_od_matrix
+
+# Custo limite para conexões inalcançáveis na rede (convenção de urban_mean_circuity.py)
+_UNREACHABLE_COST = 1e18
 
 
 def _extract_point(geom):
@@ -155,6 +160,7 @@ class VrpTsp(QgsProcessingAlgorithm):
             raise QgsProcessingException(self.tr("Camada de pontos a visitar inválida."))
 
         # 1) CRS de cálculo
+        dist_mode = "rede" if (network_layer and network_layer.isValid()) else "euclidiana"
         if network_layer and network_layer.isValid():
             target_crs = QgsCoordinateReferenceSystem("EPSG:5880")
         else:
@@ -234,16 +240,39 @@ class VrpTsp(QgsProcessingAlgorithm):
 
             vertices = [graph.findVertex(pt) for pt in snapped_points]
 
+            if any(v == -1 for v in vertices):
+                raise QgsProcessingException(
+                    self.tr(
+                        "Não foi possível amarrar um ou mais pontos à rede viária. "
+                        "Verifique se os pontos estão próximos da malha e no mesmo território dela."
+                    )
+                )
+
             try:
                 cost_matrix = compute_od_matrix(
                     graph=graph,
                     origins=vertices,
                     destinations=vertices,
                     criterion_num=0,
+                    cache_id="vrp_tsp",
                     feedback=feedback
                 )
             except Exception as exc:
                 raise QgsProcessingException(self.tr("Erro ao calcular a matriz OD: {}").format(str(exc)))
+
+            unreachable_count = 0
+            for i, row in enumerate(cost_matrix):
+                for j, c in enumerate(row):
+                    if i != j and (math.isinf(c) or c > _UNREACHABLE_COST):
+                        unreachable_count += 1
+
+            if unreachable_count > 0:
+                raise QgsProcessingException(
+                    self.tr(
+                        "A rede viária possui {} par(es) de pontos sem caminho entre si. "
+                        "Verifique se a rede está desconectada."
+                    ).format(unreachable_count)
+                )
         else:
             feedback.pushInfo(self.tr("Calculando matriz de distâncias euclidianas..."))
             cost_matrix = []
@@ -267,8 +296,8 @@ class VrpTsp(QgsProcessingAlgorithm):
             raise QgsProcessingException(str(exc))
 
         feedback.pushInfo(
-            self.tr("Otimização TSP concluída. Pontos: {count} | Backend: {backend} | Distância Total: {dist:.2f}").format(
-                count=len(all_points), backend=used_backend, dist=total_distance
+            self.tr("Otimização TSP concluída. Pontos: {count} | Modo: {dist_mode} | Backend: {backend} | Distância Total: {dist:.2f}").format(
+                count=len(all_points), dist_mode=dist_mode, backend=used_backend, dist=total_distance
             )
         )
 
@@ -336,6 +365,8 @@ class VrpTsp(QgsProcessingAlgorithm):
         route_fields.append(QgsField("dead_ratio", qgis_compat.field_type("double")))
         route_fields.append(QgsField("closed", qgis_compat.field_type("int")))
         route_fields.append(QgsField("backend", qgis_compat.field_type("string")))
+        route_fields.append(QgsField("dist_mode", qgis_compat.field_type("string")))
+        route_fields.append(QgsField("leg_geom", qgis_compat.field_type("string")))
 
         (sink_route, dest_route) = self.parameterAsSink(
             parameters,
@@ -374,6 +405,7 @@ class VrpTsp(QgsProcessingAlgorithm):
                 cum_leg_dist += leg_dist
 
                 pts = []
+                leg_geom = "reta"
                 if has_network:
                     try:
                         u_vtx = vertices[u]
@@ -398,11 +430,14 @@ class VrpTsp(QgsProcessingAlgorithm):
                             path_vtx.append(u_vtx)
                             path_vtx.reverse()
                             pts = [graph.vertex(vtx).point() for vtx in path_vtx]
+                            if len(pts) >= 2:
+                                leg_geom = "rede"
                     except Exception:
                         pts = []
 
-                if len(pts) < 2:
+                if leg_geom != "rede":
                     pts = [all_points[u], all_points[v]]
+                    leg_geom = "reta"
 
                 geom = QgsGeometry.fromPolylineXY(pts)
                 feat = QgsFeature(route_fields)
@@ -421,7 +456,9 @@ class VrpTsp(QgsProcessingAlgorithm):
                     return_dist,
                     dead_ratio,
                     closed_int,
-                    used_backend
+                    used_backend,
+                    dist_mode,
+                    leg_geom
                 ])
                 sink_route.addFeature(feat, QgsFeatureSink.Flag.FastInsert)
 
@@ -458,7 +495,7 @@ class VrpTsp(QgsProcessingAlgorithm):
             "- Aplicar busca local: se verdadeiro, aplica 2-opt e Or-opt para otimização da rota.\n\n"
             "Saídas:\n"
             "- Ordem de visita: camada de pontos ordenada com a ordem de visita na tabela de atributos em 'visit_seq', nó ('node_role'), papel da perna ('leg_role'), distância da perna ('leg_dist') e distância acumulada ('cum_dist').\n"
-            "- Rota (trechos): camada de linhas com a geometria das pernas da rota classificadas ('leg_role': 'acesso', 'rota', 'retorno'). Os trechos 'acesso' e 'retorno' da camada de rota são os deslocamentos improdutivos (do ponto inicial ao primeiro ponto a visitar e do último ao ponto final), somados em 'access_dist' e 'return_dist', com os totais de distância ('tour_dist', 'service_dist') e a taxa improdutiva ('dead_ratio') repetidos em todas as feições."
+            "- Rota (trechos): camada de linhas com a geometria das pernas da rota classificadas ('leg_role': 'acesso', 'rota', 'retorno'). Os trechos 'acesso' e 'retorno' da camada de rota são os deslocamentos improdutivos (do ponto inicial ao primeiro ponto a visitar e do último ao ponto final), somados em 'access_dist' e 'return_dist', com os totais de distância ('tour_dist', 'service_dist') e a taxa improdutiva ('dead_ratio') repetidos em todas as feições, além do modo de cálculo ('dist_mode') e da geometria do trecho ('leg_geom')."
         )
 
     def createInstance(self):

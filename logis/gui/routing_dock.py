@@ -230,7 +230,8 @@ class RoutingDock(QgsDockWidget):
         desc_label = QLabel(
             self.tr(
                 "O painel reúne o Caixeiro Viajante e a Roteirização de Veículos "
-                "Capacitados; a camada de rede viária escolhida abaixo vale para as duas abas."
+                "Capacitados; a camada de rede viária escolhida abaixo vale para a aba CVRP e, "
+                "na aba TSP, quando o modo \"pela rede viária\" está selecionado."
             )
         )
         desc_label.setStyleSheet("color: #666; font-size: 11px; margin-bottom: 5px;")
@@ -280,6 +281,22 @@ class RoutingDock(QgsDockWidget):
         if hasattr(self.cmb_end, 'setAllowEmptyLayer'):
             self.cmb_end.setAllowEmptyLayer(True)
         layout.addWidget(self.cmb_end)
+
+        # Modo de cálculo da distância
+        layout.addWidget(QLabel(self.tr("Modo de cálculo da distância:")))
+        self.cmb_tsp_mode = QComboBox()
+        self.cmb_tsp_mode.addItems([
+            self.tr("Linha reta (euclidiana)"),
+            self.tr("Pela rede viária (Dijkstra)")
+        ])
+        layout.addWidget(self.cmb_tsp_mode)
+
+        tsp_mode_desc = QLabel(
+            self.tr("Nota: O modo \"pela rede viária\" utiliza a camada de rede escolhida no topo do painel.")
+        )
+        tsp_mode_desc.setStyleSheet("color: #666; font-size: 11px;")
+        tsp_mode_desc.setWordWrap(True)
+        layout.addWidget(tsp_mode_desc)
 
         # Checkbox para busca local (2-opt e Or-opt)
         self.chk_improve = QCheckBox(self.tr("Aplicar busca local (2-opt e Or-opt)"))
@@ -378,6 +395,7 @@ class RoutingDock(QgsDockWidget):
         points_layer = self.cmb_points.currentLayer()
         end_layer = self.cmb_end.currentLayer()
         network_layer = self.cmb_network.currentLayer()
+        use_network = self.cmb_tsp_mode.currentIndex() == 1
         improve = self.chk_improve.isChecked()
 
         if not start_layer:
@@ -396,6 +414,23 @@ class RoutingDock(QgsDockWidget):
                 self.tr("Por favor, selecione a camada de pontos a visitar.")
             )
             self.txt_results.append(self.tr("<span style='color: #fc8181;'>Erro: Pontos a visitar não selecionados.</span>"))
+            return
+
+        if use_network and not network_layer:
+            QMessageBox.warning(
+                self,
+                self.tr("Aviso"),
+                self.tr(
+                    "O modo pela rede viária exige uma camada de rede viária no topo do painel "
+                    "(ex: osm_links_<code_muni> do pipeline OSM)."
+                )
+            )
+            self.txt_results.append(
+                self.tr(
+                    "<span style='color: #fc8181;'>Erro: O modo pela rede exige uma camada de rede viária no topo do painel "
+                    "(ex: osm_links_<code_muni> do pipeline OSM).</span>"
+                )
+            )
             return
 
         try:
@@ -417,7 +452,7 @@ class RoutingDock(QgsDockWidget):
                 'INPUT_START': start_layer,
                 'INPUT_POINTS': points_layer,
                 'INPUT_END': end_layer if end_layer else None,
-                'INPUT_NETWORK': network_layer if network_layer else None,
+                'INPUT_NETWORK': network_layer if use_network else None,
                 'IMPROVE': improve,
                 'OUTPUT_ORDER': 'memory:',
                 'OUTPUT_ROUTE': 'memory:'
@@ -439,6 +474,8 @@ class RoutingDock(QgsDockWidget):
             dead_ratio = 0.0
             is_closed = True
             backend_str = "N/A"
+            dist_mode_str = "N/A"
+            straight_leg_count = 0
 
             if route_layer is not None and hasattr(route_layer, 'getFeatures'):
                 feats = list(route_layer.getFeatures())
@@ -454,6 +491,11 @@ class RoutingDock(QgsDockWidget):
                     closed_val = self._attr(feat, fields, 'closed', 1)
                     is_closed = bool(closed_val)
                     backend_str = str(self._attr(feat, fields, 'backend', 'N/A'))
+                    dist_mode_str = str(self._attr(feat, fields, 'dist_mode', 'N/A'))
+
+                    for f in feats:
+                        if self._attr(f, fields, 'leg_geom', '') == 'reta':
+                            straight_leg_count += 1
 
             if num_visited == 0 and order_layer is not None and hasattr(order_layer, 'featureCount'):
                 count = order_layer.featureCount()
@@ -481,8 +523,17 @@ class RoutingDock(QgsDockWidget):
                 self.tr("-> <b>Fechamento:</b> {closed}").format(closed=closing_str)
             )
             self.txt_results.append(
+                self.tr("-> <b>Modo de distância:</b> {mode}").format(mode=dist_mode_str)
+            )
+            self.txt_results.append(
                 self.tr("-> <b>Backend de otimização:</b> {backend}<br>").format(backend=backend_str)
             )
+            if use_network and straight_leg_count > 0:
+                self.txt_results.append(
+                    self.tr(
+                        "<span style='color: #ecc94b;'>Aviso: {n} trecho(s) caíram no segmento reto por falta de caminho na malha.</span><br>"
+                    ).format(n=straight_leg_count)
+                )
 
         except Exception as e:
             self.txt_results.append(

@@ -113,6 +113,9 @@ Onde:
 
 Os cálculos são realizados em CRS métrico: o CRS da camada de entrada quando já for projetado, ou EPSG:5880 (SIRGAS 2000 / Brazil Polyconic) quando houver rede viária ou quando a camada de pontos estiver em coordenadas geográficas.
 
+> [!NOTE]
+> **Rede desconectada vira erro, não custo enorme.** Quando `INPUT_NETWORK` é fornecida, a amarração dos pontos e a conectividade da malha são validadas **antes** da otimização: ponto que não encontra vértice no grafo interrompe a execução com *"Não foi possível amarrar um ou mais pontos à rede viária."*, e par de pontos sem caminho entre si na matriz OD (custo infinito ou acima de $10^{18}$) interrompe com *"A rede viária possui N par(es) de pontos sem caminho entre si."*. Antes, esses casos entravam na otimização como custo enorme e contaminavam a sequência em silêncio.
+
 ### Natureza Algorítmica e Backend OR-Tools
 - **Heurística Nativa (Vizinho Mais Próximo + 2-opt / Or-opt):**
   - *Fase 1 — Construção pelo Vizinho Mais Próximo:* Partindo de $s$, o algoritmo de Flood (1956) escolhe repetidamente o ponto ainda não visitado de menor distância ao ponto corrente (com desempate determinístico pelo menor índice), até esgotar o conjunto $V$. No caso aberto, o ponto final $e$ é excluído do conjunto de candidatos e anexado ao fim da sequência, de modo que nunca seja escolhido no meio do percurso.
@@ -157,7 +160,7 @@ Com guarda de divisão por zero: `dead_ratio = 0.0` quando `tour_dist = 0.0`. Qu
 | Identificador | Nome na UI | Tipo | Descrição |
 |---|---|---|---|
 | `OUTPUT_ORDER` | Ordem de visita | `QgsFeatureSink` (Pontos) | Uma feição por nó da sequência resolvida (ponto inicial, pontos visitados e, no caso aberto, ponto final), com os campos originais da camada de visita acrescidos dos campos de sequência. Nas feições de ponto inicial e final os campos originais vêm nulos. |
-| `OUTPUT_ROUTE` | Rota (trechos) | `QgsFeatureSink` (Linhas) | Uma feição por perna do percurso, com a geometria do caminho na rede (Dijkstra) quando há `INPUT_NETWORK`, ou o segmento reto entre os dois nós caso contrário (também usado como *fallback* quando o par é inalcançável na rede). |
+| `OUTPUT_ROUTE` | Rota (trechos) | `QgsFeatureSink` (Linhas) | Uma feição por perna do percurso, com a geometria do caminho na rede (Dijkstra) quando há `INPUT_NETWORK`, ou o segmento reto entre os dois nós caso contrário (também usado como *fallback* quando o caminho da perna não pôde ser reconstruído na malha; o campo `leg_geom` registra qual dos dois casos ocorreu em cada perna). |
 
 **Campos de `OUTPUT_ORDER` (Ordem de visita):**
 
@@ -188,6 +191,8 @@ Com guarda de divisão por zero: `dead_ratio = 0.0` quando `tour_dist = 0.0`. Qu
 | `dead_ratio` | Duplo | Taxa improdutiva $(\texttt{access\_dist} + \texttt{return\_dist}) / \texttt{tour\_dist}$, entre $0$ e $1$. Repetido em todas as feições. |
 | `closed` | Inteiro | `1` quando o percurso é um tour fechado (sem ponto final) e `0` quando é um caminho aberto. Repetido em todas as feições. |
 | `backend` | Texto | Backend efetivamente utilizado na otimização: `ortools` ou `python`. Repetido em todas as feições. |
+| `dist_mode` | Texto | Modo de cálculo da distância: `rede` quando `INPUT_NETWORK` foi fornecida (Dijkstra sobre `QgsGraph`) e `euclidiana` caso contrário. Repetido em todas as feições. |
+| `leg_geom` | Texto | Origem da geometria **desta** perna: `rede`, quando o caminho foi reconstruído sobre a malha, ou `reta`, quando é o segmento reto entre os dois nós. |
 
 > [!NOTE]
 > **Como ler a ordem de visita:** a sequência do percurso **não** está na ordem de armazenamento das feições nem em rótulos de mapa — ela é lida na **tabela de atributos da camada `Ordem de visita`, ordenando pelo campo `visit_seq`** (clique no cabeçalho da coluna). O nó com `visit_seq = 1` é sempre o ponto inicial (`node_role = inicio`); os demais seguem na ordem de atendimento, e o último é o retorno ao ponto inicial (tour fechado) ou o ponto final (`node_role = fim`, caminho aberto).

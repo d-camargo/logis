@@ -2,6 +2,12 @@
 
 Este documento registra as principais alterações e evoluções do plugin **logis** organizadas por versão.
 
+## 0.1.12 - 2026-09-14
+
+- **Modo de Cálculo de Distância no TSP** — adição do seletor "Modo de cálculo da distância" na aba TSP (linha reta por padrão, pela rede viária como opção).
+- **Atributos de Trechos e Painel de Resultados** — novos campos `dist_mode` e `leg_geom` na camada de trechos e exibição do modo utilizado no painel de resultados.
+- **Guardas de Segurança na Roteirização pela Rede** — inclusão de guardas de amarração à rede viária e de tratamento para pares inalcançáveis no cálculo de distância.
+
 ## 0.1.11 - 2026-09-13
 
 - **Instalação do OR-Tools em um clique** — o Gerenciador de Dependências passa a instalar a biblioteca no Python do próprio QGIS, sem abrir terminal nem executar processo externo.

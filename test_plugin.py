@@ -152,6 +152,14 @@ class TestLogisPlugin(unittest.TestCase):
         self.plugin.show_routing_dock()
         self.assertEqual(self.plugin.dock_routing, dock_first)
 
+    def test_routing_dock_tsp_mode_combo(self):
+        self.plugin.initGui()
+        self.plugin.show_routing_dock()
+        dock = self.plugin.dock_routing
+        self.assertIsNotNone(dock)
+        self.assertTrue(hasattr(dock, "cmb_tsp_mode"))
+        self.assertEqual(dock.cmb_tsp_mode.count(), 2)
+
     def test_open_docs(self):
         from unittest.mock import patch
         from logis.logis_plugin import DOCS_URL

@@ -322,7 +322,7 @@ class TestVrpTspAlgorithm(unittest.TestCase):
         for field in order_fields:
             self.assertIn(field, self.alg_source, f"Campo '{field}' de OUTPUT_ORDER deve estar no fonte")
 
-        # Verificar 14 campos de OUTPUT_ROUTE
+        # Verificar 16 campos de OUTPUT_ROUTE
         route_fields = [
             "leg_seq",
             "from_seq",
@@ -338,9 +338,18 @@ class TestVrpTspAlgorithm(unittest.TestCase):
             "dead_ratio",
             "closed",
             "backend",
+            "dist_mode",
+            "leg_geom",
         ]
         for field in route_fields:
             self.assertIn(field, self.alg_source, f"Campo '{field}' de OUTPUT_ROUTE deve estar no fonte")
+
+    def test_vrp_tsp_network_guards(self):
+        self.assertIn("_UNREACHABLE_COST", self.alg_source)
+        self.assertIn("math.isinf", self.alg_source)
+        self.assertIn("v == -1", self.alg_source)
+        self.assertIn("amarrar", self.alg_source)
+        self.assertIn('cache_id="vrp_tsp"', self.alg_source)
 
     def test_provider_imports_and_registers_vrptsp(self):
         self.assertIn("from .algorithms.vrp_tsp import VrpTsp", self.provider_source)

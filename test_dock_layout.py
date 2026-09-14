@@ -134,6 +134,7 @@ class TestDockLayout(unittest.TestCase):
         self.assertIn("self.cmb_start", content)
         self.assertIn("self.cmb_points", content)
         self.assertIn("self.cmb_end", content)
+        self.assertIn("self.cmb_tsp_mode", content)
         self.assertIn("self.btn_run_tsp", content)
         self.assertIn("self.cmb_depot", content)
         self.assertIn("self.cmb_demand", content)
@@ -144,6 +145,20 @@ class TestDockLayout(unittest.TestCase):
         self.assertIn("logis:vrp_tsp", content)
         self.assertIn("logis:vrp_cvrp", content)
         self.assertNotIn("ortools", content.lower())
+
+    def test_routing_dock_tsp_distance_mode(self):
+        content = (pathlib.Path(__file__).parent / "logis/gui/routing_dock.py").read_text(
+            encoding="utf-8"
+        )
+
+        self.assertEqual(
+            content.count("self.cmb_tsp_mode = QComboBox()"), 1,
+            "Esperado exatamente 1 combo de modo do TSP (cmb_tsp_mode) no painel de roteirização."
+        )
+        self.assertIn("Linha reta (euclidiana)", content)
+        self.assertIn("Pela rede viária (Dijkstra)", content)
+        self.assertIn("self.cmb_tsp_mode.currentIndex() == 1", content)
+        self.assertIn("network_layer if use_network else None", content)
 
     def test_routing_dock_network_selector_is_unique(self):
         content = (pathlib.Path(__file__).parent / "logis/gui/routing_dock.py").read_text(
