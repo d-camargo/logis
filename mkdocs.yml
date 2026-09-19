@@ -28,12 +28,14 @@ nav:
   - Sobre: sobre.md
   - Guias:
       - Instalação: guias/instalacao.md
+      - Rede Viária (baixar dados): guias/rede_viaria.md
       - OR-Tools (opcional): ortools.md
       - Logística Urbana: guias/urbano.md
       - Logística Regional: guias/regional.md
       - Roteirização: guias/roteirizacao.md
       - Coleta de Lixo: guias/residuos.md
   - Algoritmos:
+      - Dados (download de rede): algoritmos/dados.md
       - Visão geral: algoritmos/index.md
       - Indicadores Urbanos: algoritmos/urbano.md
       - Indicadores Regionais: algoritmos/regional.md

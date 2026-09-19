@@ -13,12 +13,15 @@ técnica de cada algoritmo (parâmetros, complexidade, bibliografia) está em
 
 ## 1. Obter a rede viária OSM do município
 
-O painel **não baixa a rede**: ele consome uma camada de linhas já carregada no
-projeto. O módulo Urbano trabalha sobre a rede viária do OpenStreetMap tratada pelo
-pipeline `core.network.osm_pipeline`, que faz Overpass → recorte pelo polígono
-municipal → GeoPackage.
+O caminho principal para obter essa rede agora é o painel **Rede Viária**
+(**Complementos → logis → Rede Viária**, aba *Município (OSM)*): escolha a UF, clique em
+**Listar municípios da UF**, escolha o município e clique em **Baixar arcos e nós
+(OSM)**. O painel já entrega as camadas **Arcos OSM — \<município\>** e
+**Nós OSM — \<município\>** no projeto, prontas para os demais passos deste guia. Veja o
+passo a passo completo em [Rede Viária (baixar dados)](rede_viaria.md).
 
-No **Console Python** do QGIS:
+Como alternativa scriptável (ou para encadear em um script fora do painel), o mesmo
+pipeline pode ser chamado no **Console Python** do QGIS:
 
 ```python
 from logis.core.network.osm_pipeline import build_osm_municipal_network
@@ -56,8 +59,9 @@ A camada de links já vem com os atributos de custo que os algoritmos usam:
 > uma nova consulta (rede desatualizada, download truncado), chame a função com
 > `force=True`.
 
-Depois de gerado o GPKG, arraste `osm_links_<code_muni>` para o projeto — é essa camada
-que o painel vai consumir. O script `tools/pilot_urbano_mg.py` mostra o mesmo fluxo
+Depois de gerado o GPKG por esse caminho, arraste `osm_links_<code_muni>` para o
+projeto — é essa camada que o painel vai consumir. O script `tools/pilot_urbano_mg.py`
+mostra o mesmo fluxo
 encadeado com o construtor de grafo e a matriz OD, fora do QGIS Desktop.
 
 ---

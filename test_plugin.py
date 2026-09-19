@@ -36,12 +36,14 @@ class TestLogisPlugin(unittest.TestCase):
         self.assertEqual(self.plugin.iface, self.mock_iface)
         self.assertIsNone(self.plugin.provider)
         self.assertIsNone(self.plugin.action)
+        self.assertIsNone(self.plugin.action_network)
         self.assertIsNone(self.plugin.action_urban)
         self.assertIsNone(self.plugin.action_regional)
         self.assertIsNone(self.plugin.action_waste)
         self.assertIsNone(self.plugin.action_routing)
         self.assertIsNone(self.plugin.action_docs)
         self.assertIsNone(self.plugin.dialog)
+        self.assertIsNone(self.plugin.dock_network)
         self.assertIsNone(self.plugin.dock_urban)
         self.assertIsNone(self.plugin.dock_regional)
         self.assertIsNone(self.plugin.dock_waste)
@@ -57,8 +59,9 @@ class TestLogisPlugin(unittest.TestCase):
         # Call initGui
         self.plugin.initGui()
 
-        # Check that action, action_urban, action_regional, action_waste, action_routing and action_docs were created
+        # Check that action, action_network, action_urban, action_regional, action_waste, action_routing and action_docs were created
         self.assertIsNotNone(self.plugin.action)
+        self.assertIsNotNone(self.plugin.action_network)
         self.assertIsNotNone(self.plugin.action_urban)
         self.assertIsNotNone(self.plugin.action_regional)
         self.assertIsNotNone(self.plugin.action_waste)
@@ -67,12 +70,13 @@ class TestLogisPlugin(unittest.TestCase):
 
         # Check that they were added to menu "logis"
         self.mock_iface.addPluginToMenu.assert_any_call("logis", self.plugin.action)
+        self.mock_iface.addPluginToMenu.assert_any_call("logis", self.plugin.action_network)
         self.mock_iface.addPluginToMenu.assert_any_call("logis", self.plugin.action_urban)
         self.mock_iface.addPluginToMenu.assert_any_call("logis", self.plugin.action_regional)
         self.mock_iface.addPluginToMenu.assert_any_call("logis", self.plugin.action_waste)
         self.mock_iface.addPluginToMenu.assert_any_call("logis", self.plugin.action_routing)
         self.mock_iface.addPluginToMenu.assert_any_call("logis", self.plugin.action_docs)
-        self.assertEqual(self.mock_iface.addPluginToMenu.call_count, 6)
+        self.assertEqual(self.mock_iface.addPluginToMenu.call_count, 7)
 
     def test_show_dependencies(self):
         self.plugin.initGui()
@@ -88,6 +92,22 @@ class TestLogisPlugin(unittest.TestCase):
         dialog_first = self.plugin.dialog
         self.plugin.show_dependencies()
         self.assertEqual(self.plugin.dialog, dialog_first)
+
+    def test_show_network_dock(self):
+        self.plugin.initGui()
+        self.assertIsNone(self.plugin.dock_network)
+
+        # Trigger show_network_dock
+        self.plugin.show_network_dock()
+
+        # Check that dock_network was created and show was called
+        self.assertIsNotNone(self.plugin.dock_network)
+        self.mock_iface.addDockWidget.assert_called_once()
+
+        # Call it again to make sure it is not recreated
+        dock_first = self.plugin.dock_network
+        self.plugin.show_network_dock()
+        self.assertEqual(self.plugin.dock_network, dock_first)
 
     def test_show_urban_dock(self):
         self.plugin.initGui()
@@ -174,18 +194,21 @@ class TestLogisPlugin(unittest.TestCase):
         # Setup GUI
         self.plugin.initGui()
         self.plugin.show_dependencies()
+        self.plugin.show_network_dock()
         self.plugin.show_urban_dock()
         self.plugin.show_regional_dock()
         self.plugin.show_waste_dock()
         self.plugin.show_routing_dock()
 
         action = self.plugin.action
+        action_network = self.plugin.action_network
         action_urban = self.plugin.action_urban
         action_regional = self.plugin.action_regional
         action_waste = self.plugin.action_waste
         action_routing = self.plugin.action_routing
         action_docs = self.plugin.action_docs
         dialog = self.plugin.dialog
+        dock_network = self.plugin.dock_network
         dock_urban = self.plugin.dock_urban
         dock_regional = self.plugin.dock_regional
         dock_waste = self.plugin.dock_waste
@@ -196,14 +219,16 @@ class TestLogisPlugin(unittest.TestCase):
 
         # Check that actions are removed from menu
         self.mock_iface.removePluginMenu.assert_any_call("logis", action)
+        self.mock_iface.removePluginMenu.assert_any_call("logis", action_network)
         self.mock_iface.removePluginMenu.assert_any_call("logis", action_urban)
         self.mock_iface.removePluginMenu.assert_any_call("logis", action_regional)
         self.mock_iface.removePluginMenu.assert_any_call("logis", action_waste)
         self.mock_iface.removePluginMenu.assert_any_call("logis", action_routing)
         self.mock_iface.removePluginMenu.assert_any_call("logis", action_docs)
-        self.assertEqual(self.mock_iface.removePluginMenu.call_count, 6)
+        self.assertEqual(self.mock_iface.removePluginMenu.call_count, 7)
         
         # Check that docks are removed
+        self.mock_iface.removeDockWidget.assert_any_call(dock_network)
         self.mock_iface.removeDockWidget.assert_any_call(dock_urban)
         self.mock_iface.removeDockWidget.assert_any_call(dock_regional)
         self.mock_iface.removeDockWidget.assert_any_call(dock_waste)
@@ -211,12 +236,14 @@ class TestLogisPlugin(unittest.TestCase):
 
         # Check references are cleaned
         self.assertIsNone(self.plugin.action)
+        self.assertIsNone(self.plugin.action_network)
         self.assertIsNone(self.plugin.action_urban)
         self.assertIsNone(self.plugin.action_regional)
         self.assertIsNone(self.plugin.action_waste)
         self.assertIsNone(self.plugin.action_routing)
         self.assertIsNone(self.plugin.action_docs)
         self.assertIsNone(self.plugin.dialog)
+        self.assertIsNone(self.plugin.dock_network)
         self.assertIsNone(self.plugin.dock_urban)
         self.assertIsNone(self.plugin.dock_regional)
         self.assertIsNone(self.plugin.dock_waste)
@@ -245,6 +272,27 @@ class TestLogisPlugin(unittest.TestCase):
         src = inspect.getsource(dock.calculate_edge_betweenness)
         self.assertIn('spin_betweenness_seed', src)
         self.assertIn("'SEED'", src)
+
+    def test_network_dock_controls(self):
+        from logis.gui.network_dock import NetworkDock
+        dock = NetworkDock(self.mock_iface, self.main_window)
+        self.assertIsNotNone(dock)
+
+        # Widgets da aba Município (OSM)
+        self.assertTrue(hasattr(dock, "cmb_uf_muni"))
+        self.assertTrue(hasattr(dock, "btn_list_munis"))
+        self.assertTrue(hasattr(dock, "cmb_muni"))
+        self.assertTrue(hasattr(dock, "txt_code_muni"))
+        self.assertTrue(hasattr(dock, "chk_force_osm"))
+        self.assertTrue(hasattr(dock, "btn_download_osm"))
+
+        # Widgets da aba Estado (SNV/DNIT)
+        self.assertTrue(hasattr(dock, "cmb_uf_snv"))
+        self.assertTrue(hasattr(dock, "chk_force_snv"))
+        self.assertTrue(hasattr(dock, "btn_download_snv"))
+
+        # Verifica que o combo cmb_uf_muni possui 27 itens
+        self.assertEqual(dock.cmb_uf_muni.count(), 27)
 
 
 if __name__ == '__main__':

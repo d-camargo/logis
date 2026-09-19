@@ -11,6 +11,7 @@ class TestDockLayout(unittest.TestCase):
     """Teste estático de layout dos painéis (docks) do plugin logis."""
 
     DOCK_FILES = [
+        "logis/gui/network_dock.py",
         "logis/gui/urban_dock.py",
         "logis/gui/regional_dock.py",
         "logis/gui/waste_dock.py",
@@ -169,6 +170,52 @@ class TestDockLayout(unittest.TestCase):
             content.count("self.cmb_network = QgsMapLayerComboBox()"), 1,
             "Esperado exatamente 1 seletor de rede viária (cmb_network) no painel de roteirização."
         )
+
+    def test_network_dock_has_two_tabs(self):
+        content = (pathlib.Path(__file__).parent / "logis/gui/network_dock.py").read_text(
+            encoding="utf-8"
+        )
+
+        self.assertIn("QTabWidget(", content)
+        self.assertIn("def _new_tab", content)
+
+        new_tab_calls = len(re.findall(r"self\._new_tab\(", content))
+        self.assertEqual(
+            new_tab_calls, 2,
+            f"Esperado exatamente 2 chamadas de _new_tab, encontrado {new_tab_calls}."
+        )
+
+    def test_network_dock_results_panel_outside_tabs(self):
+        content = (pathlib.Path(__file__).parent / "logis/gui/network_dock.py").read_text(
+            encoding="utf-8"
+        )
+
+        self.assertTrue(
+            re.search(r"outer\.addWidget\(self\.txt_results\)", content),
+            "self.txt_results deve ser adicionado ao layout externo (outer), "
+            "fora de qualquer aba (painel de resultados compartilhado)."
+        )
+
+    def test_network_dock_controls(self):
+        content = (pathlib.Path(__file__).parent / "logis/gui/network_dock.py").read_text(
+            encoding="utf-8"
+        )
+
+        self.assertIn("self.cmb_uf_muni", content)
+        self.assertIn("self.btn_list_munis", content)
+        self.assertIn("self.cmb_muni", content)
+        self.assertIn("self.txt_code_muni", content)
+        self.assertIn("self.chk_force_osm", content)
+        self.assertIn("self.btn_download_osm", content)
+        self.assertIn("self.cmb_uf_snv", content)
+        self.assertIn("self.chk_force_snv", content)
+        self.assertIn("self.btn_download_snv", content)
+        self.assertIn("logis:load_osm_network", content)
+        self.assertIn("logis:load_snv_network", content)
+        self.assertIn("Qt.CursorShape.WaitCursor", content)
+        self.assertIn("restoreOverrideCursor", content)
+        self.assertNotIn("QgsTask", content)
+        self.assertNotIn("subprocess", content)
 
 
 if __name__ == "__main__":

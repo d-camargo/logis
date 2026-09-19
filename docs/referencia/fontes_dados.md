@@ -28,8 +28,9 @@ WFS.
   que aplica o filtro CQL `sg_uf = '<UF>'`, deriva os atributos de custo
   (`length`, `speed`, `travel_time`) a partir da superfície (`ds_superfi`) e grava
   `snv_links_<UF>` / `snv_nodes_<UF>` em GeoPackage.
-- **Usada por:** `logis:regional_network_density`, `logis:regional_pavement_percentage`,
-  `logis:regional_critical_links`.
+- **Usada por:** `logis:load_snv_network` (quem **baixa** a malha) e, a partir da camada
+  já carregada, `logis:regional_network_density`, `logis:regional_pavement_percentage`,
+  `logis:regional_critical_links` (que apenas **consomem** o resultado).
 - **Atributos:** a lista completa dos campos originais está em
   [Schema SNV](schema-snv.md).
 
@@ -42,15 +43,17 @@ específicos.
 
 | Fonte | Órgão | Protocolo | Licença | Onde é lida | Módulo |
 |---|---|---|---|---|---|
-| Rede viária OSM | OpenStreetMap Foundation / comunidade | Overpass API (HTTP) | ODbL | `core/connectors/osm.py` → `fetch_overpass_json()` | Urbano, Coleta de Lixo |
-| Malha municipal geobr | IPEA (`geobr`) | GeoPackage por download (ou `gisbr:read_municipality`) | Pública | `core/network/osm_pipeline.py`, `core/downloader.py` | Urbano, Coleta de Lixo |
+| Rede viária OSM | OpenStreetMap Foundation / comunidade | Overpass API (HTTP) | ODbL | `core/connectors/osm.py` → `fetch_overpass_json()`, `logis:load_osm_network` | Urbano, Coleta de Lixo |
+| Malha municipal geobr | IPEA (`geobr`) | GeoPackage por download (ou `gisbr:read_municipality`) | Pública | `core/network/osm_pipeline.py`, `core/downloader.py`, `core/network/municipios.py` (listagem de municípios do painel), `logis:load_osm_network` | Urbano, Coleta de Lixo |
 | Setores censitários + censobr | IBGE (via plugin GisBR) | `processing.run()` no provider `gisbr` | Pública | `core/network/census_pipeline.py` | Urbano, Coleta de Lixo |
 
 **Rede viária OSM.** O endpoint é `https://overpass-api.de/api/interpreter`, consultado
 por *bounding box* com *User-Agent* próprio e repetição em caso de falha. O
 `osm_pipeline` converte a resposta em camadas de links e nós, recorta pelo polígono do
 município e deriva `length`, `speed` (por `highway=*`) e `travel_time`. O dado é
-dinâmico: cada consulta traz o estado atual do mapeamento comunitário.
+dinâmico: cada consulta traz o estado atual do mapeamento comunitário. Pela interface, o
+acesso se dá pelo algoritmo `logis:load_osm_network`, orquestrado pelo painel **Rede
+Viária**.
 
 **Malha municipal geobr.** Serve para recortar a rede OSM pelo limite do município.
 Quando o plugin [GisBR](https://github.com/d-camargo/gisbr) está instalado, o polígono
@@ -58,7 +61,9 @@ vem de `gisbr:read_municipality` — é o caminho preferencial. Sem GisBR, o
 `osm_pipeline` baixa direto
 `https://www.ipea.gov.br/geobr/data_gpkg/municipality/2020/<UF>municipality_2020_simplified.gpkg`,
 com a cadeia de *mirrors* do `core/downloader.py` (releases `ipeaGIT/geobr` v1.7.0 no
-GitHub) e cache em disco em `QStandardPaths.CacheLocation` → `.../logis/`.
+GitHub) e cache em disco em `QStandardPaths.CacheLocation` → `.../logis/`. Pela
+interface, o algoritmo `logis:load_osm_network` (painel **Rede Viária**) resolve o
+polígono por esse mesmo caminho antes de baixar a rede.
 
 **Setores censitários e censobr.** `fetch_census_tracts()` encadeia
 `gisbr:read_census_tract` (geometria dos setores) e `gisbr:join_censo` (variáveis do

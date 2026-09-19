@@ -6,6 +6,8 @@ LogisProvider: registra os algoritmos do logis na Caixa de Ferramentas.
 from qgis.core import QgsProcessingProvider
 from qgis.PyQt.QtCore import QCoreApplication
 
+from .algorithms.data_osm_network import LoadOsmNetwork
+from .algorithms.data_snv_network import LoadSnvNetwork
 from .algorithms.urban_network_density import UrbanNetworkDensity
 from .algorithms.urban_network_connectivity import UrbanNetworkConnectivity
 from .algorithms.urban_mean_circuity import UrbanMeanCircuity
@@ -36,6 +38,8 @@ from .algorithms.waste_collection_coverage import WasteCollectionCoverage
 
 class LogisProvider(QgsProcessingProvider):
     def loadAlgorithms(self):
+        self.addAlgorithm(LoadOsmNetwork())
+        self.addAlgorithm(LoadSnvNetwork())
         self.addAlgorithm(UrbanNetworkDensity())
         self.addAlgorithm(UrbanNetworkConnectivity())
         self.addAlgorithm(UrbanMeanCircuity())

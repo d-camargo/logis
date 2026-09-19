@@ -2,6 +2,13 @@
 
 Este documento registra as principais alterações e evoluções do plugin **logis** organizadas por versão.
 
+## 0.2.0 - 2026-09-19
+
+- **Painel Rede Viária** — painel acoplável **Rede Viária** (com entrada no menu `logis`) organizado em abas de município (OSM) e de estado (SNV/DNIT).
+- **Algoritmos de Carga de Rede** — novos algoritmos `logis:load_osm_network` e `logis:load_snv_network` no grupo "Dados" da caixa de ferramentas do QGIS.
+- **Seleção UF → Município** — lista UF → município para não precisar decorar código IBGE.
+- **Cache Local de Downloads** — armazenamento automático dos downloads de redes em `QStandardPaths.CacheLocation/logis/` para evitar requisições repetidas.
+
 ## 0.1.12 - 2026-09-14
 
 - **Modo de Cálculo de Distância no TSP** — adição do seletor "Modo de cálculo da distância" na aba TSP (linha reta por padrão, pela rede viária como opção).

@@ -21,12 +21,14 @@ class LogisPlugin:
         self.iface = iface
         self.provider = None
         self.action = None
+        self.action_network = None
         self.action_urban = None
         self.action_regional = None
         self.action_waste = None
         self.action_routing = None
         self.action_docs = None
         self.dialog = None
+        self.dock_network = None
         self.dock_urban = None
         self.dock_regional = None
         self.dock_waste = None
@@ -48,6 +50,13 @@ class LogisPlugin:
         
         # Registra a entrada no menu "logis"
         self.iface.addPluginToMenu("logis", self.action)
+
+        # Cria a ação do menu "Rede Viária"
+        self.action_network = QAction(self.tr("Rede Viária"), self.iface.mainWindow())
+        self.action_network.triggered.connect(self.show_network_dock)
+        
+        # Registra a entrada no menu "logis"
+        self.iface.addPluginToMenu("logis", self.action_network)
 
         # Cria a ação do menu "Indicadores Urbanos"
         self.action_urban = QAction(self.tr("Indicadores Urbanos"), self.iface.mainWindow())
@@ -90,6 +99,14 @@ class LogisPlugin:
             self.dialog = DependenciesDialog(self.iface.mainWindow())
         self.dialog.refresh_status()
         self.dialog.show()
+
+    def show_network_dock(self):
+        from qgis.PyQt.QtCore import Qt
+        from .gui.network_dock import NetworkDock
+        if self.dock_network is None:
+            self.dock_network = NetworkDock(self.iface, self.iface.mainWindow())
+            self.iface.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.dock_network)
+        self.dock_network.show()
 
     def show_urban_dock(self):
         from qgis.PyQt.QtCore import Qt
@@ -141,6 +158,11 @@ class LogisPlugin:
             self.iface.removePluginMenu("logis", self.action)
             self.action = None
 
+        # Remove o item de Rede Viária do menu
+        if self.action_network is not None:
+            self.iface.removePluginMenu("logis", self.action_network)
+            self.action_network = None
+
         # Remove o item de Indicadores Urbanos do menu
         if self.action_urban is not None:
             self.iface.removePluginMenu("logis", self.action_urban)
@@ -172,6 +194,13 @@ class LogisPlugin:
             if not sip.isdeleted(self.dialog):
                 self.dialog.close()
             self.dialog = None
+
+        # Remove e libera o dock de rede viária widget
+        if self.dock_network is not None:
+            from qgis.PyQt import sip
+            if not sip.isdeleted(self.dock_network):
+                self.iface.removeDockWidget(self.dock_network)
+            self.dock_network = None
 
         # Remove e libera o dock widget
         if self.dock_urban is not None:
