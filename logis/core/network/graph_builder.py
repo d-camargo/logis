@@ -31,7 +31,11 @@ from qgis.core import (
     QgsCoordinateReferenceSystem,
     QgsField,
     QgsPointXY,
-    QgsProject
+    QgsProject,
+    QgsRectangle,
+    QgsCoordinateTransform,
+    QgsFeatureRequest,
+    QgsWkbTypes
 )
 from .. import qgis_compat
 from qgis.analysis import (
@@ -114,7 +118,9 @@ def build_graph(
     speed_field="speed",
     travel_time_field="travel_time",
     target_crs="EPSG:5880",
-    points=None
+    points=None,
+    extent=None,
+    feedback=None
 ):
     """Builds a QgsGraph from a vector line layer, reprojecting to a metric CRS.
 
@@ -133,8 +139,6 @@ def build_graph(
             - "director": The QgsVectorLayerDirector used to build the graph.
             - "crs": The target metric CRS object.
     """
-    import processing
-
     if not layer or not layer.isValid():
         raise ValueError("Invalid input layer.")
 
@@ -146,17 +150,48 @@ def build_graph(
     else:
         crs_obj = QgsCoordinateReferenceSystem("EPSG:5880")
 
-    # Always reproject to memory layer to ensure metric calculation and avoid altering original layer
-    reproj_params = {
-        "INPUT": layer,
-        "TARGET_CRS": crs_obj.authid(),
-        "OUTPUT": "memory:"
-    }
-    reproj_res = processing.run("native:reprojectlayer", reproj_params)
-    working_layer = reproj_res["OUTPUT"]
+    if extent is None:
+        import processing
+        # Always reproject to memory layer to ensure metric calculation and avoid altering original layer
+        reproj_params = {
+            "INPUT": layer,
+            "TARGET_CRS": crs_obj.authid(),
+            "OUTPUT": "memory:"
+        }
+        reproj_res = processing.run("native:reprojectlayer", reproj_params)
+        working_layer = reproj_res["OUTPUT"]
 
-    if not working_layer or not working_layer.isValid():
-        raise RuntimeError("Failed to reproject network layer.")
+        if not working_layer or not working_layer.isValid():
+            raise RuntimeError("Failed to reproject network layer.")
+    else:
+        transform_back = QgsCoordinateTransform(crs_obj, layer.crs(), QgsProject.instance())
+        source_extent = transform_back.transformBoundingBox(extent)
+        request = QgsFeatureRequest().setFilterRect(source_extent)
+
+        geom_str = QgsWkbTypes.displayString(layer.wkbType())
+        working_layer = QgsVectorLayer(f"{geom_str}?crs={crs_obj.authid()}", "working", "memory")
+        if not working_layer.isValid():
+            raise RuntimeError("Failed to create memory layer for extent.")
+
+        working_layer.dataProvider().addAttributes(layer.fields())
+        working_layer.updateFields()
+
+        transform = QgsCoordinateTransform(layer.crs(), crs_obj, QgsProject.instance())
+        feats = []
+        for f in layer.getFeatures(request):
+            geom = f.geometry()
+            if geom:
+                geom.transform(transform)
+                f.setGeometry(geom)
+            feats.append(f)
+
+        working_layer.dataProvider().addFeatures(feats)
+
+        if working_layer.featureCount() == 0:
+            raise RuntimeError("No features found in the specified extent.")
+
+    if feedback:
+        feedback.pushInfo(f"Features in window: {working_layer.featureCount()}")
 
     # 2. Standardize direction values into a new memory field
     working_layer.startEditing()
@@ -215,6 +250,12 @@ def build_graph(
     input_points = points if points is not None else []
     snapped_points = director.makeGraph(builder, input_points)
     graph = builder.graph()
+
+    if points is not None and len(snapped_points) != len(points):
+        raise RuntimeError(f"Graph director returned {len(snapped_points)} tied points, expected {len(points)}")
+
+    if feedback:
+        feedback.pushInfo(f"Graph built: {graph.vertexCount()} vertices, {graph.edgeCount()} edges")
 
     return {
         "graph": graph,

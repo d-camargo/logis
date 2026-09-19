@@ -187,6 +187,25 @@ class TestTSP(unittest.TestCase):
         self.assertEqual(tour_fallback, tour_python)
         self.assertAlmostEqual(cost_fallback, cost_python)
 
+    def test_solve_tsp_ortools_load_solver_failure(self):
+        # Quando load_routing_solver falha em solve_tsp_ortools, converte para RuntimeError com a indicação do diálogo
+        with patch("logis.core.routing.tsp.load_routing_solver", side_effect=RuntimeError("OR-Tools import falhou")):
+            with self.assertRaises(RuntimeError) as ctx:
+                solve_tsp_ortools(self.distance_matrix, start=0)
+            self.assertIn("Complementos → logis → Dependências…", str(ctx.exception))
+
+    def test_solve_tsp_blocked_guard_uses_python_fallback(self):
+        # Com o selo bloqueado, solve_tsp devolve tour válido pela heurística Python sem tocar em ortools
+        with patch("logis.core.optim_backend.guard_state", return_value="blocked"), \
+             patch("logis.core.routing.tsp.load_routing_solver") as mock_load:
+            tour, cost = solve_tsp(self.distance_matrix, start=0, backend="ortools")
+            mock_load.assert_not_called()
+            self.assertEqual(len(tour), 4)
+            self.assertEqual(sorted(tour), [0, 1, 2, 3])
+            tour_py, cost_py = solve_tsp(self.distance_matrix, start=0, backend="python")
+            self.assertEqual(tour, tour_py)
+            self.assertAlmostEqual(cost, cost_py)
+
     def test_split_legs_and_summarize_legs(self):
         # (i) split_legs/summarize_legs (D-E):
         # num tour fechado de 4 nós (início + 3 paradas) saem 4 pernas, exatamente uma 'acesso' e uma 'retorno',
@@ -278,6 +297,7 @@ class TestTSP(unittest.TestCase):
         self.assertIn("visit_seq", help_str)
         self.assertIn("access_dist", help_str)
         self.assertIn("return_dist", help_str)
+        self.assertIn("Python puro", help_str)
 
 class TestVrpTspAlgorithm(unittest.TestCase):
     def setUp(self):
@@ -303,12 +323,21 @@ class TestVrpTspAlgorithm(unittest.TestCase):
             "INPUT_END",
             "INPUT_NETWORK",
             "IMPROVE",
+            "BACKEND",
             "OUTPUT_ORDER",
             "OUTPUT_ROUTE",
         ]
         for param in params:
             self.assertTrue(hasattr(alg, param), f"VrpTsp deve declarar o atributo {param}")
             self.assertIn(f"{param} =", self.alg_source)
+
+        # Verificar parâmetro BACKEND, enum, opções, parameterAsEnum e repasse de backend= para solve_tsp
+        self.assertIn("QgsProcessingParameterEnum", self.alg_source)
+        self.assertIn("Automático (OR-Tools quando disponível)", self.alg_source)
+        self.assertIn("Python puro (heurística)", self.alg_source)
+        self.assertIn("OR-Tools", self.alg_source)
+        self.assertIn("parameterAsEnum", self.alg_source)
+        self.assertIn("backend=", self.alg_source)
 
         # Verificar que INPUT_END é optional=True
         self.assertIn("INPUT_END", self.alg_source)
@@ -351,9 +380,69 @@ class TestVrpTspAlgorithm(unittest.TestCase):
         self.assertIn("amarrar", self.alg_source)
         self.assertIn('cache_id="vrp_tsp"', self.alg_source)
 
+    def test_vrp_tsp_network_extent_and_dijkstra_cache(self):
+        self.assertIn("extent=extent", self.alg_source)
+        self.assertIn("3000.0", self.alg_source)
+        self.assertIn("QgsRectangle", self.alg_source)
+        self.assertIn("dijkstra_trees", self.alg_source)
+
+    def test_vrp_tsp_crashlog_trace(self):
+        # (passo 2 do plano) rastro de diagnóstico: crashlog importado e etapas marcadas
+        self.assertIn("crashlog", self.alg_source)
+        for stage in (
+            "tsp-inicio",
+            "tsp-transform",
+            "tsp-build-graph",
+            "tsp-grafo-pronto",
+            "tsp-od-matrix",
+            "tsp-ortools-import",
+            "tsp-solver-ok",
+            "tsp-sinks",
+            "tsp-fim",
+        ):
+            self.assertIn(f'crashlog.mark("{stage}"', self.alg_source)
+
     def test_provider_imports_and_registers_vrptsp(self):
         self.assertIn("from .algorithms.vrp_tsp import VrpTsp", self.provider_source)
         self.assertIn("self.addAlgorithm(VrpTsp())", self.provider_source)
+
+    def test_extract_point(self):
+        from qgis.core import QgsGeometry, QgsPointXY
+        from logis.algorithms.vrp_tsp import _extract_point
+
+        # Single point
+        geom_pt = QgsGeometry.fromWkt("POINT(10 20)")
+        pt = _extract_point(geom_pt)
+        self.assertIsInstance(pt, QgsPointXY)
+        self.assertAlmostEqual(pt.x(), 10.0)
+        self.assertAlmostEqual(pt.y(), 20.0)
+
+        # MultiPoint (uses first point)
+        geom_mpt = QgsGeometry.fromWkt("MULTIPOINT((15 25), (35 45))")
+        mpt = _extract_point(geom_mpt)
+        self.assertIsInstance(mpt, QgsPointXY)
+        self.assertAlmostEqual(mpt.x(), 15.0)
+        self.assertAlmostEqual(mpt.y(), 25.0)
+
+        # Polygon (uses centroid)
+        geom_poly = QgsGeometry.fromWkt("POLYGON((0 0, 0 10, 10 10, 10 0, 0 0))")
+        poly_pt = _extract_point(geom_poly)
+        self.assertIsInstance(poly_pt, QgsPointXY)
+        self.assertAlmostEqual(poly_pt.x(), 5.0)
+        self.assertAlmostEqual(poly_pt.y(), 5.0)
+
+        # Invalid or empty geometries raise ValueError
+        with self.assertRaises(ValueError):
+            _extract_point(None)
+
+        with self.assertRaises(ValueError):
+            _extract_point(QgsGeometry())
+
+        with self.assertRaises(ValueError):
+            _extract_point(QgsGeometry.fromWkt("POINT EMPTY"))
+
+        with self.assertRaises(ValueError):
+            _extract_point(QgsGeometry.fromWkt("MULTIPOINT EMPTY"))
 
 
 if __name__ == "__main__":

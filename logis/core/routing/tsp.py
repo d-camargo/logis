@@ -33,9 +33,9 @@ Complexity/Scale limits:
 from typing import List, Tuple, Optional, Dict
 
 try:
-    from ..optim_backend import pick_backend
+    from ..optim_backend import pick_backend, load_routing_solver
 except ImportError:
-    from core.optim_backend import pick_backend
+    from core.optim_backend import pick_backend, load_routing_solver
 
 try:
     from .vrp import _validate_matrix_and_depot, _validate_route
@@ -422,8 +422,8 @@ def solve_tsp_ortools(
         return tour, cost
 
     try:
-        from ortools.constraint_solver import pywrapcp, routing_enums_pb2
-    except ImportError as e:
+        pywrapcp, routing_enums_pb2 = load_routing_solver()
+    except Exception as e:
         raise RuntimeError(
             "O backend OR-Tools não está instalado ou disponível no ambiente. "
             "Use o diálogo Complementos → logis → Dependências… para obter o comando de instalação, ou utilize a heurística pura em Python."

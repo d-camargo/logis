@@ -113,6 +113,13 @@ Onde:
 
 Os cálculos são realizados em CRS métrico: o CRS da camada de entrada quando já for projetado, ou EPSG:5880 (SIRGAS 2000 / Brazil Polyconic) quando houver rede viária ou quando a camada de pontos estiver em coordenadas geográficas.
 
+### Janela de construção do grafo
+Quando `INPUT_NETWORK` é fornecida, o algoritmo **não constrói o grafo da camada inteira**: ele delimita antes uma janela de análise e só carrega no `QgsGraph` as feições viárias que caem nela. A janela é o retângulo envolvente de **todos** os pontos do problema (inicial, a visitar e final, já no CRS métrico de cálculo), dilatado em uma margem de $\max(3.000\ \text{m},\ diag)$, onde $diag$ é a diagonal desse retângulo envolvente — ou seja, a vizinhança dos pontos, e não o território todo da camada.
+
+O motivo é de custo: reprojetar e triangular uma malha estadual ou nacional inteira para resolver um TSP de poucos pontos gasta memória e tempo proporcionais ao tamanho da camada, e não ao do problema — em redes grandes, o suficiente para derrubar o QGIS. Com a janela, o custo acompanha a extensão da nuvem de pontos. A janela escolhida, a contagem de feições dentro dela e o tamanho do grafo resultante (vértices e arestas) são impressos no log de execução do algoritmo.
+
+A consequência a conhecer: um caminho que só existiria **saindo da janela** não é encontrado. Se algum ponto não se amarrar à malha recortada, ou se um par de pontos ficar sem caminho entre si dentro dela, a execução **para com erro** (ver a nota abaixo) em vez de devolver uma sequência silenciosamente contaminada — o remédio é usar uma camada de rede que cubra a região dos pontos com folga.
+
 > [!NOTE]
 > **Rede desconectada vira erro, não custo enorme.** Quando `INPUT_NETWORK` é fornecida, a amarração dos pontos e a conectividade da malha são validadas **antes** da otimização: ponto que não encontra vértice no grafo interrompe a execução com *"Não foi possível amarrar um ou mais pontos à rede viária."*, e par de pontos sem caminho entre si na matriz OD (custo infinito ou acima de $10^{18}$) interrompe com *"A rede viária possui N par(es) de pontos sem caminho entre si."*. Antes, esses casos entravam na otimização como custo enorme e contaminavam a sequência em silêncio.
 
@@ -120,8 +127,9 @@ Os cálculos são realizados em CRS métrico: o CRS da camada de entrada quando 
 - **Heurística Nativa (Vizinho Mais Próximo + 2-opt / Or-opt):**
   - *Fase 1 — Construção pelo Vizinho Mais Próximo:* Partindo de $s$, o algoritmo de Flood (1956) escolhe repetidamente o ponto ainda não visitado de menor distância ao ponto corrente (com desempate determinístico pelo menor índice), até esgotar o conjunto $V$. No caso aberto, o ponto final $e$ é excluído do conjunto de candidatos e anexado ao fim da sequência, de modo que nunca seja escolhido no meio do percurso.
   - *Fase 2 — Busca Local com Extremos Fixos:* Se `IMPROVE=True`, aplica alternadamente **2-opt** (inversão do subsegmento $\pi[i:j+1]$) e **Or-opt** (realocação de blocos contíguos de 1, 2 e 3 pontos para outra posição da sequência), repetindo o ciclo até a convergência (nenhuma iteração reduz a distância total além da tolerância de $10^{-9}$). Em ambas as buscas o **ponto inicial permanece fixo** na primeira posição e, no caso aberto, o **ponto final permanece fixo** na última (`fixed_end=True`) — as trocas só reordenam os pontos intermediários, preservando o contrato dos dois casos.
-- **Backend OR-Tools (automático, sem opção na interface):**
-  - Não há parâmetro de backend no diálogo do algoritmo. O `logis` **sempre pede o backend `"ortools"`** e a decisão é resolvida por `pick_backend` (em `core.optim_backend`): se o pacote estiver instalado no ambiente Python do QGIS, ele é usado; se não estiver, o plugin faz **fallback silencioso** para a heurística pura em Python, sem erro nem pergunta ao usuário.
+- **Backend OR-Tools (parâmetro `BACKEND`, com fallback automático):**
+  - O parâmetro `BACKEND` escolhe quem resolve a instância: `0 — Automático (OR-Tools quando disponível)` (padrão), `1 — Python puro (heurística)` ou `2 — OR-Tools`. Em qualquer dos casos a decisão final passa por `pick_backend` (em `core.optim_backend`), que faz **fallback silencioso** para a heurística pura em Python quando o OR-Tools não está instalado, está quebrado ou está sob a trava de segurança — nunca há erro nem pergunta ao usuário por causa do backend.
+  - A opção `1 — Python puro (heurística)` é a única que **não importa o OR-Tools em momento algum**: é o modo seguro quando o carregamento da biblioteca derruba o processo do QGIS (ver [Guia de Roteirização §10](../guias/roteirizacao.md#10-quando-o-qgis-fecha-sozinho-ao-calcular-a-rota)). As opções `0` e `2` pedem o OR-Tools e aceitam o fallback; diferem apenas na intenção declarada.
   - Com OR-Tools, a instância é formulada como um `pywrapcp.RoutingModel` de **um único veículo**, com depósito de partida $s$ no caso fechado e par início/fim $(s, e)$ no caso aberto. Usa `PATH_CHEAPEST_ARC` na construção e, quando `IMPROVE=True`, `GUIDED_LOCAL_SEARCH` com limite de 10 segundos (`_TIME_LIMIT_SECONDS`).
   - O backend efetivamente utilizado é registrado no campo `backend` da camada de rota (`ortools` ou `python`) e também na aba de log da execução.
 
@@ -149,11 +157,12 @@ Com guarda de divisão por zero: `dead_ratio = 0.0` quando `tour_dist = 0.0`. Qu
 | `INPUT_END` | Camada do ponto final (opcional; vazia = a rota fecha no ponto inicial) | `QgsProcessingParameterFeatureSource` (`TypeVectorPoint`, `TypeVectorPolygon`) | Camada vetorial do local de chegada (primeira feição válida). **Presente:** caminho aberto. **Omitida:** tour fechado no ponto inicial. | `None` (Opcional) |
 | `INPUT_NETWORK` | Camada de rede viária (Linhas) (opcional) | `QgsProcessingParameterFeatureSource` (`TypeVectorLine`) | Malha viária para cálculo de distâncias e geometrias reais via Dijkstra (`QgsGraph`). Se omitida, utiliza distância euclidiana direta. | `None` (Opcional) |
 | `IMPROVE` | Aplicar busca local (2-opt e Or-opt) | `QgsProcessingParameterBoolean` | Se verdadeiro, refina a sequência inicial com 2-opt e Or-opt de extremos fixos (e ativa a metaheurística `GUIDED_LOCAL_SEARCH` no backend OR-Tools). | `True` |
+| `BACKEND` | Backend de otimização | `QgsProcessingParameterEnum` | Solver que resolve a instância: `0` — *Automático (OR-Tools quando disponível)*, `1` — *Python puro (heurística)*, `2` — *OR-Tools*. Todas as opções passam por `pick_backend` e caem na heurística Python quando o OR-Tools não está disponível; só a opção `1` evita importar a biblioteca. | `0` (Automático) |
 | `OUTPUT_ORDER` | Ordem de visita | `QgsProcessingParameterFeatureSink` | Camada de pontos de saída com a sequência de visita. | *Obrigatório* |
 | `OUTPUT_ROUTE` | Rota (trechos) | `QgsProcessingParameterFeatureSink` | Camada de linhas de saída com as pernas da rota. | `None` (Opcional) |
 
 > [!NOTE]
-> **Não existe parâmetro para escolher o backend de otimização.** O uso do OR-Tools é automático quando o pacote está instalado, com fallback silencioso para a heurística Python — ver *Natureza Algorítmica e Backend OR-Tools*, acima.
+> **O backend é escolhido no parâmetro `BACKEND`.** No modo padrão (`0 — Automático`) o OR-Tools é usado quando o pacote está instalado, com fallback silencioso para a heurística Python. Escolher `1 — Python puro (heurística)` força a heurística nativa e impede qualquer import do OR-Tools — é o modo a usar quando o QGIS fecha sozinho durante o cálculo. O backend efetivamente usado sai no campo `backend` da camada de rota.
 
 ### Saídas e Resultados Gerados
 

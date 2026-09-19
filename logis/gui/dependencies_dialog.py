@@ -113,10 +113,11 @@ except ImportError:
         def __init__(self, text="", parent=None):
             self._text = text
             self.clicked = MockSignal()
+            self._enabled = True
         def setEnabled(self, enabled):
-            pass
+            self._enabled = enabled
         def isEnabled(self):
-            return True
+            return self._enabled
         def setText(self, text):
             self._text = text
         def setStyleSheet(self, style):
@@ -191,7 +192,7 @@ except ImportError:
     iface = None
 
 from ..core.data_backend import has_gisbr
-from ..core.optim_backend import has_ortools
+from ..core.optim_backend import guard_state, has_ortools, reset_ortools_guard
 # Importa install_ortools como run_install do core para evitar colisão com o método da classe
 from ..core.ortools_installer import (
     command_text,
@@ -291,8 +292,12 @@ class DependenciesDialog(QDialog):
         ortools_status_lbl_title.setStyleSheet("font-weight: normal; color: #333;")
         self.ortools_status_val = QLabel("Verificando...")
         self.ortools_status_val.setStyleSheet("font-weight: bold;")
+        self.btn_reset_guard = QPushButton("Reativar OR-Tools")
+        self.btn_reset_guard.setStyleSheet("font-weight: normal;")
+        self.btn_reset_guard.clicked.connect(self.reactivate_ortools)
         ortools_status_layout.addWidget(ortools_status_lbl_title)
         ortools_status_layout.addWidget(self.ortools_status_val)
+        ortools_status_layout.addWidget(self.btn_reset_guard)
         ortools_status_layout.addStretch()
         
         ortools_layout.addLayout(ortools_status_layout)
@@ -418,6 +423,10 @@ class DependenciesDialog(QDialog):
         self.txt_command.setText(command_text(break_system_packages=ext_managed))
         self.btn_copy_cmd.setText("Copiar Comando")
 
+        state = guard_state()
+        is_blocked = (state == "blocked")
+        self.btn_reset_guard.setEnabled(is_blocked)
+
         instalado = has_ortools()
         
         self.btn_install.setVisible(not instalado)
@@ -426,13 +435,19 @@ class DependenciesDialog(QDialog):
         self.btn_copy_cmd.setVisible(not instalado)
         self.lbl_instructions.setVisible(not instalado)
 
-        if instalado:
+        if is_blocked:
+            self.ortools_status_val.setText(
+                "Bloqueado (o QGIS fechou durante o carregamento do OR-Tools; o plugin está usando a heurística Python)"
+            )
+            self.ortools_status_val.setStyleSheet("color: #c53030; font-weight: bold;")
+        elif instalado:
             self.ortools_status_val.setText("Instalado (Disponível)")
             self.ortools_status_val.setStyleSheet("color: #2f855a; font-weight: bold;")
         else:
             self.ortools_status_val.setText("Não instalado (Heurística pura ativada)")
             self.ortools_status_val.setStyleSheet("color: #dd6b20; font-weight: bold;")
 
+        if not instalado:
             pip_avail = bool(self.env.get("pip_available"))
             self.btn_install.setEnabled(pip_avail)
             if not pip_avail:
@@ -443,6 +458,10 @@ class DependenciesDialog(QDialog):
                 self.lbl_install_hint.setText(
                     "A instalação é realizada no Python do próprio QGIS e pode deixar a janela sem resposta por alguns instantes."
                 )
+
+    def reactivate_ortools(self):
+        reset_ortools_guard()
+        self.refresh_status()
 
     def install_ortools(self):
         # (a) Solicita confirmação ao usuário explicando o processo e os impactos

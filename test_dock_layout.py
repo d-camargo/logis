@@ -136,6 +136,7 @@ class TestDockLayout(unittest.TestCase):
         self.assertIn("self.cmb_points", content)
         self.assertIn("self.cmb_end", content)
         self.assertIn("self.cmb_tsp_mode", content)
+        self.assertIn("self.cmb_tsp_backend", content)
         self.assertIn("self.btn_run_tsp", content)
         self.assertIn("self.cmb_depot", content)
         self.assertIn("self.cmb_demand", content)
@@ -145,7 +146,7 @@ class TestDockLayout(unittest.TestCase):
         self.assertIn("self.btn_run_cvrp", content)
         self.assertIn("logis:vrp_tsp", content)
         self.assertIn("logis:vrp_cvrp", content)
-        self.assertNotIn("ortools", content.lower())
+        self.assertIn("'BACKEND': self.cmb_tsp_backend.currentIndex()", content)
 
     def test_routing_dock_tsp_distance_mode(self):
         content = (pathlib.Path(__file__).parent / "logis/gui/routing_dock.py").read_text(
@@ -160,6 +161,20 @@ class TestDockLayout(unittest.TestCase):
         self.assertIn("Pela rede viária (Dijkstra)", content)
         self.assertIn("self.cmb_tsp_mode.currentIndex() == 1", content)
         self.assertIn("network_layer if use_network else None", content)
+
+    def test_routing_dock_tsp_backend(self):
+        content = (pathlib.Path(__file__).parent / "logis/gui/routing_dock.py").read_text(
+            encoding="utf-8"
+        )
+
+        self.assertEqual(
+            content.count("self.cmb_tsp_backend = QComboBox()"), 1,
+            "Esperado exatamente 1 combo de backend do TSP (cmb_tsp_backend) no painel de roteirização."
+        )
+        self.assertIn("Automático (OR-Tools quando disponível)", content)
+        self.assertIn("Python puro (heurística)", content)
+        self.assertIn("OR-Tools", content)
+        self.assertIn("'BACKEND': self.cmb_tsp_backend.currentIndex()", content)
 
     def test_routing_dock_network_selector_is_unique(self):
         content = (pathlib.Path(__file__).parent / "logis/gui/routing_dock.py").read_text(

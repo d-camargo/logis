@@ -22,6 +22,7 @@ from qgis.core import (
     QgsProcessingException,
     QgsProcessingParameterFeatureSource,
     QgsProcessingParameterBoolean,
+    QgsProcessingParameterEnum,
     QgsProcessingParameterFeatureSink,
     QgsCoordinateTransform,
     QgsCoordinateReferenceSystem,
@@ -31,17 +32,18 @@ from qgis.core import (
     QgsFeature,
     QgsFeatureSink,
     QgsWkbTypes,
-    QgsGeometry
+    QgsGeometry,
+    QgsRectangle
 )
 from qgis.analysis import QgsGraphAnalyzer
 try:
-    from ..core import qgis_compat
+    from ..core import qgis_compat, crashlog
     from ..core.routing.tsp import solve_tsp, split_legs, summarize_legs
     from ..core.optim_backend import pick_backend
     from ..core.network.graph_builder import build_graph
     from ..core.network.od_matrix import compute_od_matrix
 except ImportError:
-    from core import qgis_compat
+    from core import qgis_compat, crashlog
     from core.routing.tsp import solve_tsp, split_legs, summarize_legs
     from core.optim_backend import pick_backend
     from core.network.graph_builder import build_graph
@@ -52,11 +54,32 @@ _UNREACHABLE_COST = 1e18
 
 
 def _extract_point(geom):
-    """Retorna um QgsPointXY representando a geometria (ponto ou centroide de polígono)."""
+    """
+    Returns a QgsPointXY representing the geometry.
+
+    Handles single points, multipoints (using the first point), and polygons (using the centroid).
+    Raises ValueError when the geometry is null, empty, or fails to produce a valid point.
+    """
+    if geom is None or geom.isEmpty():
+        raise ValueError("Geometry is null or empty.")
+
     if geom.type() == QgsWkbTypes.GeometryType.PointGeometry:
-        return geom.asPoint()
+        if QgsWkbTypes.isMultiType(geom.wkbType()):
+            pts = geom.asMultiPoint()
+            if pts and not pts[0].isEmpty():
+                return pts[0]
+            raise ValueError("MultiPoint geometry does not contain a valid point.")
+        pt = geom.asPoint()
+        if not pt.isEmpty():
+            return pt
+        raise ValueError("Point geometry does not produce a valid point.")
     else:
-        return geom.centroid().asPoint()
+        centroid_geom = geom.centroid()
+        if centroid_geom and not centroid_geom.isEmpty():
+            pt = centroid_geom.asPoint()
+            if not pt.isEmpty():
+                return pt
+        raise ValueError("Geometry does not produce a valid point or centroid.")
 
 
 class VrpTsp(QgsProcessingAlgorithm):
@@ -88,6 +111,7 @@ class VrpTsp(QgsProcessingAlgorithm):
     INPUT_END = 'INPUT_END'
     INPUT_NETWORK = 'INPUT_NETWORK'
     IMPROVE = 'IMPROVE'
+    BACKEND = 'BACKEND'
     OUTPUT_ORDER = 'OUTPUT_ORDER'
     OUTPUT_ROUTE = 'OUTPUT_ROUTE'
 
@@ -134,6 +158,18 @@ class VrpTsp(QgsProcessingAlgorithm):
             )
         )
         self.addParameter(
+            QgsProcessingParameterEnum(
+                self.BACKEND,
+                self.tr("Backend de otimização"),
+                options=[
+                    self.tr("Automático (OR-Tools quando disponível)"),
+                    self.tr("Python puro (heurística)"),
+                    self.tr("OR-Tools")
+                ],
+                defaultValue=0
+            )
+        )
+        self.addParameter(
             QgsProcessingParameterFeatureSink(
                 self.OUTPUT_ORDER,
                 self.tr("Ordem de visita")
@@ -153,6 +189,14 @@ class VrpTsp(QgsProcessingAlgorithm):
         end_source = self.parameterAsSource(parameters, self.INPUT_END, context)
         network_layer = self.parameterAsVectorLayer(parameters, self.INPUT_NETWORK, context)
         improve = self.parameterAsBool(parameters, self.IMPROVE, context)
+        backend_idx = self.parameterAsEnum(parameters, self.BACKEND, context)
+
+        if backend_idx == 1:
+            req_backend = "python"
+        elif backend_idx == 2:
+            req_backend = "ortools"
+        else:
+            req_backend = pick_backend("ortools")
 
         if start_source is None:
             raise QgsProcessingException(self.tr("Camada do ponto inicial inválida."))
@@ -161,6 +205,7 @@ class VrpTsp(QgsProcessingAlgorithm):
 
         # 1) CRS de cálculo
         dist_mode = "rede" if (network_layer and network_layer.isValid()) else "euclidiana"
+        crashlog.mark("tsp-inicio", f"modo={dist_mode} backend={req_backend}")
         if network_layer and network_layer.isValid():
             target_crs = QgsCoordinateReferenceSystem("EPSG:5880")
         else:
@@ -221,19 +266,34 @@ class VrpTsp(QgsProcessingAlgorithm):
         else:
             end_idx = None
         start_idx = 0
+        crashlog.mark("tsp-transform", f"{len(all_points)} pontos -> CRS {target_crs.authid()}")
 
         # 5) Matriz de distâncias
         graph = None
         vertices = None
         if network_layer and network_layer.isValid():
             feedback.pushInfo(self.tr("Construindo o grafo e calculando a matriz OD na rede..."))
+            x_coords = [p.x() for p in all_points]
+            y_coords = [p.y() for p in all_points]
+            bbox = QgsRectangle(min(x_coords), min(y_coords), max(x_coords), max(y_coords))
+            diag = math.sqrt(bbox.width() ** 2 + bbox.height() ** 2)
+            margin = max(3000.0, diag)
+            extent = QgsRectangle(
+                bbox.xMinimum() - margin,
+                bbox.yMinimum() - margin,
+                bbox.xMaximum() + margin,
+                bbox.yMaximum() + margin
+            )
+            feedback.pushInfo(self.tr("Janela de análise: {}").format(extent.toString()))
+            crashlog.mark("tsp-build-graph", f"camada com {network_layer.featureCount()} feicoes")
             try:
-                res = build_graph(network_layer, target_crs=target_crs, points=all_points)
+                res = build_graph(network_layer, target_crs=target_crs, points=all_points, extent=extent, feedback=feedback)
             except Exception as exc:
                 raise QgsProcessingException(self.tr("Erro ao construir o grafo: {}").format(str(exc)))
 
             graph = res["graph"]
             snapped_points = res["snapped_points"]
+            crashlog.mark("tsp-grafo-pronto", f"{graph.vertexCount()} vertices, {graph.edgeCount()} arestas")
 
             if graph is None or graph.vertexCount() < 2:
                 raise QgsProcessingException(self.tr("O grafo construído possui menos de 2 vértices."))
@@ -249,6 +309,7 @@ class VrpTsp(QgsProcessingAlgorithm):
                 )
 
             try:
+                crashlog.mark("tsp-od-matrix", "Dijkstra multi-origem")
                 cost_matrix = compute_od_matrix(
                     graph=graph,
                     origins=vertices,
@@ -282,18 +343,21 @@ class VrpTsp(QgsProcessingAlgorithm):
                 row = [p1.distance(p2) for p2 in all_points]
                 cost_matrix.append(row)
 
-        # 6) Otimização TSP sem passar backend (padrão "ortools" com fallback silencioso)
-        used_backend = pick_backend("ortools")
+        # 6) Otimização TSP
+        used_backend = pick_backend(req_backend)
         feedback.pushInfo(self.tr("Executando a otimização TSP..."))
+        crashlog.mark("tsp-ortools-import", f"backend resolvido: {used_backend}")
         try:
             tour, total_distance = solve_tsp(
                 distance_matrix=cost_matrix,
                 start=start_idx,
                 end=end_idx,
-                improve=improve
+                improve=improve,
+                backend=req_backend
             )
         except (ValueError, RuntimeError) as exc:
             raise QgsProcessingException(str(exc))
+        crashlog.mark("tsp-solver-ok", f"custo={total_distance:.1f}")
 
         feedback.pushInfo(
             self.tr("Otimização TSP concluída. Pontos: {count} | Modo: {dist_mode} | Backend: {backend} | Distância Total: {dist:.2f}").format(
@@ -302,6 +366,7 @@ class VrpTsp(QgsProcessingAlgorithm):
         )
 
         # 7) Gravação dos resultados nas camadas de saída
+        crashlog.mark("tsp-sinks", "gravando camadas de saida")
         order_fields = QgsFields(points_source.fields())
         order_fields.append(QgsField("visit_seq", qgis_compat.field_type("int")))
         order_fields.append(QgsField("node_role", qgis_compat.field_type("string")))
@@ -394,6 +459,7 @@ class VrpTsp(QgsProcessingAlgorithm):
 
             cum_leg_dist = 0.0
             num_legs = len(legs)
+            dijkstra_trees = {}
 
             for k, (u, v, leg_role, leg_dist) in enumerate(legs):
                 if feedback.isCanceled():
@@ -410,7 +476,11 @@ class VrpTsp(QgsProcessingAlgorithm):
                     try:
                         u_vtx = vertices[u]
                         v_vtx = vertices[v]
-                        tree, _ = QgsGraphAnalyzer.dijkstra(graph, u_vtx, 0)
+                        if u_vtx in dijkstra_trees:
+                            tree = dijkstra_trees[u_vtx]
+                        else:
+                            tree, _ = QgsGraphAnalyzer.dijkstra(graph, u_vtx, 0)
+                            dijkstra_trees[u_vtx] = tree
                         curr = v_vtx
                         path_vtx = []
                         unreachable = False
@@ -466,6 +536,7 @@ class VrpTsp(QgsProcessingAlgorithm):
         if sink_route is not None:
             results[self.OUTPUT_ROUTE] = dest_route
 
+        crashlog.mark("tsp-fim", "concluido")
         return results
 
     def name(self):
@@ -492,7 +563,8 @@ class VrpTsp(QgsProcessingAlgorithm):
             "- Camada de pontos a visitar: feições de pontos/polígonos a serem visitadas.\n"
             "- Camada do ponto final (opcional): feição do ponto de chegada (se omitida ou vazia, a rota fecha no ponto inicial).\n"
             "- Camada de rede viária: rede viária para distâncias reais (opcional, usa distância euclidiana se omitida).\n"
-            "- Aplicar busca local: se verdadeiro, aplica 2-opt e Or-opt para otimização da rota.\n\n"
+            "- Aplicar busca local: se verdadeiro, aplica 2-opt e Or-opt para otimização da rota.\n"
+            "- Backend de otimização: escolha do solver ('Automático (OR-Tools quando disponível)', 'Python puro (heurística)' ou 'OR-Tools'). O modo 'Python puro' é o modo seguro quando o QGIS fecha ao rodar a rota.\n\n"
             "Saídas:\n"
             "- Ordem de visita: camada de pontos ordenada com a ordem de visita na tabela de atributos em 'visit_seq', nó ('node_role'), papel da perna ('leg_role'), distância da perna ('leg_dist') e distância acumulada ('cum_dist').\n"
             "- Rota (trechos): camada de linhas com a geometria das pernas da rota classificadas ('leg_role': 'acesso', 'rota', 'retorno'). Os trechos 'acesso' e 'retorno' da camada de rota são os deslocamentos improdutivos (do ponto inicial ao primeiro ponto a visitar e do último ao ponto final), somados em 'access_dist' e 'return_dist', com os totais de distância ('tour_dist', 'service_dist') e a taxa improdutiva ('dead_ratio') repetidos em todas as feições, além do modo de cálculo ('dist_mode') e da geometria do trecho ('leg_geom')."

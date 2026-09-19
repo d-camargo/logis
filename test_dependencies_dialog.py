@@ -84,6 +84,27 @@ class TestDependenciesDialog(unittest.TestCase):
         """Verifica se [sys.executable, "-m", "pip" NÃO existe mais em ortools_installer.py (fora de python_executable())."""
         self.assertNotIn('[sys.executable, "-m", "pip"', self.installer_content)
 
+    def test_btn_reset_guard_connected(self):
+        """Verifica se o botão Reativar OR-Tools existe e está conectado a reactivate_ortools."""
+        self.assertIn("self.btn_reset_guard", self.dialog_content)
+        self.assertIn("Reativar OR-Tools", self.dialog_content)
+        self.assertIn(
+            "self.btn_reset_guard.clicked.connect(self.reactivate_ortools)",
+            self.dialog_content,
+        )
+
+    def test_reset_ortools_guard_imports_and_calls(self):
+        """Verifica se guard_state e reset_ortools_guard são importados e chamados no diálogo."""
+        self.assertIn("guard_state", self.dialog_content)
+        self.assertIn("reset_ortools_guard", self.dialog_content)
+        self.assertIn("reset_ortools_guard()", self.dialog_content)
+        self.assertIn("guard_state()", self.dialog_content)
+
+    def test_blocked_status_text(self):
+        """Verifica se a mensagem de bloqueio menciona que o QGIS fechou e a heurística Python."""
+        self.assertIn("QGIS fechou durante o carregamento do OR-Tools", self.dialog_content)
+        self.assertIn("heurística Python", self.dialog_content)
+
 
 if __name__ == "__main__":
     unittest.main()

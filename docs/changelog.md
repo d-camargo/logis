@@ -2,6 +2,14 @@
 
 Este documento registra as principais alterações e evoluções do plugin **logis** organizadas por versão.
 
+## 0.3.0 - 2026-09-19
+
+- **Rastro de Diagnóstico** — captura e exibição de rastro detalhado de diagnóstico para apoio à depuração em rotinas do plugin.
+- **Trava do OR-Tools e Seletor de Backend** — introdução de trava de segurança do OR-Tools, seletor de backend de otimização na interface e opção de rearme.
+- **Janela de Construção do Grafo** — melhorias e ajustes no cálculo e progresso durante a construção do grafo da rede viária.
+- **Assinatura Barata de Cache** — otimização da validação de cache da matriz OD via assinatura simplificada e eficiente.
+- **Tratamento de Geometrias Multipart** — suporte robusto ao processamento e conversão de feições multipartes em rotinas de rede.
+
 ## 0.2.0 - 2026-09-19
 
 - **Painel Rede Viária** — painel acoplável **Rede Viária** (com entrada no menu `logis`) organizado em abas de município (OSM) e de estado (SNV/DNIT).

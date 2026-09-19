@@ -307,3 +307,88 @@ OR-Tools, complexidade e bibliografia — está em
 | "Nenhum ponto final válido encontrado na camada fornecida." | A camada de ponto final foi selecionada, mas nenhuma feição nela tem geometria válida. |
 | Trechos retos na saída apesar de haver rede selecionada | O **Modo de cálculo da distância** ficou em *Linha reta (euclidiana)*, que é o padrão — nesse modo a camada de rede do topo do painel é ignorada. No modo pela rede, são pernas isoladas cujo caminho não pôde ser reconstruído na malha (`leg_geom` = `reta`), contadas no aviso do painel de resultados. |
 | A rota muda de uma execução para outra com OR-Tools instalado | A metaheurística `GUIDED_LOCAL_SEARCH` roda até o limite de 10 segundos; pequenas variações de tempo podem mudar o resultado entre rodadas. |
+
+---
+
+## 10. Quando o QGIS fecha sozinho ao calcular a rota
+
+Em algumas máquinas o QGIS **fecha sem aviso** no meio do cálculo da rota: nenhuma
+mensagem de erro, nenhuma linha no log de Processing, a janela simplesmente some. Quase
+sempre a culpa não é do logis, e sim do **carregamento do OR-Tools** — o `import` de uma
+biblioteca compilada pode derrubar o processo inteiro do QGIS, e nesse caso não há
+exceção para capturar. Esta seção mostra como confirmar isso e como seguir trabalhando.
+
+### Onde fica o `diagnostico.log`
+
+O plugin registra as etapas da execução em `diagnostico.log`, no diretório de cache do
+logis — `QStandardPaths.CacheLocation` → `.../logis/`, a mesma pasta descrita em
+[Onde ficam o cache e o GeoPackage](rede_viaria.md#5-onde-ficam-o-cache-e-o-geopackage)
+(o caminho exato varia por sistema operacional). Cada linha tem quatro campos separados
+por `|`:
+
+```text
+2026-09-19T14:03:11.482913 | 48211 | tsp-build-graph | camada com 12834 feicoes
+```
+
+— data/hora ISO 8601, PID do processo do QGIS, **etapa** e **detalhe**. Cada marca é
+gravada e descarregada em disco na hora (`flush` + `fsync`), justamente para sobreviver a
+um fechamento abrupto.
+
+### Como ler a última linha
+
+A **última linha do arquivo é a última etapa que o plugin alcançou antes de o QGIS
+morrer** — é ela que diz onde a execução parou. Terminando em `tsp-ortools-import`, o
+processo morreu carregando o OR-Tools (a suspeita principal); terminando em
+`tsp-build-graph` ou `tsp-od-matrix`, foi a construção do grafo da rede — reduzir a área
+ou usar uma camada de rede menor resolve.
+
+No terminal:
+
+```bash
+find "$HOME/.cache" -name diagnostico.log -exec tail -n 1 {} +
+```
+
+No **Console Python do QGIS** (*Complementos → Console Python*), que dispensa saber o
+caminho — a primeira linha o imprime, a segunda mostra as últimas cinco etapas:
+
+```python
+from logis.core.crashlog import trace_path, read_tail
+print(trace_path()); print("".join(read_tail(5)))
+```
+
+### Escolher “Python puro” no seletor de backend
+
+No painel **logis — Roteirização**, aba **TSP**, o seletor **Backend de otimização** tem
+três opções: **Automático (OR-Tools quando disponível)** — o padrão —, **Python puro
+(heurística)** e **OR-Tools**. Escolher **Python puro (heurística)** é o **modo seguro**:
+o cálculo não importa o OR-Tools em momento nenhum, então um travamento causado por ele
+deixa de acontecer. A rota sai pela heurística nativa (Vizinho Mais Próximo +
+2-opt/Or-opt) — solução boa, não necessariamente ótima —, e a linha **Backend de
+otimização** do painel de resultados passa a mostrar `python`.
+
+O mesmo seletor existe no diálogo do algoritmo `logis:vrp_tsp`, no parâmetro `BACKEND`
+(ver [Algoritmos de Roteirização](../algoritmos/roteirizacao.md#2-caixeiro-viajante--tsp-logisvrp_tsp)).
+
+### O teste de uma linha que aponta o culpado
+
+Ainda no **Console Python do QGIS**, com o painel de roteirização fechado, execute
+apenas isto:
+
+```python
+from ortools.constraint_solver import pywrapcp
+```
+
+| O que acontece | O que significa |
+|---|---|
+| O QGIS **fecha na hora** | A culpa é do OR-Tools, **não do plugin** — o mesmo import derruba o QGIS fora do logis. Siga com **Python puro**, ou reinstale/remova o pacote. |
+| Sai um `ImportError` / `ModuleNotFoundError` | O OR-Tools não está instalado; o plugin já vinha usando a heurística Python e o fechamento tem outra causa. |
+| Não acontece nada (nenhuma saída) | O import funciona: o OR-Tools está sadio e o problema está em outro ponto — guarde as últimas linhas do `diagnostico.log` para o relato. |
+
+### Depois de um fechamento, o OR-Tools fica desativado sozinho
+
+Se o QGIS morreu justamente durante o carregamento do OR-Tools, o plugin **o desativa por
+conta própria** na sessão seguinte, para não repetir o tombo: a roteirização passa a usar
+a heurística Python e o painel de resultados abre com o aviso em amarelo "O OR-Tools está
+desativado por ter derrubado a sessão anterior. O rearme fica no diálogo de Dependências."
+Como isso funciona e onde fica o botão **Reativar OR-Tools** está em
+[OR-Tools (backend opcional)](../ortools.md#a-trava-automática-quando-o-or-tools-é-desativado-sozinho).

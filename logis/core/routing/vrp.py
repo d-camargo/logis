@@ -30,9 +30,9 @@ import math
 from typing import List, Tuple, Optional
 
 try:
-    from ..optim_backend import pick_backend
+    from ..optim_backend import pick_backend, load_routing_solver
 except ImportError:
-    from core.optim_backend import pick_backend
+    from core.optim_backend import pick_backend, load_routing_solver
 
 _TIME_LIMIT_SECONDS: int = 10
 
@@ -494,8 +494,8 @@ def solve_cvrp_ortools(
         return [], 0.0, []
 
     try:
-        from ortools.constraint_solver import pywrapcp, routing_enums_pb2
-    except ImportError as e:
+        pywrapcp, routing_enums_pb2 = load_routing_solver()
+    except Exception as e:
         raise RuntimeError(
             "O backend OR-Tools não está instalado ou disponível no ambiente. "
             "Use o diálogo Complementos → logis → Dependências… para obter o comando de instalação, ou utilize a heurística pura em Python."

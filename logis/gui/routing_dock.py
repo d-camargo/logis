@@ -183,6 +183,15 @@ except ImportError:
             return self._tabs[index]
 
 
+try:
+    from logis.core import optim_backend
+except ImportError:
+    try:
+        from ..core import optim_backend
+    except (ImportError, ValueError):
+        optim_backend = None
+
+
 class RoutingDock(QgsDockWidget):
     """
     Painel lateral (Dock Widget) para Roteirização (TSP/VRP)
@@ -297,6 +306,23 @@ class RoutingDock(QgsDockWidget):
         tsp_mode_desc.setStyleSheet("color: #666; font-size: 11px;")
         tsp_mode_desc.setWordWrap(True)
         layout.addWidget(tsp_mode_desc)
+
+        # Backend de otimização
+        layout.addWidget(QLabel(self.tr("Backend de otimização:")))
+        self.cmb_tsp_backend = QComboBox()
+        self.cmb_tsp_backend.addItems([
+            self.tr("Automático (OR-Tools quando disponível)"),
+            self.tr("Python puro (heurística)"),
+            self.tr("OR-Tools")
+        ])
+        layout.addWidget(self.cmb_tsp_backend)
+
+        tsp_backend_desc = QLabel(
+            self.tr("Nota: Em modo automático, o OR-Tools é utilizado se disponível, com fallback para Python puro.")
+        )
+        tsp_backend_desc.setStyleSheet("color: #666; font-size: 11px;")
+        tsp_backend_desc.setWordWrap(True)
+        layout.addWidget(tsp_backend_desc)
 
         # Checkbox para busca local (2-opt e Or-opt)
         self.chk_improve = QCheckBox(self.tr("Aplicar busca local (2-opt e Or-opt)"))
@@ -447,6 +473,14 @@ class RoutingDock(QgsDockWidget):
         self.btn_run_tsp.setEnabled(False)
         self.txt_results.append(self.tr("<b>=== CALCULANDO ROTA (TSP) ===</b><br>"))
 
+        if optim_backend and optim_backend.guard_state() == "blocked":
+            self.txt_results.append(
+                self.tr(
+                    "<span style='color: #ecc94b;'>Aviso: O OR-Tools está desativado por ter derrubado a sessão anterior. "
+                    "O rearme fica no diálogo de Dependências.</span><br>"
+                )
+            )
+
         try:
             params = {
                 'INPUT_START': start_layer,
@@ -454,6 +488,7 @@ class RoutingDock(QgsDockWidget):
                 'INPUT_END': end_layer if end_layer else None,
                 'INPUT_NETWORK': network_layer if use_network else None,
                 'IMPROVE': improve,
+                'BACKEND': self.cmb_tsp_backend.currentIndex(),
                 'OUTPUT_ORDER': 'memory:',
                 'OUTPUT_ROUTE': 'memory:'
             }

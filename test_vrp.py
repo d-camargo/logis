@@ -217,6 +217,28 @@ class TestVRP(unittest.TestCase):
         self.assertAlmostEqual(dist_o, dist_p)
         self.assertEqual(loads_o, loads_p)
 
+    def test_solve_cvrp_ortools_load_solver_failure(self):
+        # Quando load_routing_solver falha em solve_cvrp_ortools, converte para RuntimeError com a indicação do diálogo
+        with patch("logis.core.routing.vrp.load_routing_solver", side_effect=RuntimeError("OR-Tools import falhou")):
+            with self.assertRaises(RuntimeError) as ctx:
+                solve_cvrp_ortools(self.distance_matrix, self.demands, self.capacity, depot=0)
+            self.assertIn("Complementos → logis → Dependências…", str(ctx.exception))
+
+    def test_solve_cvrp_blocked_guard_uses_python_fallback(self):
+        # Com o selo bloqueado, solve_cvrp devolve rotas válidas pela heurística Python sem tocar em ortools
+        with patch("logis.core.optim_backend.guard_state", return_value="blocked"), \
+             patch("logis.core.routing.vrp.load_routing_solver") as mock_load:
+            routes, dist, loads = solve_cvrp(
+                self.distance_matrix, self.demands, self.capacity, depot=0, backend="ortools"
+            )
+            mock_load.assert_not_called()
+            routes_py, dist_py, loads_py = solve_cvrp(
+                self.distance_matrix, self.demands, self.capacity, depot=0, backend="python"
+            )
+            self.assertEqual(routes, routes_py)
+            self.assertAlmostEqual(dist, dist_py)
+            self.assertEqual(loads, loads_py)
+
     def test_solve_cvrp_default_backend_regression(self):
         # O default (sem backend) deve ser idêntico a backend="python".
         default_res = solve_cvrp(

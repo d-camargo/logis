@@ -67,32 +67,57 @@ def _resolve_nodes(graph, nodes):
     return resolved
 
 
+def _get_sample_indices(count, max_samples=256):
+    """Retorna uma lista determinística de índices de amostragem até max_samples,
+    sempre incluindo 0 e count - 1 quando count > 0.
+    """
+    if count <= 0:
+        return []
+    if count <= max_samples:
+        return list(range(count))
+    step = max(1, (count + max_samples - 1) // max_samples)
+    indices = list(range(0, count, step))
+    if indices[-1] != count - 1:
+        indices.append(count - 1)
+    return indices
+
+
 def _get_graph_hash(graph, criterion_num):
-    """Generates a unique SHA-256 hash for the graph topology, coordinates, and cost strategy.
+    """Gera uma assinatura de cache SHA-256 para o grafo e o critério de custo.
+
+    A chave gerada é um identificador de cache, não uma prova de igualdade estrita do grafo.
+    Uma eventual colisão de hash apenas implica recomputar a matriz OD (ou reaproveitar entrada de cache).
+    Para manter a geração da chave rápida e de custo O(1) em relação ao tamanho do grafo,
+    é usada uma amostra determinística (passo fixo, teto de ~256 leituras de vértices e ~256
+    de arestas, sempre incluindo a primeira e a última), além de vertexCount, edgeCount e criterion_num.
 
     Args:
-        graph (QgsGraph): The network graph.
-        criterion_num (int): Strategy index for optimization.
+        graph (QgsGraph): O grafo da rede.
+        criterion_num (int): Índice da estratégia de otimização de custo.
 
     Returns:
-        str: SHA-256 hash of the graph.
+        str: Hash SHA-256 da assinatura de cache do grafo.
     """
+    v_count = graph.vertexCount()
+    e_count = graph.edgeCount()
+
     h = hashlib.sha256()
-    h.update(f"V:{graph.vertexCount()}".encode('utf-8'))
-    h.update(f"E:{graph.edgeCount()}".encode('utf-8'))
+    h.update(f"V:{v_count}".encode('utf-8'))
+    h.update(f"E:{e_count}".encode('utf-8'))
     h.update(f"C:{criterion_num}".encode('utf-8'))
-    
-    # Hash all vertices coordinates
-    for i in range(graph.vertexCount()):
+
+    # Amostra determinística de vértices
+    for i in _get_sample_indices(v_count, max_samples=256):
         pt = graph.vertex(i).point()
         h.update(f"{pt.x():.6f},{pt.y():.6f}".encode('utf-8'))
-        
-    # Hash all edges connections and costs
-    for i in range(graph.edgeCount()):
+
+    # Amostra determinística de arestas
+    for i in _get_sample_indices(e_count, max_samples=256):
         edge = graph.edge(i)
         h.update(f"{edge.fromVertex()}->{edge.toVertex()}:{edge.cost(criterion_num):.6f}".encode('utf-8'))
-        
+
     return h.hexdigest()
+
 
 
 def compute_od_matrix(

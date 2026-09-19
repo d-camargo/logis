@@ -190,6 +190,51 @@ rápido; sem ele, sai pela heurística clássica (Clarke-Wright + 2-opt/Or-opt n
 Teitz-Bart na p-mediana, guloso nas coberturas) — **soluções boas, não necessariamente
 ótimas**.
 
+## A trava automática: quando o OR-Tools é desativado sozinho
+
+O fallback da seção anterior cobre o OR-Tools **ausente ou quebrado** — casos em que o
+`import` levanta exceção e o plugin a captura. Há um caso que nenhum `try/except` pega: o
+`import` de uma biblioteca compilada pode **derrubar o processo inteiro do QGIS**, que
+fecha sem mensagem de erro e sem log. Para não repetir o tombo a cada execução, o plugin
+guarda um selo em `ortools_guard.json`, no cache (`QStandardPaths.CacheLocation` →
+`.../logis/`):
+
+1. **antes** de importar o OR-Tools, grava o selo com `stage = "importing"`;
+2. voltando do import, regrava com `stage = "ok"`.
+
+Se o QGIS morre no meio do import, o selo fica congelado em `"importing"`. Na sessão
+seguinte `core.optim_backend.guard_state()` lê esse selo como **`blocked`**, e a partir
+daí `pick_backend()` devolve `"python"` sem sequer tentar o import, registrando no *Log de
+Mensagens* do QGIS (aba `logis`) a linha "OR-Tools foi desativado porque o QGIS fechou
+durante a última tentativa de carregá-lo."
+
+### O que significa ver o OR-Tools desativado
+
+No diálogo **Dependências** o status aparece em vermelho como *Bloqueado (o QGIS fechou
+durante o carregamento do OR-Tools; o plugin está usando a heurística Python)*, e o painel
+de roteirização abre cada execução com um aviso em amarelo dizendo o mesmo.
+
+Isso **não** quer dizer que a instalação falhou nem que o pacote sumiu: ele pode estar
+perfeitamente instalado. Quer dizer que a última tentativa de carregá-lo coincidiu com o
+fechamento do QGIS, e que o plugin optou por não arriscar de novo. Enquanto a trava
+estiver ativa, todos os algoritmos continuam disponíveis pelas heurísticas em Python puro
+— o que muda é só a qualidade possível da solução, nunca a existência dela. O passo a
+passo de confirmação (última linha do `diagnostico.log` e o teste de import de uma linha
+no Console Python) está no
+[Guia de Roteirização](guias/roteirizacao.md#10-quando-o-qgis-fecha-sozinho-ao-calcular-a-rota).
+
+### Onde fica o botão “Reativar OR-Tools”
+
+Em **Complementos → logis → Dependências…**, na **mesma linha do status do OR-Tools**,
+logo à direita dele. O botão só fica **habilitado quando a trava está ativa**; no estado
+normal ele aparece esmaecido, porque não há nada para rearmar.
+
+Clicar nele **apaga o selo** (`core.optim_backend.reset_ortools_guard()`) e atualiza o
+status na hora. A partir daí a próxima roteirização volta a tentar o OR-Tools
+normalmente — e, se o QGIS fechar outra vez durante o import, a trava se arma de novo
+sozinha. É o botão a usar depois de reinstalar, atualizar ou remover o pacote, ou quando
+se quer conferir se o problema já passou.
+
 ## Ambientes onde a instalação pode simplesmente não dar
 
 Em instalações isoladas — **QGIS Flatpak ou Snap com Python 3.13** — pode não existir
