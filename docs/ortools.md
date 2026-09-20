@@ -2,10 +2,42 @@
 
 O logis roda **somente com PyQGIS + a biblioteca padrão do Python**. O
 [Google OR-Tools](https://developers.google.com/optimization) é um **backend opcional de
-otimização**: quando está presente, os algoritmos de roteirização e de localização de
-instalações podem delegar a solução a ele; quando não está — ou está quebrado —, o
-plugin usa as **heurísticas em Python puro**, que são o padrão obrigatório. Nada no
-logis deixa de funcionar por causa do OR-Tools.
+otimização**: quando está presente, os algoritmos de **roteirização por nós** (TSP e CVRP)
+podem delegar a solução a ele; quando não está — ou está quebrado —, o plugin usa as
+**heurísticas em Python puro**, que são o padrão obrigatório. Nada no logis deixa de
+funcionar por causa do OR-Tools.
+
+## Onde o OR-Tools entra no logis
+
+O OR-Tools entra **apenas na roteirização por nós** — TSP e CVRP — e somente
+quando o parâmetro `BACKEND` resolve para `"ortools"`. Todo o resto do plugin é
+Python puro, sem exceção.
+
+| Família de algoritmos | Usa OR-Tools? | Backend |
+|---|---|---|
+| **TSP** (`logis:vrp_tsp`) — euclidiano e em rede | Sim, via `BACKEND` | `auto` / `python` / `ortools` |
+| **CVRP** (`logis:vrp_cvrp`) — euclidiano e em rede | Sim, via `BACKEND` | `auto` / `python` / `ortools` |
+| **Arc Routing** (CPP, RPP, CARP) | Não | Python puro sempre |
+| **Localização de instalações** (p-mediana, MCLP, LSCP) | Não | Python puro sempre |
+| **Indicadores** (urbanos, regionais, resíduos) | Não | Python puro sempre |
+
+### Política de falha — três modos e uma saída imediata
+
+O plugin trata **três situações** em que o OR-Tools não pode ser usado, mais um
+atalho para quem não quer correr risco nenhum:
+
+| Modo | O que acontece | Comportamento do plugin |
+|---|---|---|
+| **Ausente** — pacote não instalado | `import ortools` levanta `ImportError` | `pick_backend()` devolve `"python"` e registra aviso no *Log de Mensagens* (aba `logis`). A roteirização sai pela heurística Python pura. |
+| **Quebrado / erro de import** — pacote instalado mas não importável (típico de Linux com versão de `numpy` ou `protobuf` incompatível) | `import ortools` levanta `ImportError` ou outra exceção | Mesmo comportamento: fallback automático para `"python"` com aviso. |
+| **Abort nativo** — o `import` derruba o processo do QGIS (fecha sem exceção, sem log) | O selo `ortools_guard.json` fica congelado em `stage = "importing"` | Na sessão seguinte, `guard_state()` lê `blocked` → `pick_backend()` devolve `"python"` sem sequer tentar o import. O status aparece em vermelho no diálogo **Dependências**; o rearme é pelo botão **Reativar OR-Tools** no mesmo diálogo. |
+
+**Saída imediata — "Python puro":** em qualquer das três situações — ou mesmo
+com o OR-Tools perfeitamente funcional —, escolher `BACKEND = 1 — Python puro
+(heurística)` no parâmetro do algoritmo (ou no combo **Backend de otimização** do
+painel) **impede qualquer import do OR-Tools**. É o modo seguro quando o
+carregamento da biblioteca derruba o QGIS: o cálculo sai inteiramente pela
+heurística nativa, sem tocar no OR-Tools.
 
 ## O comando de instalação é uma regra, não um comando fixo
 
@@ -186,8 +218,8 @@ passa por `core.optim_backend.pick_backend()`:
 - `backend="python"` (o padrão) → usa a heurística direto.
 
 Ou seja: o resultado sai de qualquer jeito. Com o OR-Tools ele tende a ser melhor e mais
-rápido; sem ele, sai pela heurística clássica (Clarke-Wright + 2-opt/Or-opt no CVRP,
-Teitz-Bart na p-mediana, guloso nas coberturas) — **soluções boas, não necessariamente
+rápido; sem ele, sai pela heurística clássica (Vizinho Mais Próximo + 2-opt/Or-opt no
+TSP, Clarke-Wright + 2-opt/Or-opt no CVRP) — **soluções boas, não necessariamente
 ótimas**.
 
 ## A trava automática: quando o OR-Tools é desativado sozinho

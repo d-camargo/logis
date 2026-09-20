@@ -142,11 +142,13 @@ class TestDockLayout(unittest.TestCase):
         self.assertIn("self.cmb_demand", content)
         self.assertIn("self.cmb_demand_field", content)
         self.assertIn("self.spin_capacity", content)
+        self.assertIn("self.cmb_cvrp_backend", content)
         self.assertIn("self.chk_cvrp_improve", content)
         self.assertIn("self.btn_run_cvrp", content)
         self.assertIn("logis:vrp_tsp", content)
         self.assertIn("logis:vrp_cvrp", content)
         self.assertIn("'BACKEND': self.cmb_tsp_backend.currentIndex()", content)
+        self.assertIn("'BACKEND': self.cmb_cvrp_backend.currentIndex()", content)
 
     def test_routing_dock_tsp_distance_mode(self):
         content = (pathlib.Path(__file__).parent / "logis/gui/routing_dock.py").read_text(
@@ -175,6 +177,24 @@ class TestDockLayout(unittest.TestCase):
         self.assertIn("Python puro (heurística)", content)
         self.assertIn("OR-Tools", content)
         self.assertIn("'BACKEND': self.cmb_tsp_backend.currentIndex()", content)
+
+    def test_routing_dock_cvrp_backend(self):
+        content = (pathlib.Path(__file__).parent / "logis/gui/routing_dock.py").read_text(
+            encoding="utf-8"
+        )
+
+        self.assertEqual(
+            content.count("self.cmb_cvrp_backend = QComboBox()"), 1,
+            "Esperado exatamente 1 combo de backend do CVRP (cmb_cvrp_backend) no painel de roteirização."
+        )
+        self.assertIn("Automático (OR-Tools quando disponível)", content)
+        self.assertIn("Python puro (heurística)", content)
+        self.assertIn("OR-Tools", content)
+        self.assertIn("'BACKEND': self.cmb_cvrp_backend.currentIndex()", content)
+
+        run_cvrp_code = content.split("def run_cvrp(self):")[1]
+        self.assertIn('optim_backend.guard_state() == "blocked"', run_cvrp_code)
+        self.assertIn("Aviso: O OR-Tools está desativado por ter derrubado a sessão anterior.", run_cvrp_code)
 
     def test_routing_dock_network_selector_is_unique(self):
         content = (pathlib.Path(__file__).parent / "logis/gui/routing_dock.py").read_text(

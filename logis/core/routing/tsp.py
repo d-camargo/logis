@@ -33,9 +33,9 @@ Complexity/Scale limits:
 from typing import List, Tuple, Optional, Dict
 
 try:
-    from ..optim_backend import pick_backend, load_routing_solver
+    from ..optim_backend import pick_backend, load_routing_solver, log_warning
 except ImportError:
-    from core.optim_backend import pick_backend, load_routing_solver
+    from core.optim_backend import pick_backend, load_routing_solver, log_warning
 
 try:
     from .vrp import _validate_matrix_and_depot, _validate_route
@@ -348,9 +348,12 @@ def solve_tsp(
 
     resolved = pick_backend(backend)
     if resolved == "ortools":
-        return solve_tsp_ortools(
-            distance_matrix, start=start, end=end, improve=improve
-        )
+        try:
+            return solve_tsp_ortools(
+                distance_matrix, start=start, end=end, improve=improve
+            )
+        except RuntimeError:
+            log_warning("OR-Tools falhou ao carregar/resolver; usando heurística Python")
 
     initial_tour = nearest_neighbor(distance_matrix, start=start, end=end)
     fixed_end = (end is not None)

@@ -22,6 +22,7 @@ from qgis.core import (
     QgsProcessingParameterField,
     QgsProcessingParameterNumber,
     QgsProcessingParameterBoolean,
+    QgsProcessingParameterEnum,
     QgsProcessingParameterFeatureSink,
     QgsCoordinateTransform,
     QgsCoordinateReferenceSystem,
@@ -34,12 +35,14 @@ from qgis.core import (
     QgsGeometry
 )
 try:
-    from ..core import qgis_compat
+    from ..core import qgis_compat, crashlog
+    from ..core.optim_backend import pick_backend
     from ..core.routing.vrp import solve_cvrp, compute_route_distance
     from ..core.network.graph_builder import build_graph
     from ..core.network.od_matrix import compute_od_matrix
 except ImportError:
-    from core import qgis_compat
+    from core import qgis_compat, crashlog
+    from core.optim_backend import pick_backend
     from core.routing.vrp import solve_cvrp, compute_route_distance
     from core.network.graph_builder import build_graph
     from core.network.od_matrix import compute_od_matrix
@@ -81,6 +84,7 @@ class VrpCvrp(QgsProcessingAlgorithm):
     CAPACITY = 'CAPACITY'
     INPUT_NETWORK = 'INPUT_NETWORK'
     IMPROVE = 'IMPROVE'
+    BACKEND = 'BACKEND'
     OUTPUT_ROUTES = 'OUTPUT_ROUTES'
     OUTPUT_STOPS = 'OUTPUT_STOPS'
 
@@ -137,6 +141,18 @@ class VrpCvrp(QgsProcessingAlgorithm):
             )
         )
         self.addParameter(
+            QgsProcessingParameterEnum(
+                self.BACKEND,
+                self.tr("Backend de otimização"),
+                options=[
+                    self.tr("Automático (OR-Tools quando disponível)"),
+                    self.tr("Python puro (heurística)"),
+                    self.tr("OR-Tools")
+                ],
+                defaultValue=0
+            )
+        )
+        self.addParameter(
             QgsProcessingParameterFeatureSink(
                 self.OUTPUT_ROUTES,
                 self.tr("Rotas geradas")
@@ -157,6 +173,14 @@ class VrpCvrp(QgsProcessingAlgorithm):
         capacity = self.parameterAsDouble(parameters, self.CAPACITY, context)
         network_layer = self.parameterAsVectorLayer(parameters, self.INPUT_NETWORK, context)
         improve = self.parameterAsBool(parameters, self.IMPROVE, context)
+        backend_idx = self.parameterAsEnum(parameters, self.BACKEND, context)
+
+        if backend_idx == 1:
+            req_backend = "python"
+        elif backend_idx == 2:
+            req_backend = "ortools"
+        else:
+            req_backend = pick_backend("ortools")
 
         if depot_source is None:
             raise QgsProcessingException(self.tr("Camada de depósito inválida."))
@@ -166,6 +190,9 @@ class VrpCvrp(QgsProcessingAlgorithm):
             raise QgsProcessingException(self.tr("A capacidade do veículo deve ser estritamente maior que zero."))
 
         # 1) CRS de cálculo
+        dist_mode = "rede" if (network_layer and network_layer.isValid()) else "euclidiana"
+        crashlog.mark("cvrp-inicio", f"modo={dist_mode} backend={req_backend}")
+
         if network_layer and network_layer.isValid():
             target_crs = QgsCoordinateReferenceSystem("EPSG:5880")
         else:
@@ -230,12 +257,15 @@ class VrpCvrp(QgsProcessingAlgorithm):
         if not demand_points:
             raise QgsProcessingException(self.tr("Nenhum ponto de demanda válido encontrado."))
 
+        crashlog.mark("cvrp-transform", f"1 deposito, {len(demand_points)} demandas -> CRS {target_crs.authid()}")
+
         # 4) Matriz de distâncias (Nó 0 = depósito, Nôs 1..N = demandas)
         all_points = [depot_pt] + demand_points
         all_demands = [0.0] + demand_weights
 
         if network_layer and network_layer.isValid():
             feedback.pushInfo(self.tr("Construindo o grafo e calculando a matriz OD na rede..."))
+            crashlog.mark("cvrp-build-graph", f"camada com {network_layer.featureCount()} feicoes")
             try:
                 res = build_graph(network_layer, target_crs=target_crs, points=all_points)
             except Exception as exc:
@@ -247,8 +277,11 @@ class VrpCvrp(QgsProcessingAlgorithm):
             if graph is None or graph.vertexCount() < 2:
                 raise QgsProcessingException(self.tr("O grafo construído possui menos de 2 vértices."))
 
+            crashlog.mark("cvrp-grafo-pronto", f"{graph.vertexCount()} vertices, {graph.edgeCount()} arestas")
+
             vertices = [graph.findVertex(pt) for pt in snapped_points]
 
+            crashlog.mark("cvrp-od-matrix", "Dijkstra multi-origem")
             try:
                 cost_matrix = compute_od_matrix(
                     graph=graph,
@@ -269,30 +302,37 @@ class VrpCvrp(QgsProcessingAlgorithm):
                 cost_matrix.append(row)
 
         # 5) Resolução do CVRP
-        feedback.pushInfo(self.tr("Executando a otimização CVRP (Clarke-Wright + 2-opt/Or-opt)..."))
+        used_backend = pick_backend(req_backend)
+        feedback.pushInfo(self.tr("Executando a otimização CVRP..."))
+        crashlog.mark("cvrp-ortools-import", f"backend resolvido: {used_backend}")
         try:
             routes, total_distance, route_loads = solve_cvrp(
                 distance_matrix=cost_matrix,
                 demands=all_demands,
                 capacity=capacity,
                 depot=0,
-                improve=improve
+                improve=improve,
+                backend=req_backend
             )
         except ValueError as exc:
             raise QgsProcessingException(str(exc))
 
+        crashlog.mark("cvrp-solver-ok", f"custo={total_distance:.1f}")
+
         feedback.pushInfo(
-            self.tr("Roteirização concluída. Rotas geradas: {count} | Distância Total: {dist:.2f}").format(
-                count=len(routes), dist=total_distance
+            self.tr("Roteirização concluída. Rotas geradas: {count} | Backend: {backend} | Distância Total: {dist:.2f}").format(
+                count=len(routes), backend=used_backend, dist=total_distance
             )
         )
 
         # 6) Gravação dos resultados nas camadas de saída
+        crashlog.mark("cvrp-sinks", "gravando camadas de saida")
         route_fields = QgsFields()
         route_fields.append(QgsField("route_id", qgis_compat.field_type("int")))
         route_fields.append(QgsField("stop_count", qgis_compat.field_type("int")))
         route_fields.append(QgsField("route_load", qgis_compat.field_type("double")))
         route_fields.append(QgsField("route_dist", qgis_compat.field_type("double")))
+        route_fields.append(QgsField("backend", qgis_compat.field_type("string")))
 
         (sink_routes, dest_routes) = self.parameterAsSink(
             parameters,
@@ -328,7 +368,7 @@ class VrpCvrp(QgsProcessingAlgorithm):
                 geom = QgsGeometry.fromPolylineXY(pts)
                 feat = QgsFeature(route_fields)
                 feat.setGeometry(geom)
-                feat.setAttributes([route_idx, len(route_nodes), r_load, r_dist])
+                feat.setAttributes([route_idx, len(route_nodes), r_load, r_dist, used_backend])
                 sink_routes.addFeature(feat, QgsFeatureSink.Flag.FastInsert)
 
             if sink_stops is not None:
@@ -341,6 +381,8 @@ class VrpCvrp(QgsProcessingAlgorithm):
                     attrs.extend([route_idx, seq_idx, cum_load])
                     stop_feat.setAttributes(attrs)
                     sink_stops.addFeature(stop_feat, QgsFeatureSink.Flag.FastInsert)
+
+        crashlog.mark("cvrp-fim", "concluido")
 
         results = {self.OUTPUT_ROUTES: dest_routes}
         if sink_stops is not None:
@@ -373,7 +415,8 @@ class VrpCvrp(QgsProcessingAlgorithm):
             "- Campo de peso/demanda: campo numérico da demanda de cada cliente (opcional, default=1.0).\n"
             "- Capacidade do veículo: carga máxima transportada por cada veículo em uma rota.\n"
             "- Camada de rede viária: rede viária para distâncias reais (opcional, usa distância euclidiana se omitida).\n"
-            "- Aplicar busca local: se verdadeiro, aplica 2-opt e Or-opt para otimização de cada rota.\n\n"
+            "- Aplicar busca local: se verdadeiro, aplica 2-opt e Or-opt para otimização de cada rota.\n"
+            "- Backend de otimização: qual motor usar (Automático/Python/OR-Tools).\n\n"
             "Saídas:\n"
             "- Rotas geradas: camada de linhas com a geometria das rotas e estatísticas de carga e distância.\n"
             "- Paradas por rota: camada de pontos ordenada com atribuição de rota e carga acumulada."

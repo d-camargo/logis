@@ -383,6 +383,23 @@ class RoutingDock(QgsDockWidget):
         self.spin_capacity.setSingleStep(10.0)
         layout.addWidget(self.spin_capacity)
 
+        # Backend de otimização
+        layout.addWidget(QLabel(self.tr("Backend de otimização:")))
+        self.cmb_cvrp_backend = QComboBox()
+        self.cmb_cvrp_backend.addItems([
+            self.tr("Automático (OR-Tools quando disponível)"),
+            self.tr("Python puro (heurística)"),
+            self.tr("OR-Tools")
+        ])
+        layout.addWidget(self.cmb_cvrp_backend)
+
+        cvrp_backend_desc = QLabel(
+            self.tr("Nota: Em modo automático, o OR-Tools é utilizado se disponível, com fallback para Python puro.")
+        )
+        cvrp_backend_desc.setStyleSheet("color: #666; font-size: 11px;")
+        cvrp_backend_desc.setWordWrap(True)
+        layout.addWidget(cvrp_backend_desc)
+
         # Checkbox para busca local (2-opt e Or-opt)
         self.chk_cvrp_improve = QCheckBox(self.tr("Aplicar busca local (2-opt e Or-opt)"))
         self.chk_cvrp_improve.setChecked(True)
@@ -623,6 +640,14 @@ class RoutingDock(QgsDockWidget):
         self.btn_run_cvrp.setEnabled(False)
         self.txt_results.append(self.tr("<b>=== EXECUTANDO ROTEIRIZAÇÃO (CVRP) ===</b><br>"))
 
+        if optim_backend and optim_backend.guard_state() == "blocked":
+            self.txt_results.append(
+                self.tr(
+                    "<span style='color: #ecc94b;'>Aviso: O OR-Tools está desativado por ter derrubado a sessão anterior. "
+                    "O rearme fica no diálogo de Dependências.</span><br>"
+                )
+            )
+
         try:
             params = {
                 'INPUT_DEPOT': depot_layer,
@@ -631,6 +656,7 @@ class RoutingDock(QgsDockWidget):
                 'CAPACITY': capacity,
                 'INPUT_NETWORK': network_layer if network_layer else None,
                 'IMPROVE': improve,
+                'BACKEND': self.cmb_cvrp_backend.currentIndex(),
                 'OUTPUT_ROUTES': 'memory:',
                 'OUTPUT_STOPS': 'memory:'
             }

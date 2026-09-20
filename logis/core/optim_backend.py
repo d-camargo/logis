@@ -16,6 +16,14 @@ from logis.core import downloader
 # Tag para log de mensagens do QGIS
 LOG_TAG = "logis"
 
+def log_warning(message):
+    """Registra aviso no Log de Mensagens do QGIS (tag 'logis'); usa logging quando sem QGIS."""
+    if QgsMessageLog is not None and Qgis is not None:
+        QgsMessageLog.logMessage(message, LOG_TAG, Qgis.MessageLevel.Warning)
+    else:
+        import logging
+        logging.warning(f"[{LOG_TAG}] {message}")
+
 def _guard_path():
     return os.path.join(downloader.cache_dir(), "ortools_guard.json")
 
@@ -102,12 +110,7 @@ def has_ortools():
         return True
     except Exception as e:
         if not isinstance(e, ImportError):
-            msg = f"Erro ao importar ortools: {e}"
-            if QgsMessageLog is not None and Qgis is not None:
-                QgsMessageLog.logMessage(msg, LOG_TAG, Qgis.MessageLevel.Warning)
-            else:
-                import logging
-                logging.warning(f"[{LOG_TAG}] {msg}")
+            log_warning(f"Erro ao importar ortools: {e}")
         return False
 
 
@@ -127,24 +130,14 @@ def pick_backend(preferred="ortools"):
     """
     if preferred == "ortools":
         if guard_state() == "blocked":
-            msg = "OR-Tools foi desativado porque o QGIS fechou durante a última tentativa de carregá-lo."
-            if QgsMessageLog is not None and Qgis is not None:
-                QgsMessageLog.logMessage(msg, LOG_TAG, Qgis.MessageLevel.Warning)
-            else:
-                import logging
-                logging.warning(f"[{LOG_TAG}] {msg}")
+            log_warning("OR-Tools foi desativado porque o QGIS fechou durante a última tentativa de carregá-lo.")
             return "python"
 
         if has_ortools():
             return "ortools"
         else:
             # Fallback para heurística em Python puro com log de aviso
-            msg = "OR-Tools não está instalado ou disponível. Usando backend heurístico em Python puro."
-            if QgsMessageLog is not None and Qgis is not None:
-                QgsMessageLog.logMessage(msg, LOG_TAG, Qgis.MessageLevel.Warning)
-            else:
-                import logging
-                logging.warning(f"[{LOG_TAG}] {msg}")
+            log_warning("OR-Tools não está instalado ou disponível. Usando backend heurístico em Python puro.")
             return "python"
 
     return "python"

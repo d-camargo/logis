@@ -30,9 +30,9 @@ import math
 from typing import List, Tuple, Optional
 
 try:
-    from ..optim_backend import pick_backend, load_routing_solver
+    from ..optim_backend import pick_backend, load_routing_solver, log_warning
 except ImportError:
-    from core.optim_backend import pick_backend, load_routing_solver
+    from core.optim_backend import pick_backend, load_routing_solver, log_warning
 
 _TIME_LIMIT_SECONDS: int = 10
 
@@ -416,9 +416,12 @@ def solve_cvrp(
     """
     resolved = pick_backend(backend)
     if resolved == "ortools":
-        return solve_cvrp_ortools(
-            distance_matrix, demands, capacity, depot=depot, improve=improve
-        )
+        try:
+            return solve_cvrp_ortools(
+                distance_matrix, demands, capacity, depot=depot, improve=improve
+            )
+        except RuntimeError:
+            log_warning("OR-Tools falhou ao carregar/resolver; usando heurística Python")
 
     routes, _, route_loads = clarke_wright_savings(
         distance_matrix, demands, capacity, depot=depot

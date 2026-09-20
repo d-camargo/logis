@@ -70,8 +70,12 @@ Onde:
 | `CAPACITY` | Capacidade do veículo | `QgsProcessingParameterNumber` (`Double`) | Capacidade máxima de carga transportada por veículo em uma rota ($C > 0$). | `100.0` (min: `0.0001`) |
 | `INPUT_NETWORK` | Camada de rede viária (Linhas) (opcional) | `QgsProcessingParameterFeatureSource` (`TypeVectorLine`) | Malha viária para cálculo de distâncias e rotas reais via Dijkstra (`QgsGraph`). Se omitida, utiliza distância euclidiana direta. | `None` (Opcional) |
 | `IMPROVE` | Aplicar busca local (2-opt e Or-opt) | `QgsProcessingParameterBoolean` | Se verdadeiro, aplica os algoritmos de refinamento de busca local (2-opt e Or-opt) em cada rota gerada. | `True` |
+| `BACKEND` | Backend de otimização | `QgsProcessingParameterEnum` | Solver que resolve a instância: `0` — *Automático (OR-Tools quando disponível)*, `1` — *Python puro (heurística)*, `2` — *OR-Tools*. Todas as opções passam por `pick_backend` e caem na heurística Python quando o OR-Tools não está disponível; só a opção `1` evita importar a biblioteca. | `0` (Automático) |
 | `OUTPUT_ROUTES` | Rotas geradas | `QgsProcessingParameterFeatureSink` | Camada vetorial de saída contendo as linhas das rotas geradas. | *Obrigatório* |
 | `OUTPUT_STOPS` | Paradas por rota (opcional) | `QgsProcessingParameterFeatureSink` | Camada vetorial de saída contendo os pontos de parada ordenados. | `None` (Opcional) |
+
+> [!NOTE]
+> **O backend é escolhido no parâmetro `BACKEND`.** No modo padrão (`0 — Automático`) o OR-Tools é usado quando o pacote está instalado, com fallback silencioso para a heurística Python. Escolher `1 — Python puro (heurística)` força a heurística nativa e impede qualquer import do OR-Tools — é o modo a usar quando o QGIS fecha sozinho durante o cálculo. O backend efetivamente usado sai no campo `backend` da camada de rotas.
 
 ### Saídas e Resultados Gerados
 

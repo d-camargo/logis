@@ -280,6 +280,36 @@ class TestVRP(unittest.TestCase):
         self.assertAlmostEqual(total_dist, 0.0)
         self.assertEqual(loads, [])
 
+    def test_solve_cvrp_ortools_runtime_error_fallback(self):
+        # Mock de solve_cvrp_ortools levantando RuntimeError -> solve_cvrp devolve rotas válidas pela heurística
+        with patch("logis.core.routing.vrp.pick_backend", return_value="ortools"), \
+             patch("logis.core.routing.vrp.solve_cvrp_ortools", side_effect=RuntimeError("Erro OR-Tools")):
+            routes, dist, loads = solve_cvrp(
+                self.distance_matrix, self.demands, self.capacity, depot=0, backend="ortools"
+            )
+
+        routes_py, dist_py, loads_py = solve_cvrp(
+            self.distance_matrix, self.demands, self.capacity, depot=0, backend="python"
+        )
+        self.assertEqual(routes, routes_py)
+        self.assertAlmostEqual(dist, dist_py)
+        self.assertEqual(loads, loads_py)
+
+    def test_solve_cvrp_ortools_happy_path_mock(self):
+        # Caminho feliz OR-Tools intacto (mock devolvendo rotas)
+        expected_routes = [[1, 2], [3]]
+        expected_dist = 65.0
+        expected_loads = [10.0, 8.0]
+        with patch("logis.core.routing.vrp.pick_backend", return_value="ortools"), \
+             patch("logis.core.routing.vrp.solve_cvrp_ortools", return_value=(expected_routes, expected_dist, expected_loads)):
+            routes, dist, loads = solve_cvrp(
+                self.distance_matrix, self.demands, self.capacity, depot=0, backend="ortools"
+            )
+
+        self.assertEqual(routes, expected_routes)
+        self.assertAlmostEqual(dist, expected_dist)
+        self.assertEqual(loads, expected_loads)
+
 
 if __name__ == "__main__":
     unittest.main()

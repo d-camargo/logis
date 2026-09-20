@@ -195,7 +195,7 @@ class TestTSP(unittest.TestCase):
             self.assertIn("Complementos → logis → Dependências…", str(ctx.exception))
 
     def test_solve_tsp_blocked_guard_uses_python_fallback(self):
-        # Com o selo bloqueado, solve_tsp devolve tour válido pela heurística Python sem tocar em ortools
+        # (b) Com o selo bloqueado, solve_tsp devolve tour válido pela heurística Python sem tocar em ortools
         with patch("logis.core.optim_backend.guard_state", return_value="blocked"), \
              patch("logis.core.routing.tsp.load_routing_solver") as mock_load:
             tour, cost = solve_tsp(self.distance_matrix, start=0, backend="ortools")
@@ -205,6 +205,27 @@ class TestTSP(unittest.TestCase):
             tour_py, cost_py = solve_tsp(self.distance_matrix, start=0, backend="python")
             self.assertEqual(tour, tour_py)
             self.assertAlmostEqual(cost, cost_py)
+
+    def test_solve_tsp_ortools_runtime_error_fallback(self):
+        # (a) mock de solve_tsp_ortools levantando RuntimeError -> solve_tsp devolve tour válido pela heurística
+        with patch("logis.core.routing.tsp.pick_backend", return_value="ortools"), \
+             patch("logis.core.routing.tsp.solve_tsp_ortools", side_effect=RuntimeError("Erro OR-Tools")):
+            tour, cost = solve_tsp(self.distance_matrix, start=0, backend="ortools")
+
+        tour_py, cost_py = solve_tsp(self.distance_matrix, start=0, backend="python")
+        self.assertEqual(tour, tour_py)
+        self.assertAlmostEqual(cost, cost_py)
+
+    def test_solve_tsp_ortools_happy_path_mock(self):
+        # (c) caminho feliz OR-Tools intacto (mock devolvendo tour)
+        expected_tour = [0, 1, 3, 2]
+        expected_cost = 80.0
+        with patch("logis.core.routing.tsp.pick_backend", return_value="ortools"), \
+             patch("logis.core.routing.tsp.solve_tsp_ortools", return_value=(expected_tour, expected_cost)):
+            tour, cost = solve_tsp(self.distance_matrix, start=0, backend="ortools")
+
+        self.assertEqual(tour, expected_tour)
+        self.assertEqual(cost, expected_cost)
 
     def test_split_legs_and_summarize_legs(self):
         # (i) split_legs/summarize_legs (D-E):

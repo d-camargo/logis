@@ -2,6 +2,14 @@
 
 Este documento registra as principais alterações e evoluções do plugin **logis** organizadas por versão.
 
+## 0.4.0 - 2026-09-20
+
+- **Seletor de Backend no CVRP** — parâmetro `BACKEND` no algoritmo `logis:vrp_cvrp` e seletor de backend de otimização na aba CVRP do painel de Roteirização.
+- **Mudança de Comportamento no CVRP** — no modo "Automático", a roteirização CVRP agora utiliza OR-Tools por padrão quando disponível no ambiente.
+- **Fallback Consistente do OR-Tools** — tratamento gracioso de falhas com fallback automático para heurísticas em Python puro em TSP e CVRP.
+- **Rastro de Crashes no CVRP** — captura e exibição de rastro de diagnósticos e exceções durante a solução do CVRP.
+- **Correção nos Textos do OR-Tools** — o diálogo de Dependências e a documentação não atribuem mais a localização de instalações ao OR-Tools: o pacote é apresentado apenas como backend de roteirização (TSP/CVRP), com a localização de instalações executada em Python puro por projeto.
+
 ## 0.3.0 - 2026-09-19
 
 - **Rastro de Diagnóstico** — captura e exibição de rastro detalhado de diagnóstico para apoio à depuração em rotinas do plugin.

@@ -105,6 +105,13 @@ class TestDependenciesDialog(unittest.TestCase):
         self.assertIn("QGIS fechou durante o carregamento do OR-Tools", self.dialog_content)
         self.assertIn("heurística Python", self.dialog_content)
 
+    def test_ortools_group_title_and_description(self):
+        """Verifica se o título do grupo OR-Tools e sua descrição refletem escopo correto de rotas vs instalações."""
+        self.assertIn("Google OR-Tools (Otimização de Rotas)", self.dialog_content)
+        self.assertNotIn("Google OR-Tools (Otimização de Rotas e Instalações)", self.dialog_content)
+        self.assertIn("TSP e CVRP", self.dialog_content)
+        self.assertIn("p-mediana, MCLP e LSCP", self.dialog_content)
+
 
 if __name__ == "__main__":
     unittest.main()

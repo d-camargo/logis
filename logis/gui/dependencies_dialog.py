@@ -282,7 +282,7 @@ class DependenciesDialog(QDialog):
         layout.addWidget(self.gisbr_group)
         
         # --- SEÇÃO 2: OR-Tools ---
-        self.ortools_group = QGroupBox("Google OR-Tools (Otimização de Rotas e Instalações)")
+        self.ortools_group = QGroupBox("Google OR-Tools (Otimização de Rotas)")
         self.ortools_group.setStyleSheet("QGroupBox::title { font-weight: bold; }")
         ortools_layout = QVBoxLayout()
         ortools_layout.setSpacing(8)
@@ -303,9 +303,10 @@ class DependenciesDialog(QDialog):
         ortools_layout.addLayout(ortools_status_layout)
         
         ortools_desc = QLabel(
-            "O OR-Tools é uma biblioteca do Google para resolver problemas complexos de otimização de rotas "
-            "e localização de instalações. O logis possui heurísticas internas em Python puro, mas o "
-            "OR-Tools é recomendado para maior velocidade e precisão.\n\n"
+            "O OR-Tools é uma biblioteca do Google para resolver problemas complexos de otimização de rotas. "
+            "No logis, os algoritmos de roteirização (TSP e CVRP) utilizam o OR-Tools quando disponível, "
+            "enquanto a localização de instalações (p-mediana, MCLP e LSCP) é executada via heurísticas em Python puro por projeto. "
+            "O plugin possui heurísticas em Python para roteirização como fallback, mas o OR-Tools é recomendado para maior velocidade e precisão.\n\n"
             "Você pode instalar o pacote diretamente pelo botão abaixo ou executar o comando manual no terminal do seu sistema."
         )
         ortools_desc.setStyleSheet("font-weight: normal; color: #555; font-size: 11px;")

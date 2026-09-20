@@ -216,7 +216,14 @@ use a aba CVRP.
    a lista de campos acompanha a camada de demanda escolhida no passo anterior.
 6. **Capacidade do veículo** — na mesma unidade do campo de peso.
 7. **Aplicar busca local (2-opt e Or-opt)** — marcada por padrão.
-8. Botão **Executar Roteirização (CVRP)**.
+8. **Backend de otimização** — combo com três opções:
+   - **Automático (OR-Tools quando disponível)** — o padrão; usa OR-Tools se
+     instalado, senão heurística Python pura.
+   - **Python puro (heurística)** — força a heurística nativa, sem importar o
+     OR-Tools em momento nenhum (modo seguro quando o carregamento da biblioteca
+     derruba o QGIS).
+   - **OR-Tools** — força OR-Tools; cai no fallback Python se não disponível.
+9. Botão **Executar Roteirização (CVRP)**.
 
 Depósito e demanda são obrigatórios: sem eles, o painel abre um aviso e não executa. As
 duas camadas de saída (**Rotas geradas** e **Paradas por rota**) são criadas **em
@@ -234,6 +241,7 @@ O painel abre com quatro totais e, em seguida, uma linha por rota:
 | **Carga total** | soma de `route_load` | Soma das demandas atendidas, na unidade do campo de peso (ou o número de paradas, quando o campo fica vazio). |
 | **Distância total** | soma de `route_dist` | Quilometragem do plano inteiro, na unidade do CRS de cálculo (metros). |
 | **Rota N: k paradas \| carga L \| distância D** | `route_id`, `stop_count`, `route_load`, `route_dist` | Uma linha por rota gerada — é por aqui que se vê o **equilíbrio da frota**: rotas com carga muito abaixo da capacidade, ou uma rota muito mais longa que as demais. |
+| **Backend de otimização** | `backend` | `ortools` quando o OR-Tools resolveu a instância, ou `python` quando caiu no fallback da heurística nativa. |
 
 ### Ler as camadas de saída
 
@@ -246,6 +254,7 @@ clientes → depósito:
 | `stop_count` | Quantidade de clientes atendidos nessa rota. |
 | `route_load` | Carga total transportada na rota — comparar com a capacidade informada mostra a folga do veículo. |
 | `route_dist` | Distância total da rota, ida e volta ao depósito. |
+| `backend` | Backend efetivamente utilizado na otimização: `ortools` ou `python`. |
 
 **Paradas por rota** (pontos) — uma feição por cliente, com os atributos originais da
 camada de demanda acrescidos de:
