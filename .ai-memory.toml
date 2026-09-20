@@ -1,0 +1,6 @@
+workspace = "hermes"
+project = "logis"
+project_strategy = "repo-root"
+
+[capture]
+ignore_paths = [".env", ".planexec/**", "*.db", "dist/**", ".git/hooks/**"]
