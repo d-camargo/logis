@@ -38,6 +38,11 @@ except ImportError:
     from core.optim_backend import pick_backend, load_routing_solver, log_warning
 
 try:
+    from ..progress import NullProgress
+except ImportError:
+    from core.progress import NullProgress
+
+try:
     from .vrp import _validate_matrix_and_depot, _validate_route
 except ImportError:
     from core.routing.vrp import _validate_matrix_and_depot, _validate_route
@@ -147,7 +152,8 @@ def two_opt_tour(
     order: List[int],
     distance_matrix: List[List[float]],
     closed: bool = True,
-    fixed_end: bool = False
+    fixed_end: bool = False,
+    feedback=None
 ) -> Tuple[List[int], float]:
     """Aplica a busca local 2-opt para melhorar um tour TSP.
 
@@ -177,6 +183,9 @@ def two_opt_tour(
     Raises:
         ValueError: Se a matriz ou os nós do tour forem inválidos.
     """
+    if feedback is None:
+        feedback = NullProgress()
+
     if not order:
         return [], 0.0
 
@@ -192,6 +201,8 @@ def two_opt_tour(
 
     improved = True
     while improved:
+        if feedback.isCanceled():
+            break
         improved = False
         max_j = n - 2 if fixed_end else n - 1
         for i in range(1, max_j):
@@ -214,7 +225,8 @@ def or_opt_tour(
     distance_matrix: List[List[float]],
     closed: bool = True,
     fixed_end: bool = False,
-    segment_lengths: Tuple[int, ...] = (1, 2, 3)
+    segment_lengths: Tuple[int, ...] = (1, 2, 3),
+    feedback=None
 ) -> Tuple[List[int], float]:
     """Aplica a busca local Or-opt para melhorar um tour TSP.
 
@@ -245,6 +257,9 @@ def or_opt_tour(
     Raises:
         ValueError: Se a matriz ou os nós do tour forem inválidos.
     """
+    if feedback is None:
+        feedback = NullProgress()
+
     if not order:
         return [], 0.0
 
@@ -260,6 +275,8 @@ def or_opt_tour(
 
     improved = True
     while improved:
+        if feedback.isCanceled():
+            break
         improved = False
         n = len(best_order)
         for length in segment_lengths:
@@ -294,7 +311,8 @@ def solve_tsp(
     start: int = 0,
     end: Optional[int] = None,
     improve: bool = True,
-    backend: str = "ortools"
+    backend: str = "ortools",
+    feedback=None
 ) -> Tuple[List[int], float]:
     """Resolve o Caixeiro Viajante (TSP) usando heurísticas ou OR-Tools.
 
@@ -327,6 +345,9 @@ def solve_tsp(
     Raises:
         ValueError: Se a matriz for inválida, end == start, ou índices fora do intervalo.
     """
+    if feedback is None:
+        feedback = NullProgress()
+
     num_nodes = _validate_matrix_and_depot(distance_matrix, depot=start)
 
     if end is not None:
@@ -350,7 +371,7 @@ def solve_tsp(
     if resolved == "ortools":
         try:
             return solve_tsp_ortools(
-                distance_matrix, start=start, end=end, improve=improve
+                distance_matrix, start=start, end=end, improve=improve, feedback=feedback
             )
         except RuntimeError:
             log_warning("OR-Tools falhou ao carregar/resolver; usando heurística Python")
@@ -362,9 +383,16 @@ def solve_tsp(
     curr_cost = compute_tour_cost(curr_tour, distance_matrix, closed=closed)
 
     if improve and len(curr_tour) > 2:
+        rounds = 0
         while True:
-            curr_tour, _ = two_opt_tour(curr_tour, distance_matrix, closed=closed, fixed_end=fixed_end)
-            curr_tour, _ = or_opt_tour(curr_tour, distance_matrix, closed=closed, fixed_end=fixed_end)
+            rounds += 1
+            feedback.pushInfo(f"TSP Heurística: round {rounds}, custo atual {curr_cost:.2f}")
+            progress = min(100.0, rounds * 5.0)
+            feedback.setProgress(progress)
+            if feedback.isCanceled():
+                break
+            curr_tour, _ = two_opt_tour(curr_tour, distance_matrix, closed=closed, fixed_end=fixed_end, feedback=feedback)
+            curr_tour, _ = or_opt_tour(curr_tour, distance_matrix, closed=closed, fixed_end=fixed_end, feedback=feedback)
             new_cost = compute_tour_cost(curr_tour, distance_matrix, closed=closed)
             if new_cost >= curr_cost - 1e-9:
                 break
@@ -377,7 +405,8 @@ def solve_tsp_ortools(
     distance_matrix: List[List[float]],
     start: int = 0,
     end: Optional[int] = None,
-    improve: bool = True
+    improve: bool = True,
+    feedback=None
 ) -> Tuple[List[int], float]:
     """Resolve o Caixeiro Viajante (TSP) usando Google OR-Tools.
 
@@ -405,6 +434,9 @@ def solve_tsp_ortools(
         ValueError: Se a matriz for inválida, end == start, ou índices fora do intervalo.
         RuntimeError: Se o OR-Tools não estiver instalado ou se nenhuma solução for encontrada.
     """
+    if feedback is None:
+        feedback = NullProgress()
+
     num_nodes = _validate_matrix_and_depot(distance_matrix, depot=start)
 
     if end is not None:
@@ -456,6 +488,34 @@ def solve_tsp_ortools(
             routing_enums_pb2.LocalSearchMetaheuristic.GUIDED_LOCAL_SEARCH
         )
         search_parameters.time_limit.seconds = _TIME_LIMIT_SECONDS
+
+    import time
+    start_time = time.time()
+    last_log_time = 0.0
+
+    def cb():
+        nonlocal last_log_time
+        elapsed = time.time() - start_time
+        if _TIME_LIMIT_SECONDS > 0:
+            progress = min(100.0, 100.0 * elapsed / _TIME_LIMIT_SECONDS)
+            feedback.setProgress(progress)
+        
+        if elapsed - last_log_time >= 1.0:
+            if hasattr(routing, 'CostVar'):
+                cost = routing.CostVar().Min() / 1000.0
+                feedback.pushInfo(f"OR-Tools: nova solução encontrada (custo {cost:.2f})")
+            else:
+                feedback.pushInfo("OR-Tools: nova solução encontrada")
+            last_log_time = elapsed
+            
+        if feedback.isCanceled():
+            try:
+                if hasattr(routing, 'solver'):
+                    routing.solver().FinishCurrentSearch()
+            except Exception as exc:
+                log_warning(f"Erro ao interromper busca do OR-Tools: {exc}")
+
+    routing.AddAtSolutionCallback(cb)
 
     solution = routing.SolveWithParameters(search_parameters)
 

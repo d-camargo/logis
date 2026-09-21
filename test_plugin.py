@@ -180,6 +180,33 @@ class TestLogisPlugin(unittest.TestCase):
         self.assertTrue(hasattr(dock, "cmb_tsp_mode"))
         self.assertEqual(dock.cmb_tsp_mode.count(), 2)
 
+    def test_routing_dock_progress_controls(self):
+        self.plugin.initGui()
+        self.plugin.show_routing_dock()
+        dock = self.plugin.dock_routing
+        self.assertIsNotNone(dock)
+        self.assertTrue(hasattr(dock, "prg_run"))
+        self.assertTrue(hasattr(dock, "btn_cancel"))
+        self.assertTrue(hasattr(dock, "_start_progress"))
+        self.assertTrue(hasattr(dock, "_update_progress"))
+        self.assertTrue(hasattr(dock, "_finish_progress"))
+
+        dock._start_progress("Test Task")
+        self.assertFalse(dock.prg_run.isHidden())
+        self.assertTrue(dock.btn_cancel.isEnabled())
+        self.assertFalse(dock.btn_run_tsp.isEnabled())
+        self.assertFalse(dock.btn_run_cvrp.isEnabled())
+
+        dock._update_progress(42)
+        val = dock.prg_run.value() if hasattr(dock.prg_run, 'value') else dock.prg_run._value
+        self.assertEqual(val, 42)
+
+        dock._finish_progress()
+        self.assertTrue(dock.prg_run.isHidden())
+        self.assertFalse(dock.btn_cancel.isEnabled())
+        self.assertTrue(dock.btn_run_tsp.isEnabled())
+        self.assertTrue(dock.btn_run_cvrp.isEnabled())
+
     def test_open_docs(self):
         from unittest.mock import patch
         from logis.logis_plugin import DOCS_URL

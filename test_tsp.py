@@ -15,6 +15,23 @@ from logis.core.routing.tsp import (
 )
 from logis.core.optim_backend import has_ortools
 
+class FakeFeedback:
+    def __init__(self, cancel_after_n_progress=9999):
+        self.progresses = []
+        self.infos = []
+        self.cancel_after = cancel_after_n_progress
+        self.progress_count = 0
+        self._canceled = False
+    def setProgress(self, progress: float):
+        self.progresses.append(progress)
+        self.progress_count += 1
+        if self.progress_count >= self.cancel_after:
+            self._canceled = True
+    def pushInfo(self, info: str):
+        self.infos.append(info)
+    def isCanceled(self) -> bool:
+        return self._canceled
+
 
 class TestTSP(unittest.TestCase):
     def setUp(self):
@@ -227,6 +244,40 @@ class TestTSP(unittest.TestCase):
         self.assertEqual(tour, expected_tour)
         self.assertEqual(cost, expected_cost)
 
+    def test_solve_tsp_with_feedback(self):
+        # (a) solve_tsp com feedback reporta progresso e termina
+        fb = FakeFeedback()
+        tour, cost = solve_tsp(self.distance_matrix, start=0, backend="python", improve=True, feedback=fb)
+        self.assertEqual(sorted(tour), [0, 1, 2, 3])
+        self.assertTrue(len(fb.progresses) > 0)
+        self.assertTrue(len(fb.infos) > 0)
+
+    def test_solve_tsp_canceled_feedback(self):
+        # (b) feedback já cancelado devolve tour válido rapidamente, sem exceção
+        fb = FakeFeedback(cancel_after_n_progress=0) # cancela imediatamente
+        fb._canceled = True
+        tour, cost = solve_tsp(self.distance_matrix, start=0, backend="python", improve=True, feedback=fb)
+        self.assertEqual(len(tour), 4) # devolve tour valido
+        self.assertEqual(sorted(tour), [0, 1, 2, 3])
+
+        fb2 = FakeFeedback(cancel_after_n_progress=1)
+        tour2, cost2 = solve_tsp(self.distance_matrix, start=0, backend="ortools", improve=True, feedback=fb2)
+        self.assertEqual(len(tour2), 4)
+
+    def test_solve_tsp_none_feedback(self):
+        # (c) feedback=None (padrão) continua idêntico
+        tour, cost = solve_tsp(self.distance_matrix, start=0, backend="python", improve=True)
+        self.assertEqual(sorted(tour), [0, 1, 2, 3])
+
+    def test_solve_tsp_fallback_with_feedback(self):
+        # (d) o fallback RuntimeError -> heurística segue valendo com feedback
+        fb = FakeFeedback()
+        with patch("logis.core.routing.tsp.pick_backend", return_value="ortools"), \
+             patch("logis.core.routing.tsp.solve_tsp_ortools", side_effect=RuntimeError("Erro")):
+            tour, cost = solve_tsp(self.distance_matrix, start=0, backend="ortools", improve=True, feedback=fb)
+        self.assertEqual(sorted(tour), [0, 1, 2, 3])
+        self.assertTrue(len(fb.progresses) > 0)
+
     def test_split_legs_and_summarize_legs(self):
         # (i) split_legs/summarize_legs (D-E):
         # num tour fechado de 4 nós (início + 3 paradas) saem 4 pernas, exatamente uma 'acesso' e uma 'retorno',
@@ -426,6 +477,26 @@ class TestVrpTspAlgorithm(unittest.TestCase):
     def test_provider_imports_and_registers_vrptsp(self):
         self.assertIn("from .algorithms.vrp_tsp import VrpTsp", self.provider_source)
         self.assertIn("self.addAlgorithm(VrpTsp())", self.provider_source)
+
+    def test_vrp_tsp_progress_phases(self):
+        # (passo 4 do plano) Encadear as faixas de progresso no logis:vrp_tsp
+        self.assertIn("PhaseProgress", self.alg_source)
+        self.assertIn("feedback.setProgressText", self.alg_source)
+        self.assertIn("Construindo o grafo", self.alg_source)
+        self.assertIn("Calculando a matriz OD", self.alg_source)
+        self.assertIn("Otimizando (OR-Tools)", self.alg_source)
+        self.assertIn("Otimizando (heurística Python)", self.alg_source)
+        self.assertIn("Gravando as saídas", self.alg_source)
+
+        # Repasse de feedback= sub-faixa para build_graph, compute_od_matrix e solve_tsp
+        self.assertIn("feedback=p_build", self.alg_source)
+        self.assertIn("feedback=p_od", self.alg_source)
+        self.assertIn("feedback=p_opt", self.alg_source)
+
+    def test_vrp_tsp_metric_crs_check(self):
+        # (passo 6 do plano) Garantir CRS métrico no cálculo: mapUnits() comparado com EPSG:5880
+        self.assertIn('source_crs.mapUnits() == QgsCoordinateReferenceSystem("EPSG:5880").mapUnits()', self.alg_source)
+        self.assertNotIn("source_crs.isGeographic()", self.alg_source)
 
     def test_extract_point(self):
         from qgis.core import QgsGeometry, QgsPointXY

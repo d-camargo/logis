@@ -5,9 +5,12 @@ Painel (dock) para Roteirização (TSP/VRP).
 Licença: GPL-3.0
 """
 
+import os
+import time
+
 try:
     from qgis.gui import QgsDockWidget, QgsMapLayerComboBox, QgsFieldComboBox
-    from qgis.core import QgsMapLayerProxyModel, QgsProject
+    from qgis.core import QgsMapLayerProxyModel, QgsProject, QgsVectorLayer
     from qgis.PyQt.QtCore import Qt, QCoreApplication
     from qgis.PyQt.QtWidgets import (
         QWidget,
@@ -23,7 +26,8 @@ try:
         QComboBox,
         QScrollArea,
         QCheckBox,
-        QTabWidget
+        QTabWidget,
+        QProgressBar
     )
 except ImportError:
     # Mocks para quando rodado fora do QGIS (ex: smoke tests ou CLI)
@@ -59,6 +63,17 @@ except ImportError:
         @staticmethod
         def instance():
             return None
+    class QgsVectorLayer:
+        def __init__(self, path="", name="", provider=""):
+            self._path = path
+            self._name = name
+            self._valid = True
+        def isValid(self):
+            return getattr(self, "_valid", True)
+        def name(self):
+            return getattr(self, "_name", "")
+        def source(self):
+            return getattr(self, "_path", "")
     class Qt:
         pass
     class QCoreApplication:
@@ -98,10 +113,36 @@ except ImportError:
     class QPushButton:
         def __init__(self, text="", parent=None):
             self.clicked = MockSignal()
+            self._enabled = True
         def setEnabled(self, enabled):
-            pass
+            self._enabled = enabled
+        def isEnabled(self):
+            return getattr(self, "_enabled", True)
         def setStyleSheet(self, style):
             pass
+    class QProgressBar:
+        def __init__(self, parent=None):
+            self._value = 0
+            self._min = 0
+            self._max = 100
+            self._visible = False
+        def setRange(self, minimum, maximum):
+            self._min = minimum
+            self._max = maximum
+        def setValue(self, value):
+            self._value = value
+        def value(self):
+            return self._value
+        def setVisible(self, visible):
+            self._visible = visible
+        def isVisible(self):
+            return self._visible
+        def isHidden(self):
+            return not self._visible
+        def hide(self):
+            self._visible = False
+        def show(self):
+            self._visible = True
     class QCheckBox:
         def __init__(self, text="", parent=None):
             self._checked = False
@@ -191,6 +232,17 @@ except ImportError:
     except (ImportError, ValueError):
         optim_backend = None
 
+try:
+    from logis.core.layer_output import output_names, gpkg_path_from_source, write_layer_to_gpkg, slugify
+except ImportError:
+    try:
+        from ..core.layer_output import output_names, gpkg_path_from_source, write_layer_to_gpkg, slugify
+    except (ImportError, ValueError):
+        output_names = None
+        gpkg_path_from_source = None
+        write_layer_to_gpkg = None
+        slugify = None
+
 
 class RoutingDock(QgsDockWidget):
     """
@@ -201,6 +253,10 @@ class RoutingDock(QgsDockWidget):
     def __init__(self, iface, parent=None):
         super().__init__(QCoreApplication.translate("RoutingDock", "logis — Roteirização"), parent)
         self.iface = iface
+        self._tsp_t0 = None
+        self._tsp_runner = None
+        self._cvrp_t0 = None
+        self._cvrp_runner = None
         self._build_ui()
 
     def tr(self, string):
@@ -260,6 +316,15 @@ class RoutingDock(QgsDockWidget):
 
         # Painel de resultados
         outer.addWidget(QLabel(self.tr("Resultados da Roteirização:")))
+        self.prg_run = QProgressBar()
+        self.prg_run.setRange(0, 100)
+        self.prg_run.hide()
+        outer.addWidget(self.prg_run)
+
+        self.btn_cancel = QPushButton(self.tr("Cancelar"))
+        self.btn_cancel.setEnabled(False)
+        outer.addWidget(self.btn_cancel)
+
         self.txt_results = QTextEdit()
         self.txt_results.setReadOnly(True)
         self.txt_results.setMinimumHeight(150)
@@ -328,6 +393,13 @@ class RoutingDock(QgsDockWidget):
         self.chk_improve = QCheckBox(self.tr("Aplicar busca local (2-opt e Or-opt)"))
         self.chk_improve.setChecked(True)
         layout.addWidget(self.chk_improve)
+
+        chk_improve_desc = QLabel(
+            self.tr("Refina a rota inicial invertendo trechos (2-opt) e reposicionando paradas (Or-opt). Reduz a distância total e aumenta o tempo de cálculo.")
+        )
+        chk_improve_desc.setStyleSheet("color: #666; font-size: 11px;")
+        chk_improve_desc.setWordWrap(True)
+        layout.addWidget(chk_improve_desc)
 
         # Botão Calcular Rota (TSP)
         self.btn_run_tsp = QPushButton(self.tr("Calcular Rota (TSP)"))
@@ -405,6 +477,13 @@ class RoutingDock(QgsDockWidget):
         self.chk_cvrp_improve.setChecked(True)
         layout.addWidget(self.chk_cvrp_improve)
 
+        chk_cvrp_improve_desc = QLabel(
+            self.tr("Refina a rota inicial invertendo trechos (2-opt) e reposicionando paradas (Or-opt). Reduz a distância total e aumenta o tempo de cálculo.")
+        )
+        chk_cvrp_improve_desc.setStyleSheet("color: #666; font-size: 11px;")
+        chk_cvrp_improve_desc.setWordWrap(True)
+        layout.addWidget(chk_cvrp_improve_desc)
+
         # Botão Executar Roteirização (CVRP)
         self.btn_run_cvrp = QPushButton(self.tr("Executar Roteirização (CVRP)"))
         self.btn_run_cvrp.setStyleSheet("font-weight: bold; padding: 6px; font-size: 12px;")
@@ -428,9 +507,172 @@ class RoutingDock(QgsDockWidget):
                     return attrs[idx]
         return default
 
+    def _start_progress(self, titulo=""):
+        """
+        Inicia a exibição do progresso e desabilita os botões de execução.
+        """
+        self.prg_run.setValue(0)
+        self.prg_run.show()
+        self.btn_cancel.setEnabled(True)
+        if hasattr(self, "btn_run_tsp"):
+            self.btn_run_tsp.setEnabled(False)
+        if hasattr(self, "btn_run_cvrp"):
+            self.btn_run_cvrp.setEnabled(False)
+        if titulo:
+            self.txt_results.append(f"<b>{titulo}</b>")
+
+    def _update_progress(self, valor):
+        """
+        Atualiza o valor da barra de progresso (0–100).
+        """
+        self.prg_run.setValue(int(valor))
+
+    def _finish_progress(self):
+        """
+        Finaliza a exibição do progresso e reabilita os botões de execução.
+        """
+        self.prg_run.hide()
+        self.btn_cancel.setEnabled(False)
+        if hasattr(self, "btn_run_tsp"):
+            self.btn_run_tsp.setEnabled(True)
+        if hasattr(self, "btn_run_cvrp"):
+            self.btn_run_cvrp.setEnabled(True)
+
+    def _persist_outputs(self, kind, mode, layers):
+        """
+        Persiste e adiciona as camadas de saída ao projeto QGIS (D-J, D-K, D-L, D-M).
+
+        :param kind: 'TSP' ou 'CVRP'
+        :param mode: 'rede' ou 'euclidiana'
+        :param layers: Tupla ou lista (camada_linhas, camada_pontos)
+        :return: Tupla das camadas resultantes (carregadas do GPKG ou temporárias)
+        """
+        if not layers:
+            return layers
+
+        if all(l is None for l in layers):
+            return layers
+
+        # (a) Camada de referência pela D-K (rede do topo se houver, senão a camada de pontos a visitar / demanda)
+        ref_layer = self.cmb_network.currentLayer() if hasattr(self, "cmb_network") else None
+        if not ref_layer:
+            if kind == "TSP" and hasattr(self, "cmb_points"):
+                ref_layer = self.cmb_points.currentLayer()
+            elif kind == "CVRP" and hasattr(self, "cmb_demand"):
+                ref_layer = self.cmb_demand.currentLayer()
+
+        ref_name = ref_layer.name() if (ref_layer and hasattr(ref_layer, "name")) else None
+        ref_source = ref_layer.source() if (ref_layer and hasattr(ref_layer, "source")) else None
+
+        # (b) Nomes por output_names("TSP"|"CVRP", "rede"|"euclidiana", slugify(ref.name()))
+        ref_slug = slugify(ref_name) if (ref_name and slugify is not None) else None
+        if output_names is not None:
+            nome_linhas, nome_pontos = output_names(kind, mode, ref_slug)
+        else:
+            slug = ref_slug or "rede"
+            nl = f"{kind}-{mode}_{slug}"
+            nome_linhas, nome_pontos = (nl, f"{nl}_pontos")
+        names = (nome_linhas, nome_pontos)
+
+        for i, layer in enumerate(layers):
+            if layer is not None and hasattr(layer, "setName") and i < len(names):
+                layer.setName(names[i])
+
+        # (c) Caminho por gpkg_path_from_source(ref.source())
+        gpkg_path = gpkg_path_from_source(ref_source) if (ref_source and gpkg_path_from_source is not None) else None
+
+        proj = QgsProject.instance() if hasattr(QgsProject, "instance") else None
+        result_layers = []
+        all_gpkg_ok = True if gpkg_path else False
+
+        if gpkg_path is None:
+            # Se vier None, parar aqui e adicionar as camadas temporárias com o nome novo
+            for layer in layers:
+                if layer is not None:
+                    if proj is not None and hasattr(proj, "addMapLayer"):
+                        proj.addMapLayer(layer)
+                    result_layers.append(layer)
+                else:
+                    result_layers.append(None)
+            if hasattr(self, "txt_results"):
+                self.txt_results.append(self.tr("-> <b>Destino das saídas:</b> camada temporária"))
+            return tuple(result_layers)
+
+        # (d) Se vier caminho:
+        for i, layer in enumerate(layers):
+            if layer is None:
+                result_layers.append(None)
+                continue
+
+            nome = names[i] if i < len(names) else (layer.name() if hasattr(layer, "name") else "output")
+
+            # Remover do projeto a camada homônima já carregada daquele GPKG (D-M, trava no Windows)
+            if proj is not None and hasattr(proj, "mapLayers"):
+                map_layers = proj.mapLayers()
+                if map_layers and isinstance(map_layers, dict):
+                    for existing_id, existing_layer in list(map_layers.items()):
+                        if (
+                            existing_layer
+                            and hasattr(existing_layer, "name")
+                            and existing_layer.name() == nome
+                            and hasattr(existing_layer, "source")
+                            and str(existing_layer.source()).split("|", 1)[0] == str(gpkg_path)
+                        ):
+                            proj.removeMapLayer(existing_id)
+
+            # Gravar com write_layer_to_gpkg
+            ok = False
+            err_msg = ""
+            if write_layer_to_gpkg is not None:
+                ok, err_msg = write_layer_to_gpkg(layer, gpkg_path, nome)
+
+            if ok:
+                saved_layer = None
+                if QgsVectorLayer is not None:
+                    try:
+                        vlayer = QgsVectorLayer(f"{gpkg_path}|layername={nome}", nome, "ogr")
+                        if vlayer and hasattr(vlayer, "isValid") and vlayer.isValid():
+                            saved_layer = vlayer
+                    except Exception as exc:
+                        err_msg = str(exc)
+                        saved_layer = None
+
+                if saved_layer is not None:
+                    if proj is not None and hasattr(proj, "addMapLayer"):
+                        proj.addMapLayer(saved_layer)
+                    result_layers.append(saved_layer)
+                else:
+                    # (e) Reabertura falhou, caindo na camada temporária
+                    all_gpkg_ok = False
+                    if hasattr(self, "txt_results"):
+                        self.txt_results.append(
+                            self.tr("<span style='color: #ecc94b;'>Aviso: Falha ao carregar camada do GPKG ({nome}). Usando camada temporária.</span>").format(nome=nome)
+                        )
+                    if proj is not None and hasattr(proj, "addMapLayer"):
+                        proj.addMapLayer(layer)
+                    result_layers.append(layer)
+            else:
+                # (e) Se a gravação falhar, escrever no log a linha de aviso com o erro e cair na camada temporária
+                all_gpkg_ok = False
+                if hasattr(self, "txt_results"):
+                    err_str = err_msg if err_msg else self.tr("Erro desconhecido")
+                    self.txt_results.append(
+                        self.tr("<span style='color: #ecc94b;'>Aviso: Falha ao gravar no GPKG ({err}). Usando camada temporária.</span>").format(err=err_str)
+                    )
+                if proj is not None and hasattr(proj, "addMapLayer"):
+                    proj.addMapLayer(layer)
+                result_layers.append(layer)
+
+        # Acrescentar ao log uma linha dizendo onde a saída foi parar
+        if hasattr(self, "txt_results"):
+            dest_str = os.path.basename(gpkg_path) if all_gpkg_ok else "camada temporária"
+            self.txt_results.append(self.tr("-> <b>Destino das saídas:</b> {dest}").format(dest=dest_str))
+
+        return tuple(result_layers)
+
     def run_tsp(self):
         """
-        Executa o algoritmo de Caixeiro Viajante (TSP) e exibe os resultados.
+        Executa o algoritmo de Caixeiro Viajante (TSP) em segundo plano.
         """
         self.txt_results.clear()
 
@@ -476,18 +718,6 @@ class RoutingDock(QgsDockWidget):
             )
             return
 
-        try:
-            import processing
-        except ImportError:
-            QMessageBox.critical(
-                self,
-                self.tr("Erro"),
-                self.tr("QGIS Processing não está disponível no ambiente atual.")
-            )
-            self.txt_results.append(self.tr("<span style='color: #fc8181;'>Erro: QGIS Processing não disponível.</span>"))
-            return
-
-        self.btn_run_tsp.setEnabled(False)
         self.txt_results.append(self.tr("<b>=== CALCULANDO ROTA (TSP) ===</b><br>"))
 
         if optim_backend and optim_backend.guard_state() == "blocked":
@@ -498,26 +728,69 @@ class RoutingDock(QgsDockWidget):
                 )
             )
 
+        self._tsp_t0 = time.monotonic()
+        self._start_progress()
+
+        params = {
+            'INPUT_START': start_layer,
+            'INPUT_POINTS': points_layer,
+            'INPUT_END': end_layer if end_layer else None,
+            'INPUT_NETWORK': network_layer if use_network else None,
+            'IMPROVE': improve,
+            'BACKEND': self.cmb_tsp_backend.currentIndex(),
+            'OUTPUT_ORDER': 'memory:',
+            'OUTPUT_ROUTE': 'memory:'
+        }
+
         try:
-            params = {
-                'INPUT_START': start_layer,
-                'INPUT_POINTS': points_layer,
-                'INPUT_END': end_layer if end_layer else None,
-                'INPUT_NETWORK': network_layer if use_network else None,
-                'IMPROVE': improve,
-                'BACKEND': self.cmb_tsp_backend.currentIndex(),
-                'OUTPUT_ORDER': 'memory:',
-                'OUTPUT_ROUTE': 'memory:'
-            }
-            res = processing.run("logis:vrp_tsp", params)
+            from logis.gui.task_runner import AlgTaskRunner
+        except ImportError:
+            from .task_runner import AlgTaskRunner
 
-            order_layer = res.get('OUTPUT_ORDER')
-            route_layer = res.get('OUTPUT_ROUTE')
+        self._tsp_runner = AlgTaskRunner(
+            "logis:vrp_tsp",
+            params,
+            self._on_tsp_finished,
+            on_message=self.txt_results.append,
+            on_progress=self._update_progress
+        )
 
-            if order_layer is not None:
-                QgsProject.instance().addMapLayer(order_layer)
-            if route_layer is not None:
-                QgsProject.instance().addMapLayer(route_layer)
+        try:
+            self.btn_cancel.clicked.disconnect()
+        except (TypeError, RuntimeError):
+            pass
+        self.btn_cancel.clicked.connect(self._tsp_runner.cancel)
+        self._tsp_runner.start()
+
+    def _on_tsp_finished(self, ok, results):
+        """
+        Callback executado quando a tarefa de cálculo do TSP é concluída.
+        """
+        try:
+            if not ok or not results:
+                runner = getattr(self, "_tsp_runner", None)
+                if runner and getattr(runner, "feedback", None) and runner.feedback.isCanceled():
+                    self.txt_results.append(
+                        self.tr("<span style='color: #ecc94b;'>Cálculo cancelado pelo usuário.</span><br>")
+                    )
+                else:
+                    err_msg = str(results) if isinstance(results, str) else self.tr("Erro ao calcular rota.")
+                    self.txt_results.append(
+                        self.tr("<span style='color: #fc8181;'>Erro ao calcular rota: {error}</span><br>").format(error=err_msg)
+                    )
+                return
+
+            runner = getattr(self, "_tsp_runner", None)
+            if runner and hasattr(runner, 'resolve_layer'):
+                order_layer = runner.resolve_layer(results, 'OUTPUT_ORDER')
+                route_layer = runner.resolve_layer(results, 'OUTPUT_ROUTE')
+            else:
+                order_layer = results.get('OUTPUT_ORDER') if results else None
+                route_layer = results.get('OUTPUT_ROUTE') if results else None
+
+            use_network = self.cmb_tsp_mode.currentIndex() == 1
+            mode = "rede" if use_network else "euclidiana"
+            route_layer, order_layer = self._persist_outputs("TSP", mode, (route_layer, order_layer))
 
             num_visited = 0
             tour_dist = 0.0
@@ -549,6 +822,7 @@ class RoutingDock(QgsDockWidget):
                         if self._attr(f, fields, 'leg_geom', '') == 'reta':
                             straight_leg_count += 1
 
+            end_layer = self.cmb_end.currentLayer()
             if num_visited == 0 and order_layer is not None and hasattr(order_layer, 'featureCount'):
                 count = order_layer.featureCount()
                 num_visited = count - (2 if (end_layer and count >= 2) else 1) if count > 0 else 0
@@ -559,13 +833,13 @@ class RoutingDock(QgsDockWidget):
                 self.tr("-> <b>Pontos visitados:</b> {n}").format(n=num_visited)
             )
             self.txt_results.append(
-                self.tr("-> <b>Distância total do tour:</b> {dist:.2f}").format(dist=tour_dist)
+                self.tr("-> <b>Distância total do tour:</b> {dist:.2f}&nbsp;m").format(dist=tour_dist)
             )
             self.txt_results.append(
-                self.tr("-> <b>Custo de acesso:</b> {acc:.2f}").format(acc=access_dist)
+                self.tr("-> <b>Custo de acesso:</b> {acc:.2f}&nbsp;m").format(acc=access_dist)
             )
             self.txt_results.append(
-                self.tr("-> <b>Custo de retorno:</b> {ret:.2f}").format(ret=return_dist)
+                self.tr("-> <b>Custo de retorno:</b> {ret:.2f}&nbsp;m").format(ret=return_dist)
             )
             self.txt_results.append(
                 self.tr("-> <b>Razão de deadhead (dead_ratio):</b> {dr:.4f}").format(dr=dead_ratio)
@@ -578,7 +852,14 @@ class RoutingDock(QgsDockWidget):
                 self.tr("-> <b>Modo de distância:</b> {mode}").format(mode=dist_mode_str)
             )
             self.txt_results.append(
-                self.tr("-> <b>Backend de otimização:</b> {backend}<br>").format(backend=backend_str)
+                self.tr("-> <b>Backend de otimização:</b> {backend}").format(backend=backend_str)
+            )
+            t = f"{time.monotonic() - self._tsp_t0:.1f}".replace(".", ",")
+            self.txt_results.append(
+                self.tr("-> <b>Tempo de cálculo:</b> {t} s").format(t=t)
+            )
+            self.txt_results.append(
+                self.tr("-> <b>Unidade das distâncias:</b> metros<br>")
             )
             if use_network and straight_leg_count > 0:
                 self.txt_results.append(
@@ -587,17 +868,17 @@ class RoutingDock(QgsDockWidget):
                     ).format(n=straight_leg_count)
                 )
 
+            self.txt_results.append(self.tr("<b>=== CÁLCULO CONCLUÍDO ===</b>"))
         except Exception as e:
             self.txt_results.append(
                 self.tr("<span style='color: #fc8181;'>Erro ao calcular rota: {error}</span><br>").format(error=str(e))
             )
-
-        self.txt_results.append(self.tr("<b>=== CÁLCULO CONCLUÍDO ===</b>"))
-        self.btn_run_tsp.setEnabled(True)
+        finally:
+            self._finish_progress()
 
     def run_cvrp(self):
         """
-        Executa o algoritmo de Roteirização de Veículos Capacitados (CVRP) e exibe os resultados.
+        Executa o algoritmo de Roteirização de Veículos Capacitados (CVRP) em segundo plano.
         """
         self.txt_results.clear()
 
@@ -626,18 +907,6 @@ class RoutingDock(QgsDockWidget):
             self.txt_results.append(self.tr("<span style='color: #fc8181;'>Erro: Camada de demanda não selecionada.</span>"))
             return
 
-        try:
-            import processing
-        except ImportError:
-            QMessageBox.critical(
-                self,
-                self.tr("Erro"),
-                self.tr("QGIS Processing não está disponível no ambiente atual.")
-            )
-            self.txt_results.append(self.tr("<span style='color: #fc8181;'>Erro: QGIS Processing não disponível.</span>"))
-            return
-
-        self.btn_run_cvrp.setEnabled(False)
         self.txt_results.append(self.tr("<b>=== EXECUTANDO ROTEIRIZAÇÃO (CVRP) ===</b><br>"))
 
         if optim_backend and optim_backend.guard_state() == "blocked":
@@ -648,27 +917,70 @@ class RoutingDock(QgsDockWidget):
                 )
             )
 
+        self._cvrp_t0 = time.monotonic()
+        self._start_progress()
+
+        params = {
+            'INPUT_DEPOT': depot_layer,
+            'INPUT_DEMAND': demand_layer,
+            'FIELD_DEMAND': demand_field or '',
+            'CAPACITY': capacity,
+            'INPUT_NETWORK': network_layer if network_layer else None,
+            'IMPROVE': improve,
+            'BACKEND': self.cmb_cvrp_backend.currentIndex(),
+            'OUTPUT_ROUTES': 'memory:',
+            'OUTPUT_STOPS': 'memory:'
+        }
+
         try:
-            params = {
-                'INPUT_DEPOT': depot_layer,
-                'INPUT_DEMAND': demand_layer,
-                'FIELD_DEMAND': demand_field or '',
-                'CAPACITY': capacity,
-                'INPUT_NETWORK': network_layer if network_layer else None,
-                'IMPROVE': improve,
-                'BACKEND': self.cmb_cvrp_backend.currentIndex(),
-                'OUTPUT_ROUTES': 'memory:',
-                'OUTPUT_STOPS': 'memory:'
-            }
-            res = processing.run("logis:vrp_cvrp", params)
+            from logis.gui.task_runner import AlgTaskRunner
+        except ImportError:
+            from .task_runner import AlgTaskRunner
 
-            routes_layer = res.get('OUTPUT_ROUTES')
-            stops_layer = res.get('OUTPUT_STOPS')
+        self._cvrp_runner = AlgTaskRunner(
+            "logis:vrp_cvrp",
+            params,
+            self._on_cvrp_finished,
+            on_message=self.txt_results.append,
+            on_progress=self._update_progress
+        )
 
-            if routes_layer is not None:
-                QgsProject.instance().addMapLayer(routes_layer)
-            if stops_layer is not None:
-                QgsProject.instance().addMapLayer(stops_layer)
+        try:
+            self.btn_cancel.clicked.disconnect()
+        except (TypeError, RuntimeError):
+            pass
+        self.btn_cancel.clicked.connect(self._cvrp_runner.cancel)
+        self._cvrp_runner.start()
+
+    def _on_cvrp_finished(self, ok, results):
+        """
+        Callback executado quando a tarefa de cálculo do CVRP é concluída.
+        """
+        try:
+            if not ok or not results:
+                runner = getattr(self, "_cvrp_runner", None)
+                if runner and getattr(runner, "feedback", None) and runner.feedback.isCanceled():
+                    self.txt_results.append(
+                        self.tr("<span style='color: #ecc94b;'>Cálculo cancelado pelo usuário.</span><br>")
+                    )
+                else:
+                    err_msg = str(results) if isinstance(results, str) else self.tr("Erro ao executar CVRP.")
+                    self.txt_results.append(
+                        self.tr("<span style='color: #fc8181;'>Erro ao executar CVRP: {error}</span><br>").format(error=err_msg)
+                    )
+                return
+
+            runner = getattr(self, "_cvrp_runner", None)
+            if runner and hasattr(runner, 'resolve_layer'):
+                routes_layer = runner.resolve_layer(results, 'OUTPUT_ROUTES')
+                stops_layer = runner.resolve_layer(results, 'OUTPUT_STOPS')
+            else:
+                routes_layer = results.get('OUTPUT_ROUTES') if results else None
+                stops_layer = results.get('OUTPUT_STOPS') if results else None
+
+            network_layer = self.cmb_network.currentLayer()
+            mode = "rede" if network_layer else "euclidiana"
+            routes_layer, stops_layer = self._persist_outputs("CVRP", mode, (routes_layer, stops_layer))
 
             total_routes = 0
             total_stops = 0
@@ -689,7 +1001,7 @@ class RoutingDock(QgsDockWidget):
                     total_load += r_load
                     total_dist += r_dist
 
-                    line_str = self.tr("Rota {id}: {n} paradas | carga {load:.2f} | distância {dist:.2f}").format(
+                    line_str = self.tr("Rota {id}: {n} paradas | carga {load:.2f} | distância {dist:.2f}&nbsp;m").format(
                         id=r_id, n=s_count, load=r_load, dist=r_dist
                     )
                     route_lines.append(line_str)
@@ -704,7 +1016,7 @@ class RoutingDock(QgsDockWidget):
                 self.tr("-> <b>Carga total:</b> {load:.2f}").format(load=total_load)
             )
             self.txt_results.append(
-                self.tr("-> <b>Distância total:</b> {dist:.2f}<br>").format(dist=total_dist)
+                self.tr("-> <b>Distância total:</b> {dist:.2f}&nbsp;m<br>").format(dist=total_dist)
             )
 
             for line in route_lines:
@@ -712,11 +1024,20 @@ class RoutingDock(QgsDockWidget):
             if route_lines:
                 self.txt_results.append("")
 
+            t0 = getattr(self, "_cvrp_t0", None)
+            t = f"{time.monotonic() - t0:.1f}".replace(".", ",") if t0 is not None else "0,0"
+            self.txt_results.append(
+                self.tr("-> <b>Tempo de cálculo:</b> {t} s").format(t=t)
+            )
+            self.txt_results.append(
+                self.tr("-> <b>Unidade das distâncias:</b> metros<br>")
+            )
+
+            self.txt_results.append(self.tr("<b>=== CÁLCULO CONCLUÍDO ===</b>"))
         except Exception as e:
             self.txt_results.append(
                 self.tr("<span style='color: #fc8181;'>Erro ao executar CVRP: {error}</span><br>").format(error=str(e))
             )
-
-        self.txt_results.append(self.tr("<b>=== CÁLCULO CONCLUÍDO ===</b>"))
-        self.btn_run_cvrp.setEnabled(True)
+        finally:
+            self._finish_progress()
 

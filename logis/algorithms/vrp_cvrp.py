@@ -14,6 +14,8 @@
 Algoritmo de processamento para Roteirização de Veículos Capacitados (CVRP).
 """
 
+import math
+
 from qgis.core import (
     QgsProcessing,
     QgsProcessingAlgorithm,
@@ -32,16 +34,19 @@ from qgis.core import (
     QgsFeature,
     QgsFeatureSink,
     QgsWkbTypes,
-    QgsGeometry
+    QgsGeometry,
+    QgsRectangle
 )
 try:
     from ..core import qgis_compat, crashlog
+    from ..core.progress import PhaseProgress
     from ..core.optim_backend import pick_backend
     from ..core.routing.vrp import solve_cvrp, compute_route_distance
     from ..core.network.graph_builder import build_graph
     from ..core.network.od_matrix import compute_od_matrix
 except ImportError:
     from core import qgis_compat, crashlog
+    from core.progress import PhaseProgress
     from core.optim_backend import pick_backend
     from core.routing.vrp import solve_cvrp, compute_route_distance
     from core.network.graph_builder import build_graph
@@ -197,10 +202,10 @@ class VrpCvrp(QgsProcessingAlgorithm):
             target_crs = QgsCoordinateReferenceSystem("EPSG:5880")
         else:
             source_crs = demand_source.sourceCrs()
-            if source_crs.isGeographic():
-                target_crs = QgsCoordinateReferenceSystem("EPSG:5880")
-            else:
+            if source_crs.mapUnits() == QgsCoordinateReferenceSystem("EPSG:5880").mapUnits():
                 target_crs = source_crs
+            else:
+                target_crs = QgsCoordinateReferenceSystem("EPSG:5880")
 
         transform_depot = QgsCoordinateTransform(depot_source.sourceCrs(), target_crs, QgsProject.instance())
         transform_demand = QgsCoordinateTransform(demand_source.sourceCrs(), target_crs, QgsProject.instance())
@@ -217,16 +222,22 @@ class VrpCvrp(QgsProcessingAlgorithm):
             raise QgsProcessingException(self.tr("Nenhum ponto de depósito válido encontrado."))
 
         # 3) Leitura das demandas, pontos e pesos
+        p_read = PhaseProgress(feedback, 0.0, 8.0)
+        feedback.setProgressText(self.tr("Lendo pontos de demanda…"))
+        feedback.pushInfo(self.tr("Lendo pontos de demanda..."))
+
         demand_field_idx = demand_source.fields().indexOf(demand_field_name) if demand_field_name else -1
 
         demand_features = []
         demand_points = []
         demand_weights = []
 
-        feedback.pushInfo(self.tr("Lendo pontos de demanda..."))
-        for feat in demand_source.getFeatures():
-            if feedback.isCanceled():
+        total_pts = demand_source.featureCount()
+        for i, feat in enumerate(demand_source.getFeatures()):
+            if p_read.isCanceled():
                 return {}
+            if total_pts > 0:
+                p_read.setProgress(100.0 * (i + 1) / total_pts)
             geom = feat.geometry()
             if geom is None or geom.isEmpty():
                 continue
@@ -254,6 +265,8 @@ class VrpCvrp(QgsProcessingAlgorithm):
             demand_points.append(pt_transformed)
             demand_weights.append(weight)
 
+        p_read.setProgress(100.0)
+
         if not demand_points:
             raise QgsProcessingException(self.tr("Nenhum ponto de demanda válido encontrado."))
 
@@ -263,13 +276,31 @@ class VrpCvrp(QgsProcessingAlgorithm):
         all_points = [depot_pt] + demand_points
         all_demands = [0.0] + demand_weights
 
+        graph = None
+        vertices = None
         if network_layer and network_layer.isValid():
             feedback.pushInfo(self.tr("Construindo o grafo e calculando a matriz OD na rede..."))
+            x_coords = [p.x() for p in all_points]
+            y_coords = [p.y() for p in all_points]
+            bbox = QgsRectangle(min(x_coords), min(y_coords), max(x_coords), max(y_coords))
+            diag = math.sqrt(bbox.width() ** 2 + bbox.height() ** 2)
+            margin = max(3000.0, diag)
+            extent = QgsRectangle(
+                bbox.xMinimum() - margin,
+                bbox.yMinimum() - margin,
+                bbox.xMaximum() + margin,
+                bbox.yMaximum() + margin
+            )
+            feedback.pushInfo(self.tr("Janela de análise: {}").format(extent.toString()))
             crashlog.mark("cvrp-build-graph", f"camada com {network_layer.featureCount()} feicoes")
+
+            p_build = PhaseProgress(feedback, 8.0, 35.0)
+            feedback.setProgressText(self.tr("Construindo o grafo…"))
             try:
-                res = build_graph(network_layer, target_crs=target_crs, points=all_points)
+                res = build_graph(network_layer, target_crs=target_crs, points=all_points, extent=extent, feedback=p_build)
             except Exception as exc:
                 raise QgsProcessingException(self.tr("Erro ao construir o grafo: {}").format(str(exc)))
+            p_build.setProgress(100.0)
 
             graph = res["graph"]
             snapped_points = res["snapped_points"]
@@ -281,28 +312,49 @@ class VrpCvrp(QgsProcessingAlgorithm):
 
             vertices = [graph.findVertex(pt) for pt in snapped_points]
 
-            crashlog.mark("cvrp-od-matrix", "Dijkstra multi-origem")
+            p_od = PhaseProgress(feedback, 35.0, 70.0)
+            feedback.setProgressText(self.tr("Calculando a matriz OD…"))
             try:
+                crashlog.mark("cvrp-od-matrix", "Dijkstra multi-origem")
                 cost_matrix = compute_od_matrix(
                     graph=graph,
                     origins=vertices,
                     destinations=vertices,
                     criterion_num=0,
-                    feedback=feedback
+                    cache_id="vrp_cvrp",
+                    feedback=p_od
                 )
             except Exception as exc:
                 raise QgsProcessingException(self.tr("Erro ao calcular a matriz OD: {}").format(str(exc)))
+            p_od.setProgress(100.0)
         else:
+            p_euc = PhaseProgress(feedback, 8.0, 40.0)
+            feedback.setProgressText(self.tr("Calculando matriz de distâncias euclidianas…"))
             feedback.pushInfo(self.tr("Calculando matriz de distâncias euclidianas..."))
             cost_matrix = []
+            n_all = len(all_points)
             for i, p1 in enumerate(all_points):
-                if feedback.isCanceled():
+                if p_euc.isCanceled():
                     return {}
+                if n_all > 0:
+                    p_euc.setProgress(100.0 * (i + 1) / n_all)
                 row = [p1.distance(p2) for p2 in all_points]
                 cost_matrix.append(row)
+            p_euc.setProgress(100.0)
 
         # 5) Resolução do CVRP
         used_backend = pick_backend(req_backend)
+        if used_backend == "ortools":
+            opt_text = self.tr("Otimizando (OR-Tools)…")
+        else:
+            opt_text = self.tr("Otimizando (heurística Python)…")
+        feedback.setProgressText(opt_text)
+
+        if dist_mode == "rede":
+            p_opt = PhaseProgress(feedback, 70.0, 90.0)
+        else:
+            p_opt = PhaseProgress(feedback, 40.0, 85.0)
+
         feedback.pushInfo(self.tr("Executando a otimização CVRP..."))
         crashlog.mark("cvrp-ortools-import", f"backend resolvido: {used_backend}")
         try:
@@ -312,10 +364,12 @@ class VrpCvrp(QgsProcessingAlgorithm):
                 capacity=capacity,
                 depot=0,
                 improve=improve,
-                backend=req_backend
+                backend=req_backend,
+                feedback=p_opt
             )
-        except ValueError as exc:
+        except (ValueError, RuntimeError) as exc:
             raise QgsProcessingException(str(exc))
+        p_opt.setProgress(100.0)
 
         crashlog.mark("cvrp-solver-ok", f"custo={total_distance:.1f}")
 
@@ -326,6 +380,12 @@ class VrpCvrp(QgsProcessingAlgorithm):
         )
 
         # 6) Gravação dos resultados nas camadas de saída
+        feedback.setProgressText(self.tr("Gravando as saídas…"))
+        if dist_mode == "rede":
+            p_out = PhaseProgress(feedback, 90.0, 100.0)
+        else:
+            p_out = PhaseProgress(feedback, 85.0, 100.0)
+
         crashlog.mark("cvrp-sinks", "gravando camadas de saida")
         route_fields = QgsFields()
         route_fields.append(QgsField("route_id", qgis_compat.field_type("int")))
@@ -357,6 +417,11 @@ class VrpCvrp(QgsProcessingAlgorithm):
             demand_source.sourceCrs()
         )
 
+        total_route_items = len(routes) if sink_routes is not None else 0
+        total_stop_items = sum(len(r) for r in routes) if sink_stops is not None else 0
+        total_out_items = total_route_items + total_stop_items
+        written_items = 0
+
         for route_idx, route_nodes in enumerate(routes, start=1):
             if not route_nodes:
                 continue
@@ -364,16 +429,23 @@ class VrpCvrp(QgsProcessingAlgorithm):
             r_load = sum(all_demands[node] for node in route_nodes)
 
             if sink_routes is not None:
+                if p_out.isCanceled():
+                    return {}
                 pts = [depot_pt] + [demand_points[node - 1] for node in route_nodes] + [depot_pt]
                 geom = QgsGeometry.fromPolylineXY(pts)
                 feat = QgsFeature(route_fields)
                 feat.setGeometry(geom)
                 feat.setAttributes([route_idx, len(route_nodes), r_load, r_dist, used_backend])
                 sink_routes.addFeature(feat, QgsFeatureSink.Flag.FastInsert)
+                written_items += 1
+                if total_out_items > 0:
+                    p_out.setProgress(100.0 * written_items / total_out_items)
 
             if sink_stops is not None:
                 cum_load = 0.0
                 for seq_idx, node in enumerate(route_nodes, start=1):
+                    if p_out.isCanceled():
+                        return {}
                     demand_feat = demand_features[node - 1]
                     cum_load += all_demands[node]
                     stop_feat = QgsFeature(demand_feat)
@@ -381,6 +453,11 @@ class VrpCvrp(QgsProcessingAlgorithm):
                     attrs.extend([route_idx, seq_idx, cum_load])
                     stop_feat.setAttributes(attrs)
                     sink_stops.addFeature(stop_feat, QgsFeatureSink.Flag.FastInsert)
+                    written_items += 1
+                    if total_out_items > 0:
+                        p_out.setProgress(100.0 * written_items / total_out_items)
+
+        p_out.setProgress(100.0)
 
         crashlog.mark("cvrp-fim", "concluido")
 

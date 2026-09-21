@@ -13,6 +13,24 @@ from logis.core.optim_backend import has_ortools
 
 
 
+class FakeFeedback:
+    def __init__(self, cancel_after_n_progress=9999):
+        self.progresses = []
+        self.infos = []
+        self.cancel_after = cancel_after_n_progress
+        self.progress_count = 0
+        self._canceled = False
+    def setProgress(self, progress: float):
+        self.progresses.append(progress)
+        self.progress_count += 1
+        if self.progress_count >= self.cancel_after:
+            self._canceled = True
+    def pushInfo(self, info: str):
+        self.infos.append(info)
+    def isCanceled(self) -> bool:
+        return self._canceled
+
+
 class TestVRP(unittest.TestCase):
     def setUp(self):
         # 4 nodes: 0 is depot, 1, 2, 3 are customers
@@ -310,7 +328,55 @@ class TestVRP(unittest.TestCase):
         self.assertAlmostEqual(dist, expected_dist)
         self.assertEqual(loads, expected_loads)
 
+    def test_solve_cvrp_with_feedback(self):
+        # (a) solve_cvrp com feedback reporta progresso e termina
+        fb = FakeFeedback()
+        routes, dist, loads = solve_cvrp(
+            self.distance_matrix, self.demands, self.capacity, depot=0, backend="python", improve=True, feedback=fb
+        )
+        self.assertEqual(len(routes), 2)
+        self.assertTrue(len(fb.progresses) > 0)
+        self.assertTrue(len(fb.infos) > 0)
+
+    def test_solve_cvrp_canceled_feedback(self):
+        # (b) feedback já cancelado devolve rotas válidas rapidamente, sem exceção
+        fb = FakeFeedback(cancel_after_n_progress=0)
+        fb._canceled = True
+        routes, dist, loads = solve_cvrp(
+            self.distance_matrix, self.demands, self.capacity, depot=0, backend="python", improve=True, feedback=fb
+        )
+        self.assertTrue(len(routes) > 0)
+        visited = [c for r in routes for c in r]
+        self.assertEqual(sorted(visited), [1, 2, 3])
+
+        fb2 = FakeFeedback(cancel_after_n_progress=1)
+        routes2, dist2, loads2 = solve_cvrp(
+            self.distance_matrix, self.demands, self.capacity, depot=0, backend="ortools", improve=True, feedback=fb2
+        )
+        self.assertTrue(len(routes2) > 0)
+        visited2 = [c for r in routes2 for c in r]
+        self.assertEqual(sorted(visited2), [1, 2, 3])
+
+    def test_solve_cvrp_none_feedback(self):
+        # (c) feedback=None (padrão) continua idêntico
+        routes, dist, loads = solve_cvrp(
+            self.distance_matrix, self.demands, self.capacity, depot=0, backend="python", improve=True
+        )
+        self.assertEqual(len(routes), 2)
+
+    def test_solve_cvrp_fallback_with_feedback(self):
+        # (d) o fallback RuntimeError -> heurística segue valendo com feedback
+        fb = FakeFeedback()
+        with patch("logis.core.routing.vrp.pick_backend", return_value="ortools"), \
+             patch("logis.core.routing.vrp.solve_cvrp_ortools", side_effect=RuntimeError("Erro")):
+            routes, dist, loads = solve_cvrp(
+                self.distance_matrix, self.demands, self.capacity, depot=0, backend="ortools", improve=True, feedback=fb
+            )
+        self.assertEqual(len(routes), 2)
+        self.assertTrue(len(fb.progresses) > 0)
+
 
 if __name__ == "__main__":
     unittest.main()
+
 

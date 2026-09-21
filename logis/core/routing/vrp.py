@@ -34,6 +34,11 @@ try:
 except ImportError:
     from core.optim_backend import pick_backend, load_routing_solver, log_warning
 
+try:
+    from ..progress import NullProgress
+except ImportError:
+    from core.progress import NullProgress
+
 _TIME_LIMIT_SECONDS: int = 10
 
 
@@ -127,7 +132,8 @@ def clarke_wright_savings(
     distance_matrix: List[List[float]],
     demands: List[float],
     capacity: float,
-    depot: int = 0
+    depot: int = 0,
+    feedback=None
 ) -> Tuple[List[List[int]], float, List[float]]:
     """Constructs initial VRP routes using the Clarke & Wright savings algorithm.
 
@@ -155,6 +161,9 @@ def clarke_wright_savings(
     Raises:
         ValueError: Se entradas forem inválidas ou demanda exceder capacidade.
     """
+    if feedback is None:
+        feedback = NullProgress()
+
     num_nodes = _validate_matrix_and_depot(distance_matrix, depot)
     _validate_demands(demands, capacity, num_nodes, depot)
 
@@ -182,6 +191,8 @@ def clarke_wright_savings(
 
     # Merge routes based on savings
     for s, i, j in savings:
+        if feedback.isCanceled():
+            break
         r_i = node_to_route[i]
         r_j = node_to_route[j]
 
@@ -229,7 +240,8 @@ def clarke_wright_savings(
 def two_opt(
     route: List[int],
     distance_matrix: List[List[float]],
-    depot: int = 0
+    depot: int = 0,
+    feedback=None
 ) -> Tuple[List[int], float]:
     """Applies the 2-opt local search heuristic to improve a single VRP route.
 
@@ -262,6 +274,9 @@ def two_opt(
     Raises:
         ValueError: Se a matriz não for quadrada, contiver valores negativos, ou se índices forem inválidos.
     """
+    if feedback is None:
+        feedback = NullProgress()
+
     num_nodes = _validate_matrix_and_depot(distance_matrix, depot)
     _validate_route(route, num_nodes)
 
@@ -273,6 +288,8 @@ def two_opt(
 
     improved = True
     while improved:
+        if feedback.isCanceled():
+            break
         improved = False
         n = len(best_route)
         for i in range(n - 1):
@@ -294,7 +311,8 @@ def or_opt(
     route: List[int],
     distance_matrix: List[List[float]],
     depot: int = 0,
-    segment_lengths: Tuple[int, ...] = (1, 2, 3)
+    segment_lengths: Tuple[int, ...] = (1, 2, 3),
+    feedback=None
 ) -> Tuple[List[int], float]:
     """Applies the Or-opt local search heuristic to improve a single VRP route.
 
@@ -329,6 +347,9 @@ def or_opt(
     Raises:
         ValueError: Se a matriz não for quadrada, contiver valores negativos, ou se índices forem inválidos.
     """
+    if feedback is None:
+        feedback = NullProgress()
+
     num_nodes = _validate_matrix_and_depot(distance_matrix, depot)
     _validate_route(route, num_nodes)
 
@@ -340,6 +361,8 @@ def or_opt(
 
     improved = True
     while improved:
+        if feedback.isCanceled():
+            break
         improved = False
         n = len(best_route)
         for length in segment_lengths:
@@ -372,7 +395,8 @@ def solve_cvrp(
     capacity: float,
     depot: int = 0,
     improve: bool = True,
-    backend: str = "python"
+    backend: str = "python",
+    feedback=None
 ) -> Tuple[List[List[int]], float, List[float]]:
     """Solves the Capacitated Vehicle Routing Problem (CVRP) using Savings and local search heuristics.
 
@@ -414,32 +438,46 @@ def solve_cvrp(
     Raises:
         ValueError: Se entradas forem inválidas ou demanda exceder capacidade.
     """
+    if feedback is None:
+        feedback = NullProgress()
+
     resolved = pick_backend(backend)
     if resolved == "ortools":
         try:
             return solve_cvrp_ortools(
-                distance_matrix, demands, capacity, depot=depot, improve=improve
+                distance_matrix, demands, capacity, depot=depot, improve=improve, feedback=feedback
             )
         except RuntimeError:
             log_warning("OR-Tools falhou ao carregar/resolver; usando heurística Python")
 
     routes, _, route_loads = clarke_wright_savings(
-        distance_matrix, demands, capacity, depot=depot
+        distance_matrix, demands, capacity, depot=depot, feedback=feedback
     )
 
     if improve and routes:
         improved_routes = []
+        rounds = 0
         for route in routes:
             curr_route = route
             curr_dist = compute_route_distance(curr_route, distance_matrix, depot)
             while True:
-                curr_route, _ = two_opt(curr_route, distance_matrix, depot)
-                curr_route, _ = or_opt(curr_route, distance_matrix, depot)
+                rounds += 1
+                feedback.pushInfo(f"CVRP Heurística: round {rounds}, custo atual {curr_dist:.2f}")
+                progress = min(100.0, rounds * 5.0)
+                feedback.setProgress(progress)
+                if feedback.isCanceled():
+                    break
+                curr_route, _ = two_opt(curr_route, distance_matrix, depot, feedback=feedback)
+                curr_route, _ = or_opt(curr_route, distance_matrix, depot, feedback=feedback)
                 new_dist = compute_route_distance(curr_route, distance_matrix, depot)
                 if new_dist >= curr_dist - 1e-9:
                     break
                 curr_dist = new_dist
             improved_routes.append(curr_route)
+            if feedback.isCanceled():
+                break
+        if len(improved_routes) < len(routes):
+            improved_routes.extend(routes[len(improved_routes):])
         routes = improved_routes
         route_loads = [sum(demands[c] for c in r) for r in routes]
 
@@ -455,7 +493,8 @@ def solve_cvrp_ortools(
     demands: List[float],
     capacity: float,
     depot: int = 0,
-    improve: bool = True
+    improve: bool = True,
+    feedback=None
 ) -> Tuple[List[List[int]], float, List[float]]:
     """Solves the Capacitated Vehicle Routing Problem (CVRP) using Google OR-Tools.
 
@@ -489,6 +528,9 @@ def solve_cvrp_ortools(
         ValueError: Se entradas forem inválidas ou demanda exceder capacidade.
         RuntimeError: Se o OR-Tools não estiver instalado ou se nenhuma solução for encontrada.
     """
+    if feedback is None:
+        feedback = NullProgress()
+
     num_nodes = _validate_matrix_and_depot(distance_matrix, depot)
     _validate_demands(demands, capacity, num_nodes, depot)
 
@@ -541,6 +583,34 @@ def solve_cvrp_ortools(
             routing_enums_pb2.LocalSearchMetaheuristic.GUIDED_LOCAL_SEARCH
         )
         search_parameters.time_limit.seconds = _TIME_LIMIT_SECONDS
+
+    import time
+    start_time = time.time()
+    last_log_time = 0.0
+
+    def cb():
+        nonlocal last_log_time
+        elapsed = time.time() - start_time
+        if _TIME_LIMIT_SECONDS > 0:
+            progress = min(100.0, 100.0 * elapsed / _TIME_LIMIT_SECONDS)
+            feedback.setProgress(progress)
+
+        if elapsed - last_log_time >= 1.0:
+            if hasattr(routing, 'CostVar'):
+                cost = routing.CostVar().Min() / 1000.0
+                feedback.pushInfo(f"OR-Tools: nova solução encontrada (custo {cost:.2f})")
+            else:
+                feedback.pushInfo("OR-Tools: nova solução encontrada")
+            last_log_time = elapsed
+
+        if feedback.isCanceled():
+            try:
+                if hasattr(routing, 'solver'):
+                    routing.solver().FinishCurrentSearch()
+            except Exception as exc:
+                log_warning(f"Erro ao interromper busca do OR-Tools: {exc}")
+
+    routing.AddAtSolutionCallback(cb)
 
     solution = routing.SolveWithParameters(search_parameters)
 

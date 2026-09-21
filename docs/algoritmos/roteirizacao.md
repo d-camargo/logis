@@ -24,6 +24,50 @@ Quando o pacote opcional **Google OR-Tools** está instalado e ativo no ambiente
 
 ---
 
+## Execução em Segundo Plano: Progresso e Cancelamento
+
+Os dois algoritmos reportam progresso e aceitam cancelamento pelo objeto `feedback` do
+Processing — vale para o diálogo do algoritmo, para o console e para o painel **logis —
+Roteirização**, que os despacha ao gerenciador de tarefas do QGIS (ver
+[Guia de Roteirização §8](../guias/roteirizacao.md#8-execução-em-segundo-plano-e-destino-das-saídas)).
+
+O progresso é repartido em **faixas por etapa** (`core.progress.PhaseProgress` remapeia o
+progresso 0–100 de cada etapa para a sua faixa dentro do total), de modo que a barra
+avança uma só vez, de 0 a 100, na ordem **grafo → matriz OD → solver → saídas**:
+
+| Etapa | Com rede viária (`INPUT_NETWORK`) | Sem rede (euclidiana) |
+|---|---|---|
+| Leitura dos pontos de entrada | 0 – 8 | 0 – 8 |
+| Construção do grafo (`QgsGraph`) | 8 – 35 | — |
+| Matriz OD (Dijkstra multi-origem) | 35 – 70 | — |
+| Matriz de distâncias euclidianas | — | 8 – 40 |
+| Otimização (solver) | 70 – 90 | 40 – 85 |
+| Gravação das saídas | 90 – 100 | 85 – 100 |
+
+**Progresso e cancelamento valem para os dois backends**, com granularidade diferente:
+
+- **Heurística Python pura** — a barra avança a cada rodada de busca local (2-opt/Or-opt)
+  e o pedido de cancelamento é consultado entre as rodadas e entre as passadas de cada
+  busca; a interrupção é imediata.
+- **OR-Tools** — a barra avança pela fração do limite de tempo já consumida, e o
+  cancelamento é consultado no retorno de **cada solução nova** do solver, quando o
+  plugin manda encerrar a busca corrente. Numa fase nativa longa sem solução nova, o
+  encerramento efetivo da thread pode esperar até o limite de 10 segundos
+  (`_TIME_LIMIT_SECONDS`).
+
+Cancelamento aceito interrompe a execução **antes de gravar qualquer saída**.
+
+> [!NOTE]
+> **CRS métrico obrigatório — por isso as distâncias são sempre em metros.** O cálculo
+> nunca corre em coordenadas geográficas: havendo `INPUT_NETWORK`, os pontos e a malha são
+> reprojetados para **EPSG:5880** (SIRGAS 2000 / Brazil Polyconic); sem rede, o CRS da
+> camada de pontos só é mantido quando suas **unidades de mapa já são metros**, e nos
+> demais casos o algoritmo também reprojeta para EPSG:5880. Em consequência, todos os
+> campos de distância das saídas (`leg_dist`, `cum_dist`, `tour_dist`, `route_dist`, …) e
+> os totais do painel estão **em metros**.
+
+---
+
 ## Sumário dos Algoritmos
 
 1. [`logis:vrp_cvrp`](#1-roteirização-de-veículos-capacitados--cvrp-logisvrp_cvrp) — Roteirização de Veículos Capacitados (CVRP via Clarke-Wright + 2-opt/Or-opt)
@@ -115,7 +159,7 @@ Onde:
 - $V = \{1, 2, \dots, N\}$ é o conjunto de pontos a visitar e $(\pi_1, \dots, \pi_N)$ é uma permutação de $V$, com $\pi_0 = s$.
 - $d(u, v)$ é a distância entre os nós $u$ e $v$, calculada sobre a malha viária (`QgsGraph`/Dijkstra, matriz OD) quando `INPUT_NETWORK` é fornecida, ou via distância euclidiana direta caso contrário.
 
-Os cálculos são realizados em CRS métrico: o CRS da camada de entrada quando já for projetado, ou EPSG:5880 (SIRGAS 2000 / Brazil Polyconic) quando houver rede viária ou quando a camada de pontos estiver em coordenadas geográficas.
+Os cálculos são realizados em CRS métrico: o CRS da camada de entrada quando suas unidades de mapa já forem metros, ou EPSG:5880 (SIRGAS 2000 / Brazil Polyconic) quando houver rede viária ou quando o CRS da camada de pontos não estiver em metros.
 
 ### Janela de construção do grafo
 Quando `INPUT_NETWORK` é fornecida, o algoritmo **não constrói o grafo da camada inteira**: ele delimita antes uma janela de análise e só carrega no `QgsGraph` as feições viárias que caem nela. A janela é o retângulo envolvente de **todos** os pontos do problema (inicial, a visitar e final, já no CRS métrico de cálculo), dilatado em uma margem de $\max(3.000\ \text{m},\ diag)$, onde $diag$ é a diagonal desse retângulo envolvente — ou seja, a vizinhança dos pontos, e não o território todo da camada.
@@ -133,7 +177,7 @@ A consequência a conhecer: um caminho que só existiria **saindo da janela** n�
   - *Fase 2 — Busca Local com Extremos Fixos:* Se `IMPROVE=True`, aplica alternadamente **2-opt** (inversão do subsegmento $\pi[i:j+1]$) e **Or-opt** (realocação de blocos contíguos de 1, 2 e 3 pontos para outra posição da sequência), repetindo o ciclo até a convergência (nenhuma iteração reduz a distância total além da tolerância de $10^{-9}$). Em ambas as buscas o **ponto inicial permanece fixo** na primeira posição e, no caso aberto, o **ponto final permanece fixo** na última (`fixed_end=True`) — as trocas só reordenam os pontos intermediários, preservando o contrato dos dois casos.
 - **Backend OR-Tools (parâmetro `BACKEND`, com fallback automático):**
   - O parâmetro `BACKEND` escolhe quem resolve a instância: `0 — Automático (OR-Tools quando disponível)` (padrão), `1 — Python puro (heurística)` ou `2 — OR-Tools`. Em qualquer dos casos a decisão final passa por `pick_backend` (em `core.optim_backend`), que faz **fallback silencioso** para a heurística pura em Python quando o OR-Tools não está instalado, está quebrado ou está sob a trava de segurança — nunca há erro nem pergunta ao usuário por causa do backend.
-  - A opção `1 — Python puro (heurística)` é a única que **não importa o OR-Tools em momento algum**: é o modo seguro quando o carregamento da biblioteca derruba o processo do QGIS (ver [Guia de Roteirização §10](../guias/roteirizacao.md#10-quando-o-qgis-fecha-sozinho-ao-calcular-a-rota)). As opções `0` e `2` pedem o OR-Tools e aceitam o fallback; diferem apenas na intenção declarada.
+  - A opção `1 — Python puro (heurística)` é a única que **não importa o OR-Tools em momento algum**: é o modo seguro quando o carregamento da biblioteca derruba o processo do QGIS (ver [Guia de Roteirização §11](../guias/roteirizacao.md#11-quando-o-qgis-fecha-sozinho-ao-calcular-a-rota)). As opções `0` e `2` pedem o OR-Tools e aceitam o fallback; diferem apenas na intenção declarada.
   - Com OR-Tools, a instância é formulada como um `pywrapcp.RoutingModel` de **um único veículo**, com depósito de partida $s$ no caso fechado e par início/fim $(s, e)$ no caso aberto. Usa `PATH_CHEAPEST_ARC` na construção e, quando `IMPROVE=True`, `GUIDED_LOCAL_SEARCH` com limite de 10 segundos (`_TIME_LIMIT_SECONDS`).
   - O backend efetivamente utilizado é registrado no campo `backend` da camada de rota (`ortools` ou `python`) e também na aba de log da execução.
 

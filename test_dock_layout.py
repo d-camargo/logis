@@ -126,6 +126,16 @@ class TestDockLayout(unittest.TestCase):
             "self.txt_results deve ser adicionado ao layout externo (outer), "
             "fora de qualquer aba (painel de resultados compartilhado)."
         )
+        self.assertTrue(
+            re.search(r"outer\.addWidget\(self\.prg_run\)", content),
+            "self.prg_run deve ser adicionado ao layout externo (outer), "
+            "fora de qualquer aba (barra de progresso compartilhada)."
+        )
+        self.assertTrue(
+            re.search(r"outer\.addWidget\(self\.btn_cancel\)", content),
+            "self.btn_cancel deve ser adicionado ao layout externo (outer), "
+            "fora de qualquer aba (botão cancelar compartilhado)."
+        )
 
     def test_routing_dock_controls(self):
         content = (pathlib.Path(__file__).parent / "logis/gui/routing_dock.py").read_text(
@@ -145,6 +155,11 @@ class TestDockLayout(unittest.TestCase):
         self.assertIn("self.cmb_cvrp_backend", content)
         self.assertIn("self.chk_cvrp_improve", content)
         self.assertIn("self.btn_run_cvrp", content)
+        self.assertIn("self.prg_run", content)
+        self.assertIn("self.btn_cancel", content)
+        self.assertIn("def _start_progress(", content)
+        self.assertIn("def _update_progress(", content)
+        self.assertIn("def _finish_progress(", content)
         self.assertIn("logis:vrp_tsp", content)
         self.assertIn("logis:vrp_cvrp", content)
         self.assertIn("'BACKEND': self.cmb_tsp_backend.currentIndex()", content)
@@ -206,6 +221,39 @@ class TestDockLayout(unittest.TestCase):
             "Esperado exatamente 1 seletor de rede viária (cmb_network) no painel de roteirização."
         )
 
+    def test_routing_dock_local_search_description(self):
+        content = (pathlib.Path(__file__).parent / "logis/gui/routing_dock.py").read_text(
+            encoding="utf-8"
+        )
+        desc_text = "Refina a rota inicial invertendo trechos (2-opt) e reposicionando paradas (Or-opt). Reduz a distância total e aumenta o tempo de cálculo."
+
+        self.assertEqual(
+            content.count(desc_text), 2,
+            "Esperado que a descrição de busca local apareça exatamente 2 vezes no fonte."
+        )
+
+        pos_chk_improve = content.find("self.chk_improve = QCheckBox")
+        pos_chk_cvrp_improve = content.find("self.chk_cvrp_improve = QCheckBox")
+
+        self.assertGreater(pos_chk_improve, -1)
+        self.assertGreater(pos_chk_cvrp_improve, -1)
+
+        first_desc_pos = content.find(desc_text)
+        second_desc_pos = content.find(desc_text, first_desc_pos + 1)
+
+        self.assertGreater(
+            first_desc_pos, pos_chk_improve,
+            "Primeira ocorrência da descrição deve estar após self.chk_improve."
+        )
+        self.assertLess(
+            first_desc_pos, pos_chk_cvrp_improve,
+            "Primeira ocorrência da descrição deve estar antes de self.chk_cvrp_improve."
+        )
+        self.assertGreater(
+            second_desc_pos, pos_chk_cvrp_improve,
+            "Segunda ocorrência da descrição deve estar após self.chk_cvrp_improve."
+        )
+
     def test_network_dock_has_two_tabs(self):
         content = (pathlib.Path(__file__).parent / "logis/gui/network_dock.py").read_text(
             encoding="utf-8"
@@ -252,6 +300,87 @@ class TestDockLayout(unittest.TestCase):
         self.assertNotIn("QgsTask", content)
         self.assertNotIn("subprocess", content)
 
+    def test_routing_dock_tsp_background_task(self):
+        content = (pathlib.Path(__file__).parent / "logis/gui/routing_dock.py").read_text(
+            encoding="utf-8"
+        )
+
+        self.assertIn("def _on_tsp_finished(self, ok, results):", content)
+        self.assertIn("AlgTaskRunner(", content)
+        self.assertIn("self._tsp_runner =", content)
+
+        # Verificar que run_tsp usa AlgTaskRunner e não chama processing.run diretamente
+        self.assertIn("def run_tsp(self):", content)
+        run_tsp_code = content.split("def run_tsp(self):")[1].split("def _on_tsp_finished")[0]
+        self.assertNotIn("processing.run(", run_tsp_code)
+
+        # Verificar conexão de cancelamento
+        self.assertIn("self.btn_cancel.clicked.connect(self._tsp_runner.cancel)", content)
+
+    def test_routing_dock_cvrp_background_task(self):
+        content = (pathlib.Path(__file__).parent / "logis/gui/routing_dock.py").read_text(
+            encoding="utf-8"
+        )
+
+        self.assertIn("def _on_cvrp_finished(self, ok, results):", content)
+        self.assertIn("AlgTaskRunner(", content)
+        self.assertIn("self._cvrp_runner =", content)
+
+        # Verificar que run_cvrp usa AlgTaskRunner e não chama processing.run diretamente
+        self.assertIn("def run_cvrp(self):", content)
+        run_cvrp_code = content.split("def run_cvrp(self):")[1].split("def _on_cvrp_finished")[0]
+        self.assertNotIn("processing.run(", run_cvrp_code)
+
+        # Verificar conexão de cancelamento
+        self.assertIn("self.btn_cancel.clicked.connect(self._cvrp_runner.cancel)", content)
+
+    def test_routing_dock_persist_outputs(self):
+        content = (pathlib.Path(__file__).parent / "logis/gui/routing_dock.py").read_text(
+            encoding="utf-8"
+        )
+
+        self.assertIn("def _persist_outputs(", content)
+        self.assertIn("output_names(", content)
+        self.assertIn("gpkg_path_from_source(", content)
+        self.assertIn("write_layer_to_gpkg(", content)
+        self.assertIn(".setName(", content)
+        self.assertIn("camada temporária", content)
+        self.assertIn("self._persist_outputs(\"TSP\",", content)
+        self.assertIn("self._persist_outputs(\"CVRP\",", content)
+
+        # Garantir que nenhum 'memory:' do dock virou caminho de arquivo cru em parâmetro de sink (D-J)
+        self.assertIn("'OUTPUT_ORDER': 'memory:'", content)
+        self.assertIn("'OUTPUT_ROUTE': 'memory:'", content)
+        self.assertIn("'OUTPUT_ROUTES': 'memory:'", content)
+        self.assertIn("'OUTPUT_STOPS': 'memory:'", content)
+
+        on_cvrp_finished_code = content.split("def _on_cvrp_finished")[1].split("def ")[0]
+        self.assertIn("self._persist_outputs(\"CVRP\",", on_cvrp_finished_code)
+
+    def test_routing_dock_tsp_report_time_and_unit(self):
+        content = (pathlib.Path(__file__).parent / "logis/gui/routing_dock.py").read_text(
+            encoding="utf-8"
+        )
+
+        self.assertIn("Tempo de cálculo", content)
+        self.assertIn("Unidade das distâncias", content)
+        self.assertEqual(
+            content.count("time.monotonic"), 4,
+            "Esperado exatamente 4 usos de time.monotonic no routing_dock.py (início e fim do TSP e CVRP)."
+        )
+
+    def test_routing_dock_cvrp_report_time_and_unit(self):
+        content = (pathlib.Path(__file__).parent / "logis/gui/routing_dock.py").read_text(
+            encoding="utf-8"
+        )
+        on_cvrp_finished_code = content.split("def _on_cvrp_finished")[1].split("def ")[0]
+
+        self.assertIn("self._persist_outputs(\"CVRP\",", on_cvrp_finished_code)
+        self.assertIn("Tempo de cálculo", on_cvrp_finished_code)
+        self.assertIn("Unidade das distâncias", on_cvrp_finished_code)
+        self.assertIn("&nbsp;m", on_cvrp_finished_code)
+
 
 if __name__ == "__main__":
     unittest.main()
+

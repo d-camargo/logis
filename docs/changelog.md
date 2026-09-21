@@ -2,6 +2,14 @@
 
 Este documento registra as principais alterações e evoluções do plugin **logis** organizadas por versão.
 
+## 0.5.0 - 2026-09-21
+
+- **Execução Assíncrona no Gerenciador de Tarefas** — execução de TSP e CVRP fora da thread da UI pelo gerenciador de tarefas do QGIS.
+- **Controles no Painel** — barra de progresso e botão Cancelar integrados ao painel de Roteirização.
+- **Progresso por Etapa e Cancelamento Cooperativo** — acompanhamento de progresso por etapa (grafo, matriz OD, solver e saídas) e cancelamento cooperativo em ambos os backends.
+- **Saídas Gravadas no GeoPackage** — gravação das camadas de resultado diretamente no GeoPackage da rede de entrada com nomes padronizados (`TSP-rede_…`/`TSP-euclidiana_…`/`CVRP-…`) e sufixo `_pontos`.
+- **Relatório Consolidado** — inclusão da descrição da busca local, tempo de cálculo e unidade explicitada em metros no relatório de resultados.
+
 ## 0.4.0 - 2026-09-20
 
 - **Seletor de Backend no CVRP** — parâmetro `BACKEND` no algoritmo `logis:vrp_cvrp` e seletor de backend de otimização na aba CVRP do painel de Roteirização.

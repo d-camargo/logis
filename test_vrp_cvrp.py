@@ -40,5 +40,29 @@ class TestVrpCvrpAlgorithm(unittest.TestCase):
         ):
             self.assertIn(f'crashlog.mark("{stage}"', self.alg_source)
 
+    def test_vrp_cvrp_progress_phases_and_extent(self):
+        self.assertIn("PhaseProgress", self.alg_source)
+        self.assertIn("feedback.setProgressText", self.alg_source)
+        self.assertIn("Lendo pontos de demanda", self.alg_source)
+        self.assertIn("Construindo o grafo", self.alg_source)
+        self.assertIn("Calculando a matriz OD", self.alg_source)
+        self.assertIn("Otimizando (OR-Tools)", self.alg_source)
+        self.assertIn("Otimizando (heurística Python)", self.alg_source)
+        self.assertIn("Gravando as saídas", self.alg_source)
+
+        # Repasse de feedback= sub-faixa para build_graph, compute_od_matrix e solve_cvrp
+        self.assertIn("feedback=p_build", self.alg_source)
+        self.assertIn("feedback=p_od", self.alg_source)
+        self.assertIn("feedback=p_opt", self.alg_source)
+
+        # Repasse de extent= em build_graph
+        self.assertIn("extent=extent", self.alg_source)
+        self.assertIn("QgsRectangle", self.alg_source)
+
+    def test_vrp_cvrp_metric_crs_check(self):
+        # (passo 6 do plano) Garantir CRS métrico no cálculo: mapUnits() comparado com EPSG:5880
+        self.assertIn('source_crs.mapUnits() == QgsCoordinateReferenceSystem("EPSG:5880").mapUnits()', self.alg_source)
+        self.assertNotIn("source_crs.isGeographic()", self.alg_source)
+
 if __name__ == "__main__":
     unittest.main()

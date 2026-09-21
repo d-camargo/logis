@@ -39,6 +39,19 @@ painel) **impede qualquer import do OR-Tools**. É o modo seguro quando o
 carregamento da biblioteca derruba o QGIS: o cálculo sai inteiramente pela
 heurística nativa, sem tocar no OR-Tools.
 
+**A execução é em segundo plano — e a interface não congela mais.** O painel
+**logis — Roteirização** despacha TSP e CVRP ao gerenciador de tarefas do QGIS:
+o cálculo corre numa thread de trabalho, com barra de progresso e botão
+**Cancelar** (ver [Guia de Roteirização §8](guias/roteirizacao.md#8-execução-em-segundo-plano-e-destino-das-saídas)).
+Isso muda o diagnóstico de um sintoma que antes se creditava ao OR-Tools: a
+janela travada durante os segundos da busca **era da arquitetura do painel**, que
+rodava o algoritmo dentro do laço da interface, e **não** do OR-Tools. Com a
+execução em segundo plano, o congelamento deixou de existir nos dois backends —
+inclusive com o limite de tempo de 10 segundos do `GUIDED_LOCAL_SEARCH`. O que
+continua sendo do OR-Tools é o **abort nativo** da tabela acima (o processo
+fecha, sem exceção e sem log) e o atraso descrito no guia para o cancelamento
+durante uma busca sem soluções novas.
+
 ## O comando de instalação é uma regra, não um comando fixo
 
 O comando não pode ser copiado de um tutorial e colado em qualquer máquina: ele é
@@ -253,7 +266,7 @@ estiver ativa, todos os algoritmos continuam disponíveis pelas heurísticas em 
 — o que muda é só a qualidade possível da solução, nunca a existência dela. O passo a
 passo de confirmação (última linha do `diagnostico.log` e o teste de import de uma linha
 no Console Python) está no
-[Guia de Roteirização](guias/roteirizacao.md#10-quando-o-qgis-fecha-sozinho-ao-calcular-a-rota).
+[Guia de Roteirização](guias/roteirizacao.md#11-quando-o-qgis-fecha-sozinho-ao-calcular-a-rota).
 
 ### Onde fica o botão “Reativar OR-Tools”
 

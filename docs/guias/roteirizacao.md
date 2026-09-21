@@ -27,11 +27,11 @@ vale também para a aba **CVRP**, cujos insumos estão na
 | **Camada do ponto final (Pontos)** | Não | Se vazia, a rota **fecha no ponto inicial** (tour fechado). Se preenchida, a rota termina nesse ponto (caminho aberto — garagem diferente, aterro, transbordo, CD de destino). Também usa a primeira feição válida. |
 | **Camada de rede viária (Linhas)** | Não | Na aba **TSP** a camada só entra no cálculo quando o **Modo de cálculo da distância** está em *Pela rede viária (Dijkstra)*; no modo padrão, *Linha reta (euclidiana)*, ela é ignorada mesmo se estiver selecionada (na aba CVRP vale sempre). Com rede, as distâncias são reais (Dijkstra sobre `QgsGraph`, matriz OD) e os trechos da saída seguem a geometria das ruas; sem rede, tudo é **distância euclidiana** e os trechos são segmentos retos. A rede pode ser a `osm_links_<code_muni>` do pipeline OSM — ver o [Guia de Logística Urbana](urbano.md#1-obter-a-rede-viária-osm-do-município). |
 
-> **CRS de cálculo.** O cálculo é feito em CRS métrico. Quando há rede viária, ou quando
-> a camada de pontos está em coordenadas geográficas, o algoritmo reprojeta para
-> **EPSG:5880** (SIRGAS 2000 / Brazil Polyconic); quando a camada de pontos já está em
-> CRS projetado e não há rede, usa o CRS dela. As distâncias das saídas estão na unidade
-> desse CRS de cálculo (metros).
+> **CRS de cálculo.** O cálculo é sempre feito em CRS **métrico**. Quando há rede viária,
+> o algoritmo reprojeta para **EPSG:5880** (SIRGAS 2000 / Brazil Polyconic); sem rede, ele
+> só mantém o CRS da camada de pontos se as unidades desse CRS já forem **metros**, e
+> reprojeta para EPSG:5880 em qualquer outro caso. Por isso as distâncias das saídas e do
+> painel estão **sempre em metros**.
 
 ---
 
@@ -70,9 +70,12 @@ Os controles aparecem nesta ordem:
    Mais Próximo, mais rápida e pior.
 7. Botão **Calcular Rota (TSP)**.
 
-O painel **limpa** os resultados a cada execução. As duas camadas de saída (**Ordem de
-visita** e **Rota (trechos)**) são criadas **em memória** e adicionadas automaticamente
-ao projeto — salve-as em disco antes de fechar o projeto.
+O painel **limpa** os resultados a cada execução. O cálculo corre **em segundo plano**,
+no gerenciador de tarefas do QGIS: a tela continua utilizável, a barra de progresso
+acompanha as etapas e o botão **Cancelar** interrompe. As duas camadas de saída
+(**Ordem de visita** e **Rota (trechos)**) são gravadas no **GeoPackage da camada de
+referência** quando houver um, ou criadas como **camadas temporárias** quando não houver
+— ver a [seção 8](#8-execução-em-segundo-plano-e-destino-das-saídas).
 
 Ponto inicial e pontos a visitar são obrigatórios: sem eles, o painel abre um aviso e
 não executa. O backend OR-Tools é usado automaticamente quando instalado, com fallback
@@ -225,10 +228,12 @@ use a aba CVRP.
    - **OR-Tools** — força OR-Tools; cai no fallback Python se não disponível.
 9. Botão **Executar Roteirização (CVRP)**.
 
-Depósito e demanda são obrigatórios: sem eles, o painel abre um aviso e não executa. As
-duas camadas de saída (**Rotas geradas** e **Paradas por rota**) são criadas **em
-memória** e adicionadas automaticamente ao projeto — salve-as em disco antes de fechar o
-projeto.
+Depósito e demanda são obrigatórios: sem eles, o painel abre um aviso e não executa. Como
+no TSP, o cálculo corre **em segundo plano**, com barra de progresso e botão **Cancelar**.
+As duas camadas de saída (**Rotas geradas** e **Paradas por rota**) são gravadas no
+**GeoPackage da camada de referência** quando houver um, ou criadas como **camadas
+temporárias** quando não houver — ver a
+[seção 8](#8-execução-em-segundo-plano-e-destino-das-saídas).
 
 ### Ler o painel de resultados do CVRP
 
@@ -276,7 +281,89 @@ OR-Tools, complexidade e bibliografia — está em
 
 ---
 
-## 8. Limitações
+## 8. Execução em segundo plano e destino das saídas
+
+### A tela continua utilizável
+
+TSP e CVRP não rodam mais dentro do laço da interface: os dois botões despacham o
+algoritmo para o **gerenciador de tarefas do QGIS**, e o cálculo corre numa thread de
+trabalho. Enquanto ele corre, a janela do QGIS continua respondendo — dá para navegar no
+mapa, abrir uma tabela de atributos, ler o log.
+
+**As duas barras andam juntas.** A barra do próprio painel, logo acima do campo de
+resultados, e a barra do **gerenciador de tarefas** do QGIS, no canto inferior direito da
+janela, mostram o mesmo número: ambas vão de 0 a 100 conforme as etapas do algoritmo
+(grafo → matriz OD → solver → saídas; as faixas de cada etapa estão em
+[Algoritmos de Roteirização](../algoritmos/roteirizacao.md#execução-em-segundo-plano-progresso-e-cancelamento)).
+Enquanto a tarefa corre, os botões **Calcular Rota (TSP)** e **Executar Roteirização
+(CVRP)** ficam desabilitados — uma execução de cada vez — e o botão **Cancelar**, logo
+abaixo da barra, fica habilitado.
+
+### O botão Cancelar
+
+**Cancelar** interrompe o cálculo: as etapas consultam o pedido de cancelamento entre os
+passos, a execução para **sem gravar saída nenhuma** e o painel registra em amarelo
+"Cálculo cancelado pelo usuário.". A barra some, os botões voltam a ficar habilitados e
+nada é adicionado ao projeto.
+
+> **Limite conhecido — cancelar no meio da busca do OR-Tools.** Com o backend OR-Tools, o
+> pedido de cancelamento só é lido **quando o solver devolve uma solução nova** — é no
+> retorno de cada solução que o plugin manda o solver encerrar a busca corrente. Se a
+> busca entrar numa fase nativa longa sem produzir solução nova, clicar em **Cancelar**
+> **destrava a interface na hora** (o painel dá o cálculo por cancelado e os botões
+> voltam), mas a **thread de trabalho só encerra de fato quando o limite de tempo interno
+> do solver — 10 segundos — se esgota**. Não há dado perdido nem saída gravada: é apenas
+> uma thread que segue ocupada por alguns segundos. Com o backend **Python puro
+> (heurística)** o cancelamento é consultado a cada rodada de busca local, sem essa
+> espera.
+
+### Onde a saída é gravada
+
+As camadas de saída deixaram de ser apenas de memória. O destino é decidido pela **camada
+de referência**: a camada de **rede viária do topo do painel** quando houver uma e, quando
+não houver, a camada de **pontos a visitar** (TSP) ou de **demanda / clientes** (CVRP).
+
+| Origem da camada de referência | Onde as saídas vão parar |
+|---|---|
+| Arquivo **`.gpkg`** | **No mesmo GeoPackage**, como camadas novas, recarregadas dali para o projeto. |
+| Qualquer outra origem (memória, shapefile, PostGIS, serviço) | **Camada temporária**, adicionada ao projeto — salve-a em disco antes de fechar o projeto. |
+
+O painel diz onde a saída foi parar na linha **Destino das saídas:** — o nome do arquivo
+`.gpkg` ou "camada temporária". Se a gravação no GeoPackage falhar (disco cheio, arquivo
+somente leitura, GPKG aberto por outro programa), o painel avisa em amarelo e a execução
+**cai na camada temporária** em vez de perder o resultado.
+
+### Como as camadas se chamam
+
+O nome é montado a partir do tipo de execução, do modo de distância e do nome da camada de
+referência em *slug* (minúsculas, sem acento; espaços e `_` viram `-`):
+
+| Execução | Camada de linhas | Camada de pontos |
+|---|---|---|
+| **TSP**, pela rede viária | `TSP-rede_<ref>` — Rota (trechos) | `TSP-rede_<ref>_pontos` — Ordem de visita |
+| **TSP**, linha reta | `TSP-euclidiana_<ref>` | `TSP-euclidiana_<ref>_pontos` |
+| **CVRP**, pela rede viária | `CVRP-rede_<ref>` — Rotas geradas | `CVRP-rede_<ref>_pontos` — Paradas por rota |
+| **CVRP**, linha reta | `CVRP-euclidiana_<ref>` | `CVRP-euclidiana_<ref>_pontos` |
+
+`<ref>` é o slug da camada de referência: uma rede chamada `osm_links_3106200` vira
+`osm-links-3106200`, e o par de saídas de um TSP pela rede sai como
+`TSP-rede_osm-links-3106200` (linhas) e `TSP-rede_osm-links-3106200_pontos` (pontos).
+
+### Reexecutar substitui o resultado anterior de mesmo nome
+
+Rodar de novo com os mesmos insumos produz **o mesmo nome de camada** — e a gravação
+**substitui** a camada homônima dentro do GeoPackage, em vez de criar uma segunda. Antes
+de gravar, o plugin **remove do projeto** a camada já carregada com aquele nome (sem isso
+o arquivo fica travado no Windows) e a recarrega depois da gravação.
+
+A consequência a conhecer: **o resultado anterior de mesmo nome se perde**. Para comparar
+dois cenários, renomeie ou salve à parte a saída da primeira execução antes de rodar a
+segunda — ou mude o que entra no nome (a camada de referência ou o modo de cálculo da
+distância).
+
+---
+
+## 9. Limitações
 
 - A aba TSP é um **TSP de um único veículo**: não há capacidade, janela de tempo nem
   frota. Para frota com capacidade, use a aba **CVRP**
@@ -292,7 +379,8 @@ OR-Tools, complexidade e bibliografia — está em
   feições extras são ignoradas em silêncio.
 - Feições de geometria vazia na camada de pontos a visitar são puladas; polígonos
   entram pelo **centroide**.
-- Camadas de saída em **memória**: perdem-se ao fechar o projeto sem salvar.
+- Camadas de saída **temporárias** quando a camada de referência não vem de um `.gpkg`:
+  perdem-se ao fechar o projeto sem salvar (ver a [seção 8](#8-execução-em-segundo-plano-e-destino-das-saídas)).
 - **CVRP — demanda maior que a capacidade**: nenhum cliente pode ter demanda maior que a
   capacidade do veículo; nesse caso o algoritmo **recusa a execução** com a mensagem "A
   demanda do nó excede a capacidade máxima do veículo". Não há entrega fracionada: ou o
@@ -305,7 +393,7 @@ OR-Tools, complexidade e bibliografia — está em
 
 ---
 
-## 9. Problemas comuns
+## 10. Problemas comuns
 
 | Sintoma | Causa provável |
 |---|---|
@@ -319,7 +407,7 @@ OR-Tools, complexidade e bibliografia — está em
 
 ---
 
-## 10. Quando o QGIS fecha sozinho ao calcular a rota
+## 11. Quando o QGIS fecha sozinho ao calcular a rota
 
 Em algumas máquinas o QGIS **fecha sem aviso** no meio do cálculo da rota: nenhuma
 mensagem de erro, nenhuma linha no log de Processing, a janela simplesmente some. Quase

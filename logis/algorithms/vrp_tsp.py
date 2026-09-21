@@ -38,12 +38,14 @@ from qgis.core import (
 from qgis.analysis import QgsGraphAnalyzer
 try:
     from ..core import qgis_compat, crashlog
+    from ..core.progress import PhaseProgress
     from ..core.routing.tsp import solve_tsp, split_legs, summarize_legs
     from ..core.optim_backend import pick_backend
     from ..core.network.graph_builder import build_graph
     from ..core.network.od_matrix import compute_od_matrix
 except ImportError:
     from core import qgis_compat, crashlog
+    from core.progress import PhaseProgress
     from core.routing.tsp import solve_tsp, split_legs, summarize_legs
     from core.optim_backend import pick_backend
     from core.network.graph_builder import build_graph
@@ -210,10 +212,10 @@ class VrpTsp(QgsProcessingAlgorithm):
             target_crs = QgsCoordinateReferenceSystem("EPSG:5880")
         else:
             source_crs = points_source.sourceCrs()
-            if source_crs.isGeographic():
-                target_crs = QgsCoordinateReferenceSystem("EPSG:5880")
-            else:
+            if source_crs.mapUnits() == QgsCoordinateReferenceSystem("EPSG:5880").mapUnits():
                 target_crs = source_crs
+            else:
+                target_crs = QgsCoordinateReferenceSystem("EPSG:5880")
 
         transform_start = QgsCoordinateTransform(start_source.sourceCrs(), target_crs, QgsProject.instance())
         transform_points = QgsCoordinateTransform(points_source.sourceCrs(), target_crs, QgsProject.instance())
@@ -229,19 +231,25 @@ class VrpTsp(QgsProcessingAlgorithm):
         if start_pt is None:
             raise QgsProcessingException(self.tr("Nenhum ponto inicial válido encontrado."))
 
-        # 3) Leitura dos pontos a visitar na ordem de leitura
+        # 3) Leitura dos pontos a visitar na ordem de leitura (Faixa: 0–8)
+        p_read = PhaseProgress(feedback, 0.0, 8.0)
+        feedback.setProgressText(self.tr("Lendo pontos a visitar…"))
+        feedback.pushInfo(self.tr("Lendo pontos a visitar..."))
         visit_points = []
         visit_features = []
-        feedback.pushInfo(self.tr("Lendo pontos a visitar..."))
-        for feat in points_source.getFeatures():
-            if feedback.isCanceled():
+        total_pts = points_source.featureCount()
+        for i, feat in enumerate(points_source.getFeatures()):
+            if p_read.isCanceled():
                 return {}
+            if total_pts > 0:
+                p_read.setProgress(100.0 * (i + 1) / total_pts)
             geom = feat.geometry()
             if geom is None or geom.isEmpty():
                 continue
             pt_transformed = transform_points.transform(_extract_point(geom))
             visit_points.append(pt_transformed)
             visit_features.append(feat)
+        p_read.setProgress(100.0)
 
         if not visit_points:
             raise QgsProcessingException(self.tr("A camada de pontos a visitar está vazia."))
@@ -286,10 +294,14 @@ class VrpTsp(QgsProcessingAlgorithm):
             )
             feedback.pushInfo(self.tr("Janela de análise: {}").format(extent.toString()))
             crashlog.mark("tsp-build-graph", f"camada com {network_layer.featureCount()} feicoes")
+
+            p_build = PhaseProgress(feedback, 8.0, 35.0)
+            feedback.setProgressText(self.tr("Construindo o grafo…"))
             try:
-                res = build_graph(network_layer, target_crs=target_crs, points=all_points, extent=extent, feedback=feedback)
+                res = build_graph(network_layer, target_crs=target_crs, points=all_points, extent=extent, feedback=p_build)
             except Exception as exc:
                 raise QgsProcessingException(self.tr("Erro ao construir o grafo: {}").format(str(exc)))
+            p_build.setProgress(100.0)
 
             graph = res["graph"]
             snapped_points = res["snapped_points"]
@@ -308,6 +320,8 @@ class VrpTsp(QgsProcessingAlgorithm):
                     )
                 )
 
+            p_od = PhaseProgress(feedback, 35.0, 70.0)
+            feedback.setProgressText(self.tr("Calculando a matriz OD…"))
             try:
                 crashlog.mark("tsp-od-matrix", "Dijkstra multi-origem")
                 cost_matrix = compute_od_matrix(
@@ -316,10 +330,11 @@ class VrpTsp(QgsProcessingAlgorithm):
                     destinations=vertices,
                     criterion_num=0,
                     cache_id="vrp_tsp",
-                    feedback=feedback
+                    feedback=p_od
                 )
             except Exception as exc:
                 raise QgsProcessingException(self.tr("Erro ao calcular a matriz OD: {}").format(str(exc)))
+            p_od.setProgress(100.0)
 
             unreachable_count = 0
             for i, row in enumerate(cost_matrix):
@@ -335,16 +350,33 @@ class VrpTsp(QgsProcessingAlgorithm):
                     ).format(unreachable_count)
                 )
         else:
+            p_euc = PhaseProgress(feedback, 8.0, 40.0)
+            feedback.setProgressText(self.tr("Calculando matriz de distâncias euclidianas…"))
             feedback.pushInfo(self.tr("Calculando matriz de distâncias euclidianas..."))
             cost_matrix = []
+            n_all = len(all_points)
             for i, p1 in enumerate(all_points):
-                if feedback.isCanceled():
+                if p_euc.isCanceled():
                     return {}
+                if n_all > 0:
+                    p_euc.setProgress(100.0 * (i + 1) / n_all)
                 row = [p1.distance(p2) for p2 in all_points]
                 cost_matrix.append(row)
+            p_euc.setProgress(100.0)
 
         # 6) Otimização TSP
         used_backend = pick_backend(req_backend)
+        if used_backend == "ortools":
+            opt_text = self.tr("Otimizando (OR-Tools)…")
+        else:
+            opt_text = self.tr("Otimizando (heurística Python)…")
+        feedback.setProgressText(opt_text)
+
+        if dist_mode == "rede":
+            p_opt = PhaseProgress(feedback, 70.0, 90.0)
+        else:
+            p_opt = PhaseProgress(feedback, 40.0, 85.0)
+
         feedback.pushInfo(self.tr("Executando a otimização TSP..."))
         crashlog.mark("tsp-ortools-import", f"backend resolvido: {used_backend}")
         try:
@@ -353,10 +385,12 @@ class VrpTsp(QgsProcessingAlgorithm):
                 start=start_idx,
                 end=end_idx,
                 improve=improve,
-                backend=req_backend
+                backend=req_backend,
+                feedback=p_opt
             )
         except (ValueError, RuntimeError) as exc:
             raise QgsProcessingException(str(exc))
+        p_opt.setProgress(100.0)
         crashlog.mark("tsp-solver-ok", f"custo={total_distance:.1f}")
 
         feedback.pushInfo(
@@ -366,6 +400,12 @@ class VrpTsp(QgsProcessingAlgorithm):
         )
 
         # 7) Gravação dos resultados nas camadas de saída
+        feedback.setProgressText(self.tr("Gravando as saídas…"))
+        if dist_mode == "rede":
+            p_out = PhaseProgress(feedback, 90.0, 100.0)
+        else:
+            p_out = PhaseProgress(feedback, 85.0, 100.0)
+
         crashlog.mark("tsp-sinks", "gravando camadas de saida")
         order_fields = QgsFields(points_source.fields())
         order_fields.append(QgsField("visit_seq", qgis_compat.field_type("int")))
@@ -382,38 +422,6 @@ class VrpTsp(QgsProcessingAlgorithm):
             QgsWkbTypes.Type.Point,
             target_crs
         )
-
-        if sink_order is not None:
-            closed = (end_idx is None)
-            legs = split_legs(tour, cost_matrix, closed=closed)
-            num_input_fields = points_source.fields().count()
-            cum_dist = 0.0
-
-            for i, node in enumerate(tour):
-                if feedback.isCanceled():
-                    return {}
-
-                visit_seq = i + 1
-
-                if i == 0:
-                    node_role = "inicio"
-                    leg_role = ""
-                    leg_dist = 0.0
-                    orig_attrs = [None] * num_input_fields
-                else:
-                    _, _, leg_role, leg_dist = legs[i - 1]
-                    cum_dist += leg_dist
-                    if end_idx is not None and node == end_idx:
-                        node_role = "fim"
-                        orig_attrs = [None] * num_input_fields
-                    else:
-                        node_role = "parada"
-                        orig_attrs = visit_features[node - 1].attributes()
-
-                feat = QgsFeature(order_fields)
-                feat.setGeometry(QgsGeometry.fromPointXY(all_points[node]))
-                feat.setAttributes(list(orig_attrs) + [visit_seq, node_role, leg_role, leg_dist, cum_dist])
-                sink_order.addFeature(feat, QgsFeatureSink.Flag.FastInsert)
 
         route_fields = QgsFields()
         route_fields.append(QgsField("leg_seq", qgis_compat.field_type("int")))
@@ -442,11 +450,51 @@ class VrpTsp(QgsProcessingAlgorithm):
             target_crs
         )
 
+        closed = (end_idx is None)
+        legs = split_legs(tour, cost_matrix, closed=closed)
+
+        total_order_items = len(tour) if sink_order is not None else 0
+        total_route_items = len(legs) if sink_route is not None else 0
+        total_out_items = total_order_items + total_route_items
+        written_items = 0
+
+        if sink_order is not None:
+            num_input_fields = points_source.fields().count()
+            cum_dist = 0.0
+
+            for i, node in enumerate(tour):
+                if p_out.isCanceled():
+                    return {}
+
+                visit_seq = i + 1
+
+                if i == 0:
+                    node_role = "inicio"
+                    leg_role = ""
+                    leg_dist = 0.0
+                    orig_attrs = [None] * num_input_fields
+                else:
+                    _, _, leg_role, leg_dist = legs[i - 1]
+                    cum_dist += leg_dist
+                    if end_idx is not None and node == end_idx:
+                        node_role = "fim"
+                        orig_attrs = [None] * num_input_fields
+                    else:
+                        node_role = "parada"
+                        orig_attrs = visit_features[node - 1].attributes()
+
+                feat = QgsFeature(order_fields)
+                feat.setGeometry(QgsGeometry.fromPointXY(all_points[node]))
+                feat.setAttributes(list(orig_attrs) + [visit_seq, node_role, leg_role, leg_dist, cum_dist])
+                sink_order.addFeature(feat, QgsFeatureSink.Flag.FastInsert)
+
+                written_items += 1
+                if total_out_items > 0:
+                    p_out.setProgress(100.0 * written_items / total_out_items)
+
         if sink_route is not None:
-            closed = (end_idx is None)
             closed_int = 1 if closed else 0
             stop_count = len(visit_points)
-            legs = split_legs(tour, cost_matrix, closed=closed)
             summary = summarize_legs(legs)
 
             tour_dist = summary["tour_dist"]
@@ -462,7 +510,7 @@ class VrpTsp(QgsProcessingAlgorithm):
             dijkstra_trees = {}
 
             for k, (u, v, leg_role, leg_dist) in enumerate(legs):
-                if feedback.isCanceled():
+                if p_out.isCanceled():
                     return {}
 
                 leg_seq = k + 1
@@ -531,6 +579,12 @@ class VrpTsp(QgsProcessingAlgorithm):
                     leg_geom
                 ])
                 sink_route.addFeature(feat, QgsFeatureSink.Flag.FastInsert)
+
+                written_items += 1
+                if total_out_items > 0:
+                    p_out.setProgress(100.0 * written_items / total_out_items)
+
+        p_out.setProgress(100.0)
 
         results = {self.OUTPUT_ORDER: dest_order}
         if sink_route is not None:
