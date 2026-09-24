@@ -14,13 +14,16 @@ from qgis.core import (
 from qgis.PyQt.QtCore import QCoreApplication
 
 from ..core import downloader
-from ..core.network.osm_pipeline import build_osm_municipal_network
+from ..core.network.municipios import normalize_code_muni
+from ..core.network.osm_pipeline import build_osm_network
 
 
 class LoadOsmNetwork(QgsProcessingAlgorithm):
     """
     Algoritmo QGIS Processing para carregar/baixar a rede viária urbana (OSM) de um município
-    brasileiro a partir de seu código IBGE (7 dígitos).
+    brasileiro a partir de seu código IBGE (7 dígitos). Usa o algoritmo gisbr:osm_network
+    quando o GisBR 0.11+ está instalado e o pipeline interno caso contrário. Em ambos os casos,
+    os arcos trazem os atributos de custo length, speed e travel_time.
 
     Referência Bibliográfica da Técnica:
         OpenStreetMap contributors (2024). Planet dump [Data file from Overpass API].
@@ -41,6 +44,9 @@ class LoadOsmNetwork(QgsProcessingAlgorithm):
 
     def tr(self, string):
         return QCoreApplication.translate("LoadOsmNetwork", string)
+
+    def flags(self):
+        return super().flags() | QgsProcessingAlgorithm.Flag.FlagNoThreading
 
     def initAlgorithm(self, config=None):
         self.addParameter(
@@ -77,7 +83,8 @@ class LoadOsmNetwork(QgsProcessingAlgorithm):
         )
 
     def processAlgorithm(self, parameters, context, feedback):
-        code = self.parameterAsString(parameters, self.INPUT_CODE_MUNI, context).strip()
+        code_raw = self.parameterAsString(parameters, self.INPUT_CODE_MUNI, context)
+        code = normalize_code_muni(code_raw)
         nome = self.parameterAsString(parameters, self.INPUT_NOME_MUNI, context).strip()
         force = self.parameterAsBool(parameters, self.FORCE, context)
 
@@ -88,13 +95,19 @@ class LoadOsmNetwork(QgsProcessingAlgorithm):
 
         gpkg_path = str(downloader.cache_dir() / f"osm_{code}.gpkg")
 
-        result = build_osm_municipal_network(
+        result = build_osm_network(
             code,
             nome or None,
             gpkg_path,
             force=force,
-            feedback=feedback
+            feedback=feedback,
+            context=context
         )
+
+        metadata = result.get("metadata", {}) if isinstance(result, dict) else {}
+        backend = metadata.get("backend")
+        if backend and feedback:
+            feedback.pushInfo(self.tr("Fonte: {backend}").format(backend=backend))
 
         layers = result.get("layers", {}) if result else {}
         links_layer = layers.get("osm_links")
@@ -106,7 +119,7 @@ class LoadOsmNetwork(QgsProcessingAlgorithm):
             or nodes_layer is None
             or not nodes_layer.isValid()
         ):
-            erro = result.get("metadata", {}).get("erro") if result and "metadata" in result else None
+            erro = metadata.get("erro") if metadata else None
             if not erro:
                 erro = self.tr("nenhuma via encontrada para o município")
             raise QgsProcessingException(erro)
@@ -179,7 +192,9 @@ class LoadOsmNetwork(QgsProcessingAlgorithm):
 
     def shortHelpString(self):
         return self.tr(
-            "Baixa e processa a rede viária urbana de um município a partir dos dados do OpenStreetMap (via Overpass API).\n\n"
+            "Baixa e processa a rede viária urbana de um município a partir dos dados do OpenStreetMap.\n"
+            "Utiliza o algoritmo gisbr:osm_network quando o GisBR 0.11+ está instalado e o pipeline interno caso contrário.\n"
+            "Em ambos os casos, os arcos trazem os campos de custo length, speed e travel_time.\n\n"
             "Parâmetros:\n"
             "- Código IBGE do município: código numérico de 7 dígitos.\n"
             "- Nome do município (opcional): para auxiliar na identificação.\n"

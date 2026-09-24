@@ -2,6 +2,13 @@
 
 Este documento registra as principais alterações e evoluções do plugin **logis** organizadas por versão.
 
+## 0.6.0 - 2026-09-24
+
+- **Rede Viária Municipal via GisBR** — integração com `gisbr:osm_network` quando o GisBR 0.11+ está instalado (com pipeline interno como fallback).
+- **Linha de Fonte da Rede no Painel** — exibição da linha de fonte da rede viária no painel.
+- **Listagem de Municípios via GisBR** — listagem de municípios via `gisbr:read_municipality`.
+- **Correção no Código IBGE** — tratamento de códigos IBGE com sufixo `.0` que travavam o download.
+
 ## 0.5.0 - 2026-09-21
 
 - **Execução Assíncrona no Gerenciador de Tarefas** — execução de TSP e CVRP fora da thread da UI pelo gerenciador de tarefas do QGIS.

@@ -25,6 +25,7 @@ from qgis.core import (
 from .. import qgis_compat
 from ..connectors import osm
 from ..data_backend import has_gisbr
+from .municipios import normalize_code_muni
 
 
 _DEFAULT_SPEEDS = {
@@ -72,6 +73,142 @@ def _calcular_comprimento_metros(geom):
     da.setSourceCrs(crs, QgsProject.instance().transformContext())
     da.setEllipsoid(crs.ellipsoidAcronym())
     return da.measureLength(geom)
+
+
+def _custos_de(comprimento_m, velocidade_kmh):
+    """Calcula custos de rede (length, speed, travel_time) para uma feição.
+
+    Função pura (sem dependência do PyQGIS).
+
+    Parameters
+    ----------
+    comprimento_m : float, int or None
+        Comprimento em metros. Se None, não numérico ou < 0, considera 0.0.
+    velocidade_kmh : float, int or None
+        Velocidade em km/h. Se nulo/None, não numérico ou <= 0, considera 40.0.
+
+    Returns
+    -------
+    tuple of (float, float, float)
+        (length, speed, travel_time em segundos)
+    """
+    if isinstance(comprimento_m, bool):
+        len_val = 0.0
+    else:
+        try:
+            len_val = float(comprimento_m) if comprimento_m is not None else 0.0
+            if len_val < 0:
+                len_val = 0.0
+        except (ValueError, TypeError):
+            len_val = 0.0
+
+    if isinstance(velocidade_kmh, bool):
+        spd_val = 40.0
+    else:
+        try:
+            spd_val = float(velocidade_kmh) if velocidade_kmh is not None else 40.0
+            if spd_val <= 0:
+                spd_val = 40.0
+        except (ValueError, TypeError):
+            spd_val = 40.0
+
+    speed_mps = spd_val / 3.6
+    travel_time = len_val / speed_mps if speed_mps > 0 else 0.0
+
+    return (len_val, spd_val, travel_time)
+
+
+def _adapta_links_gisbr(layer):
+    """Adapta camada de links originada do GisBR para o contrato do graph_builder.
+
+    O GisBR produz uma camada de links com atributos como `comprimento_m` e
+    `velocidade_kmh`. O `graph_builder` do logis exige que a camada de links
+    possua os campos estandardizados:
+    - `length`: comprimento da via em metros (derivado de `comprimento_m` ou da geometria).
+    - `speed`: velocidade média em km/h (derivada de `velocidade_kmh`; se nula ou <= 0, fallback para 40.0 km/h).
+    - `travel_time`: tempo de percurso em segundos (calculado como `length / (speed / 3.6)`).
+
+    Mapeamento de campos:
+    - Todos os campos originais da camada GisBR são mantidos intactos.
+    - `length` <- `comprimento_m` (ou medido via elipsoide EPSG:4674 se ausente/inválido).
+    - `speed` <- `velocidade_kmh` (fallback para 40.0 se nulo ou <= 0).
+    - `travel_time` <- `length / (speed / 3.6)`.
+
+    Parameters
+    ----------
+    layer : QgsVectorLayer
+        Camada vetorial de links do GisBR (ou similar).
+
+    Returns
+    -------
+    QgsVectorLayer or None
+        Camada em memória EPSG:4674 contendo todos os campos originais mais `length`,
+        `speed` e `travel_time`. Retorna None se a camada de entrada for inválida.
+    """
+    if layer is None or not layer.isValid():
+        return None
+
+    def _is_valid_number(val):
+        if val is None or isinstance(val, bool):
+            return False
+        try:
+            float(val)
+            return True
+        except (ValueError, TypeError):
+            return False
+
+    field_names = [f.name() for f in layer.fields()]
+    new_fields = QgsFields()
+    for f in layer.fields():
+        new_fields.append(f)
+
+    for field_name in ("length", "speed", "travel_time"):
+        if field_name not in field_names:
+            new_fields.append(QgsField(field_name, qgis_compat.field_type("double")))
+
+    layer_name = layer.name() if layer.name() else "osm_links_gisbr"
+    uri = "LineString?crs=EPSG:4674"
+    mem_layer = QgsVectorLayer(uri, layer_name, "memory")
+    dp = mem_layer.dataProvider()
+    dp.addAttributes(list(new_fields))
+    mem_layer.updateFields()
+
+    mem_layer.startEditing()
+    for feat in layer.getFeatures():
+        geom = feat.geometry()
+
+        comp = None
+        if "comprimento_m" in field_names:
+            comp = feat["comprimento_m"]
+        elif "length" in field_names:
+            comp = feat["length"]
+
+        if not _is_valid_number(comp) and geom and not geom.isEmpty():
+            comp = _calcular_comprimento_metros(geom)
+
+        vel = None
+        if "velocidade_kmh" in field_names:
+            vel = feat["velocidade_kmh"]
+        elif "speed" in field_names:
+            vel = feat["speed"]
+
+        length_val, speed_val, travel_time_val = _custos_de(comp, vel)
+
+        new_feat = QgsFeature(mem_layer.fields())
+        if geom:
+            new_feat.setGeometry(geom)
+
+        for f in layer.fields():
+            new_feat.setAttribute(f.name(), feat[f.name()])
+
+        new_feat.setAttribute("length", length_val)
+        new_feat.setAttribute("speed", speed_val)
+        new_feat.setAttribute("travel_time", travel_time_val)
+
+        mem_layer.addFeature(new_feat)
+
+    mem_layer.commitChanges()
+    return mem_layer
 
 
 def _parse_osm_ways(payload):
@@ -201,8 +338,12 @@ def _recorta_poligono(layer, poligono, layer_name):
         return None
 
 
-def _resolve_layer(out, layer_name):
+def _resolve_layer(out, layer_name, context=None):
     if isinstance(out, str):
+        if context is not None and hasattr(context, "getMapLayer"):
+            lyr = context.getMapLayer(out)
+            if lyr is not None:
+                return lyr
         return QgsProject.instance().mapLayer(out) or QgsVectorLayer(out, layer_name, "ogr")
     return out
 
@@ -211,10 +352,12 @@ def _municipio_poligono(code_muni, nome_muni=None, feedback=None):
     """Poligono do municipio p/ recorte. None se falhar."""
     import processing
     
+    code_muni_norm = normalize_code_muni(code_muni)
+
     if has_gisbr():
         try:
             out = processing.run("gisbr:read_municipality", {
-                "CODE": str(code_muni),
+                "CODE": code_muni_norm,
                 "SIMPLIFIED": True,
                 "OUTPUT": "TEMPORARY_OUTPUT",
             })["OUTPUT"]
@@ -229,7 +372,7 @@ def _municipio_poligono(code_muni, nome_muni=None, feedback=None):
     else:
         # Fallback: baixar diretamente usando o downloader do logis
         from .. import downloader
-        uf_code = str(code_muni)[:2]
+        uf_code = code_muni_norm[:2]
         url = f"https://www.ipea.gov.br/geobr/data_gpkg/municipality/2020/{uf_code}municipality_2020_simplified.gpkg"
         try:
             local_path = downloader.fetch(url, feedback=feedback)
@@ -241,9 +384,9 @@ def _municipio_poligono(code_muni, nome_muni=None, feedback=None):
             if col in field_names:
                 field = layer.fields().field(col)
                 if field.isNumeric():
-                    expr = f'"{col}" = {int(code_muni)}'
+                    expr = f'"{col}" = {int(code_muni_norm)}'
                 else:
-                    expr = f'"{col}" = \'{code_muni}\''
+                    expr = f'"{col}" = \'{code_muni_norm}\''
                 if not layer.setSubsetString(expr):
                     return None
             return layer
@@ -284,6 +427,8 @@ def _update_cost_attributes(layer):
 
 def _grava_gpkg(layer, gpkg_path, layer_name):
     """Salva a camada em um GeoPackage."""
+    if layer is None or not layer.isValid():
+        return False, "layer invalida"
     opts = QgsVectorFileWriter.SaveVectorOptions()
     opts.driverName = "GPKG"
     opts.layerName = layer_name
@@ -378,3 +523,57 @@ def build_osm_municipal_network(code_muni, nome_muni, gpkg_path, force=False, fe
             "gpkg_ok": ok_links and ok_nodes,
         },
     }
+
+
+def build_osm_network(code_muni, nome_muni, gpkg_path, force=False, feedback=None, context=None):
+    """Despacha a construção da rede OSM municipal para GisBR (se disponível) ou pipeline nativo (logis)."""
+    code = normalize_code_muni(code_muni)
+    if has_gisbr("gisbr:osm_network"):
+        import processing
+
+        res_gisbr = processing.run(
+            "gisbr:osm_network",
+            {
+                "CODE": code,
+                "FORCE": force,
+                "REDE": 0,
+                "PONTAS_SOLTAS": False,
+                "LINKS": "TEMPORARY_OUTPUT",
+                "NODES": "TEMPORARY_OUTPUT",
+                "PROBLEMAS": "TEMPORARY_OUTPUT",
+            },
+            context=context,
+            feedback=feedback,
+            is_child_algorithm=context is not None,
+        )
+
+        links_layer = _resolve_layer(res_gisbr.get("LINKS"), f"osm_links_{code}", context=context)
+        nodes_layer = _resolve_layer(res_gisbr.get("NODES"), f"osm_nodes_{code}", context=context)
+
+        osm_links = _adapta_links_gisbr(links_layer)
+        osm_nodes = nodes_layer
+
+        ok_links, _ = _grava_gpkg(osm_links, gpkg_path, f"osm_links_{code}")
+        ok_nodes, _ = _grava_gpkg(osm_nodes, gpkg_path, f"osm_nodes_{code}")
+
+        return {
+            "raw_cache": None,
+            "layers": {
+                "osm_links_raw": None,
+                "osm_links": osm_links,
+                "osm_nodes": osm_nodes,
+            },
+            "metadata": {
+                "code_muni": str(code),
+                "nome_muni": nome_muni,
+                "backend": "gisbr",
+                "links_clipped": osm_links.featureCount() if osm_links and osm_links.isValid() else 0,
+                "nodes": osm_nodes.featureCount() if osm_nodes and osm_nodes.isValid() else 0,
+                "gpkg_ok": ok_links and ok_nodes,
+            },
+        }
+
+    res = build_osm_municipal_network(code, nome_muni, gpkg_path, force=force, feedback=feedback)
+    if isinstance(res, dict) and "metadata" in res and isinstance(res["metadata"], dict):
+        res["metadata"]["backend"] = "logis"
+    return res

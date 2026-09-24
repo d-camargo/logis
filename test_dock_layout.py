@@ -297,6 +297,12 @@ class TestDockLayout(unittest.TestCase):
         self.assertIn("logis:load_snv_network", content)
         self.assertIn("Qt.CursorShape.WaitCursor", content)
         self.assertIn("restoreOverrideCursor", content)
+        self.assertIn("self.lbl_osm_source", content)
+        self.assertIn('has_gisbr("gisbr:osm_network")', content)
+        self.assertIn("municipios.normalize_code_muni(data)", content)
+        self.assertIn("municipios.normalize_code_muni(self.txt_code_muni.text().strip())", content)
+        self.assertIn("municipios.normalize_code_muni(selected) == code_muni", content)
+        self.assertIn("carregada via", content)
         self.assertNotIn("QgsTask", content)
         self.assertNotIn("subprocess", content)
 

@@ -7,14 +7,19 @@ except ImportError:
     QgsApplication = None
 
 
-def has_gisbr():
+def has_gisbr(alg_id="gisbr:read_municipality"):
     """Verifica se o plugin GisBR está instalado e registrado no Processing do QGIS.
 
     Consulta o processingRegistry do QgsApplication para verificar se o
-    algoritmo 'gisbr:read_municipality' está disponível.
+    algoritmo especificado por `alg_id` (padrão 'gisbr:read_municipality') está disponível.
+    Nota: 'gisbr:osm_network' existe desde o GisBR 0.11.0.
+
+    Args:
+        alg_id (str, optional): ID do algoritmo a ser verificado.
+            Padrão: "gisbr:read_municipality".
 
     Returns:
-        bool: True se o plugin GisBR estiver registrado, False caso contrário.
+        bool: True se o algoritmo do GisBR estiver registrado, False caso contrário.
     """
     if QgsApplication is None:
         return False
@@ -27,4 +32,4 @@ def has_gisbr():
     if reg_instance is None:
         return False
 
-    return reg_instance.algorithmById("gisbr:read_municipality") is not None
+    return reg_instance.algorithmById(alg_id) is not None

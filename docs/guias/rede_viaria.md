@@ -43,10 +43,10 @@ comportamento real, não um bug:
 ## 3. Aba Município (OSM)
 
 1. Escolha a **UF** na lista.
-2. Clique em **Listar municípios da UF**. Isso baixa a malha municipal do geobr (IBGE
-   2020) e preenche a lista **Município** com `Nome (código)`, ordenada por nome. A
-   primeira chamada para uma UF baixa o GeoPackage da malha municipal; as chamadas
-   seguintes, para a mesma UF, vêm do cache.
+2. Clique em **Listar municípios da UF**. Isso consulta a malha municipal via `gisbr:read_municipality`
+   (quando o plugin GisBR está instalado) com fallback do geobr (IBGE 2020) e preenche a lista
+   **Município** com `Nome (código)`, ordenada por nome. A primeira chamada para uma UF baixa o GeoPackage
+   da malha municipal; as chamadas seguintes, para a mesma UF, vêm do cache.
 3. Escolha o município na lista. O campo **Código IBGE (7 dígitos)** é preenchido
    sozinho a partir da seleção. Se você já souber o código, pode digitá-lo direto nesse
    campo — a listagem por UF é só uma conveniência, não um pré-requisito.
@@ -54,14 +54,18 @@ comportamento real, não um bug:
    Overpass em vez de reaproveitar o cache local.
 5. Clique em **Baixar arcos e nós (OSM)**.
 
-Por baixo, o algoritmo `logis:load_osm_network` (via
-`core.network.osm_pipeline.build_osm_municipal_network()`):
+Logo abaixo do checkbox de cache, a linha de status do painel informa qual backend está ativo:
+**Fonte: GisBR (gisbr:osm_network)** quando o GisBR 0.11+ está instalado ou **Fonte: pipeline
+interno do logis — instale o GisBR 0.11+ para usar o fluxo único** caso contrário.
 
-- resolve o polígono do município — usando `gisbr:read_municipality` quando o plugin
-  GisBR está instalado, ou baixando o GeoPackage do geobr diretamente quando não está;
-- consulta a Overpass API pelo *bbox* do polígono;
-- recorta o resultado pelo polígono do município;
-- deduplica os nós de extremidade dos trechos recortados.
+Por baixo, o algoritmo `logis:load_osm_network` (via
+`core.network.osm_pipeline.build_osm_network()`):
+
+- utiliza o algoritmo `gisbr:osm_network` quando o GisBR 0.11+ está instalado (neste caso,
+  os parâmetros de consulta e o cache da rede são gerenciados diretamente pelo GisBR);
+- utiliza o pipeline interno nativo (`build_osm_municipal_network()`) caso contrário (resolvendo o
+  polígono do município via `gisbr:read_municipality` ou geobr, consultando a Overpass API pelo *bbox*,
+  recortando pelo polígono e deduplicando os nós de extremidade).
 
 O resultado são duas camadas adicionadas ao projeto: **Arcos OSM — \<município\>** (arcos)
 e **Nós OSM — \<município\>** (nós), onde \<município\> é o nome escolhido na lista — ou o
@@ -80,6 +84,10 @@ A camada de arcos já vem com os campos de custo que os demais algoritmos usam:
 | `length` | Comprimento do trecho, em **metros** |
 | `speed` | Velocidade estimada pela classe `highway`, em km/h |
 | `travel_time` | Tempo de percurso do trecho, em **segundos** (`length` ÷ `speed`) |
+
+Pelo GisBR (0.11+), a camada também traz os campos `arc_id`, `from_node`, `to_node`, `componente`,
+`comprimento_m` e `velocidade_kmh`. Os campos `length`, `speed` e `travel_time` existem e são
+padronizados nos dois caminhos para garantir compatibilidade com os demais algoritmos do logis.
 
 É essa camada de arcos que os painéis **Urbano** e **Coleta de Lixo** consomem.
 
@@ -149,6 +157,7 @@ mudou, mapeamento OSM mudou) ou de consertar um download que ficou truncado.
 | Sintoma | Causa provável |
 |---|---|
 | Erro de Overpass na área de resultados | A Overpass API está fora do ar ou sobrecarregada — é um serviço público com limite de uso; tente de novo mais tarde. Um município grande também pode estourar o tempo limite da consulta. |
+| Erro propagado do GisBR | Falha na execução do algoritmo `gisbr:osm_network` (ex.: falha de download, município sem vias ou erro interno do GisBR); a mensagem de erro original é exibida na área de resultados. |
 | "nao foi possivel resolver o municipio" | Código IBGE inexistente ou digitado errado, falha no plugin GisBR, ou geobr inacessível para o fallback direto. |
 | "OSM: nenhum way com highway encontrado no bbox" / nenhuma via encontrada | O *bbox* do município não retornou vias mapeadas com a tag `highway` no OpenStreetMap. |
 | O SNV não devolve dados para a UF | O WFS da INDE está fora do ar, ou a UF não tem trecho federal registrado no vintage `snv_202507a`. O erro chega ao painel com a mensagem do algoritmo. |

@@ -159,6 +159,7 @@ except ImportError:
             pass
 
 from logis.core import ufs
+from logis.core.data_backend import has_gisbr
 from logis.core.network import municipios
 
 class NetworkDock(QgsDockWidget):
@@ -236,6 +237,13 @@ class NetworkDock(QgsDockWidget):
         self.chk_force_osm = QCheckBox(self.tr("Forçar novo download (ignorar cache)"))
         tab_muni.addWidget(self.chk_force_osm)
         
+        if has_gisbr("gisbr:osm_network"):
+            src_txt = self.tr("Fonte: GisBR (gisbr:osm_network)")
+        else:
+            src_txt = self.tr("Fonte: pipeline interno do logis — instale o GisBR 0.11+ para usar o fluxo único")
+        self.lbl_osm_source = QLabel(src_txt)
+        tab_muni.addWidget(self.lbl_osm_source)
+
         self.btn_download_osm = QPushButton(self.tr("Baixar arcos e nós (OSM)"))
         self.btn_download_osm.clicked.connect(self.download_osm_network)
         tab_muni.addWidget(self.btn_download_osm)
@@ -275,7 +283,7 @@ class NetworkDock(QgsDockWidget):
     def _on_muni_changed(self):
         data = self.cmb_muni.currentData()
         if data:
-            self.txt_code_muni.setText(str(data))
+            self.txt_code_muni.setText(municipios.normalize_code_muni(data))
 
     def _log(self, html):
         self.txt_results.append(html)
@@ -313,7 +321,7 @@ class NetworkDock(QgsDockWidget):
             self._set_busy(False)
 
     def download_osm_network(self):
-        code_muni = self.txt_code_muni.text().strip()
+        code_muni = municipios.normalize_code_muni(self.txt_code_muni.text().strip())
         if len(code_muni) != 7 or not code_muni.isdigit():
             msg = self.tr("Código IBGE do município deve possuir 7 dígitos.")
             self._error(msg)
@@ -342,7 +350,7 @@ class NetworkDock(QgsDockWidget):
             force = self.chk_force_osm.isChecked()
             nome_muni = ""
             selected = self.cmb_muni.currentData()
-            if selected and str(selected) == code_muni:
+            if selected and municipios.normalize_code_muni(selected) == code_muni:
                 nome_muni = self.cmb_muni.currentText().rsplit(" (", 1)[0].strip()
             params = {
                 'INPUT_CODE_MUNI': code_muni,
@@ -374,7 +382,8 @@ class NetworkDock(QgsDockWidget):
 
             n_links = links_layer.featureCount() if (links_layer and hasattr(links_layer, 'featureCount')) else 0
             n_nodes = nodes_layer.featureCount() if (nodes_layer and hasattr(nodes_layer, 'featureCount')) else 0
-            self._log(self.tr(f"Rede viária OSM ({code_muni}) carregada: {n_links} arcos, {n_nodes} nós."))
+            source = "GisBR" if has_gisbr("gisbr:osm_network") else "logis"
+            self._log(self.tr(f"Rede viária OSM ({code_muni}) carregada via {source}: {n_links} arcos, {n_nodes} nós."))
         except Exception as exc:
             self._error(str(exc))
         finally:
