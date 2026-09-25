@@ -21,7 +21,8 @@ try:
         QScrollArea,
         QCheckBox,
         QTabWidget,
-        QApplication
+        QApplication,
+        QProgressBar
     )
 except ImportError:
     # Mocks para quando rodado fora do QGIS (ex: smoke tests ou CLI)
@@ -41,6 +42,29 @@ except ImportError:
             pass
         def pushWarning(self, warning):
             pass
+        def setProgress(self, progress):
+            pass
+        def setProgressText(self, text):
+            pass
+    class QProgressBar:
+        def __init__(self, parent=None):
+            self._value = 0
+            self._min = 0
+            self._max = 100
+            self._visible = False
+            self._text_visible = True
+            self._format = "%p%"
+        def setRange(self, minimum, maximum):
+            self._min = minimum
+            self._max = maximum
+        def setValue(self, value):
+            self._value = value
+        def setFormat(self, format_str):
+            self._format = format_str
+        def setVisible(self, visible):
+            self._visible = visible
+        def setTextVisible(self, visible):
+            self._text_visible = visible
     class Qt:
         class CursorShape:
             WaitCursor = 0
@@ -162,6 +186,45 @@ from logis.core import ufs
 from logis.core.data_backend import has_gisbr
 from logis.core.network import municipios
 
+class _DockFeedback(QgsProcessingFeedback):
+    """
+    Feedback customizado do Processing que redireciona mensagens e progresso
+    para os componentes da UI do painel (dock).
+
+    Origem: gisbr/gui/diagnostico_dock.py (_LogFeedback).
+    """
+
+    def __init__(self, log_fn, progress_bar=None):
+        super().__init__()
+        self.log_fn = log_fn
+        self.progress_bar = progress_bar
+
+    def pushInfo(self, info):
+        super().pushInfo(info)
+        if self.log_fn:
+            self.log_fn(info)
+        QApplication.processEvents()
+
+    def pushWarning(self, warning):
+        super().pushWarning(warning)
+        if self.log_fn:
+            self.log_fn(warning)
+        QApplication.processEvents()
+
+    def setProgress(self, progress):
+        super().setProgress(progress)
+        if self.progress_bar:
+            self.progress_bar.setRange(0, 100)
+            self.progress_bar.setValue(int(progress))
+        QApplication.processEvents()
+
+    def setProgressText(self, text):
+        super().setProgressText(text)
+        if self.progress_bar:
+            self.progress_bar.setFormat(f"{text} — %p%")
+        QApplication.processEvents()
+
+
 class NetworkDock(QgsDockWidget):
     """
     Painel lateral (Dock Widget) para Rede Viária.
@@ -205,7 +268,7 @@ class NetworkDock(QgsDockWidget):
         outer.addWidget(title_label)
 
         desc_label = QLabel(
-            self.tr("O painel baixa arcos e nós direto para o projeto. O QGIS pode ficar sem resposta durante o download.")
+            self.tr("O painel baixa arcos e nós direto para o projeto. O download roda em primeiro plano; acompanhe o andamento na barra de progresso.")
         )
         desc_label.setStyleSheet("color: #666; font-size: 11px; margin-bottom: 5px;")
         desc_label.setWordWrap(True)
@@ -269,6 +332,11 @@ class NetworkDock(QgsDockWidget):
 
         outer.addWidget(self.tabs)
 
+        self.progress_bar = QProgressBar()
+        self.progress_bar.setTextVisible(True)
+        self.progress_bar.setVisible(False)
+        outer.addWidget(self.progress_bar)
+
         lbl_res = QLabel(self.tr("<b>Resultados:</b>"))
         outer.addWidget(lbl_res)
 
@@ -291,22 +359,28 @@ class NetworkDock(QgsDockWidget):
     def _error(self, msg):
         self.txt_results.append(f"<span style='color: #fc8181;'>{msg}</span>")
 
-    def _set_busy(self, busy):
+    def _set_busy(self, busy, texto=""):
         self.btn_list_munis.setEnabled(not busy)
         self.btn_download_osm.setEnabled(not busy)
         self.btn_download_snv.setEnabled(not busy)
         if busy:
+            self.progress_bar.setRange(0, 0)
+            if texto:
+                self.progress_bar.setFormat(texto)
+            self.progress_bar.setVisible(True)
             QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
             QApplication.processEvents()
         else:
+            self.progress_bar.setVisible(False)
             QApplication.restoreOverrideCursor()
+            QApplication.processEvents()
 
     def list_municipalities(self):
         uf = self.cmb_uf_muni.currentText()
         if not uf:
             return
             
-        self._set_busy(True)
+        self._set_busy(True, self.tr("Listando municípios…"))
         try:
             munis = municipios.list_municipios(uf)
             self.cmb_muni.clear()
@@ -328,25 +402,12 @@ class NetworkDock(QgsDockWidget):
             QMessageBox.warning(self, self.tr("Erro"), msg)
             return
 
-        self._set_busy(True)
+        self._set_busy(True, self.tr("Baixando rede viária OSM…"))
         try:
             import processing
-            from qgis.core import QgsProcessingFeedback, QgsProject
+            from qgis.core import QgsProject
 
-            class _CollectingFeedback(QgsProcessingFeedback):
-                def __init__(self):
-                    super().__init__()
-                    self.logs = []
-
-                def pushInfo(self, info):
-                    super().pushInfo(info)
-                    self.logs.append(str(info))
-
-                def pushWarning(self, warning):
-                    super().pushWarning(warning)
-                    self.logs.append(str(warning))
-
-            fb = _CollectingFeedback()
+            fb = _DockFeedback(self._log, self.progress_bar)
             force = self.chk_force_osm.isChecked()
             nome_muni = ""
             selected = self.cmb_muni.currentData()
@@ -377,9 +438,6 @@ class NetworkDock(QgsDockWidget):
                 if QgsProject.instance():
                     QgsProject.instance().addMapLayer(nodes_layer)
 
-            for log_msg in fb.logs:
-                self._log(log_msg)
-
             n_links = links_layer.featureCount() if (links_layer and hasattr(links_layer, 'featureCount')) else 0
             n_nodes = nodes_layer.featureCount() if (nodes_layer and hasattr(nodes_layer, 'featureCount')) else 0
             source = "GisBR" if has_gisbr("gisbr:osm_network") else "logis"
@@ -397,25 +455,12 @@ class NetworkDock(QgsDockWidget):
             QMessageBox.warning(self, self.tr("Erro"), msg)
             return
 
-        self._set_busy(True)
+        self._set_busy(True, self.tr("Baixando rede viária SNV…"))
         try:
             import processing
-            from qgis.core import QgsProcessingFeedback, QgsProject
+            from qgis.core import QgsProject
 
-            class _CollectingFeedback(QgsProcessingFeedback):
-                def __init__(self):
-                    super().__init__()
-                    self.logs = []
-
-                def pushInfo(self, info):
-                    super().pushInfo(info)
-                    self.logs.append(str(info))
-
-                def pushWarning(self, warning):
-                    super().pushWarning(warning)
-                    self.logs.append(str(warning))
-
-            fb = _CollectingFeedback()
+            fb = _DockFeedback(self._log, self.progress_bar)
             force = self.chk_force_snv.isChecked()
             params = {
                 'INPUT_UF': uf,
@@ -439,9 +484,6 @@ class NetworkDock(QgsDockWidget):
                     nodes_layer.setName(f"Nós SNV — {uf}")
                 if QgsProject.instance():
                     QgsProject.instance().addMapLayer(nodes_layer)
-
-            for log_msg in fb.logs:
-                self._log(log_msg)
 
             n_links = links_layer.featureCount() if (links_layer and hasattr(links_layer, 'featureCount')) else 0
             n_nodes = nodes_layer.featureCount() if (nodes_layer and hasattr(nodes_layer, 'featureCount')) else 0

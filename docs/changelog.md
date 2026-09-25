@@ -2,6 +2,10 @@
 
 Este documento registra as principais alterações e evoluções do plugin **logis** organizadas por versão.
 
+## 0.6.1 - 2026-09-25
+
+- **Progresso e Log ao Vivo na Rede Viária** — barra de progresso e log ao vivo durante o download da rede viária (OSM e SNV) no painel Rede Viária, que antes deixava o QGIS congelado sem retorno.
+
 ## 0.6.0 - 2026-09-24
 
 - **Rede Viária Municipal via GisBR** — integração com `gisbr:osm_network` quando o GisBR 0.11+ está instalado (com pipeline interno como fallback).

@@ -303,6 +303,13 @@ class TestDockLayout(unittest.TestCase):
         self.assertIn("municipios.normalize_code_muni(self.txt_code_muni.text().strip())", content)
         self.assertIn("municipios.normalize_code_muni(selected) == code_muni", content)
         self.assertIn("carregada via", content)
+        self.assertIn("class _DockFeedback", content)
+        self.assertIn("self.progress_bar", content)
+        self.assertIn("setRange(0, 0)", content)
+        dock_fb_code = content.split("class _DockFeedback")[1].split("class NetworkDock")[0]
+        self.assertIn("processEvents()", dock_fb_code)
+        self.assertNotIn("_CollectingFeedback", content)
+        self.assertNotIn("fb.logs", content)
         self.assertNotIn("QgsTask", content)
         self.assertNotIn("subprocess", content)
 

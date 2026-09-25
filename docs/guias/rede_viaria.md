@@ -24,12 +24,17 @@ conteúdo fica dentro de uma área rolável, como os demais painéis do plugin.
 ## 2. O que vale para as duas abas
 
 Logo abaixo do título, o próprio painel avisa: *"O painel baixa arcos e nós direto para
-o projeto. O QGIS pode ficar sem resposta durante o download."* Isso descreve um
-comportamento real, não um bug:
+o projeto. O download roda em primeiro plano; acompanhe o andamento na barra de
+progresso."* Isso descreve um comportamento real, não um bug:
 
-- A execução do download é **síncrona**. Enquanto ela roda, o cursor vira ampulheta e
+- A execução do download é **síncrona**. Enquanto ela roda, o cursor vira ampulheta,
   os três botões (**Listar municípios da UF**, **Baixar arcos e nós (OSM)**, **Baixar
-  arcos e nós (SNV)**) ficam desabilitados.
+  arcos e nós (SNV)**) ficam desabilitados e **não há botão Cancelar**.
+- Durante o download, aparece uma **barra de progresso** logo acima de **Resultados** —
+  primeiro em modo "ocupado" e, quando a fonte informa etapas (como o GisBR), com o
+  nome da etapa e a porcentagem.
+- As **mensagens do log** chegam à área de resultados enquanto o download roda, e
+  não só no fim.
 - A janela do QGIS pode parecer travada até o download terminar — **é esperado, não
   feche o QGIS**. Municípios grandes e UFs extensas podem levar minutos.
 - A área **Resultados**, no rodapé, é somente leitura, em fonte monoespaçada. Ela

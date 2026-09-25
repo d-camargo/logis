@@ -613,98 +613,128 @@ Retorno:
 <context>
     <name>NetworkDock</name>
     <message>
-        <location filename="../gui/network_dock.py" line="171"/>
+        <location filename="../gui/network_dock.py" line="234"/>
         <source>logis — Rede Viária</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/network_dock.py" line="203"/>
+        <location filename="../gui/network_dock.py" line="266"/>
         <source>&lt;b&gt;Rede Viária&lt;/b&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/network_dock.py" line="207"/>
-        <source>O painel baixa arcos e nós direto para o projeto. O QGIS pode ficar sem resposta durante o download.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../gui/network_dock.py" line="217"/>
+        <location filename="../gui/network_dock.py" line="280"/>
         <source>Município (OSM)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/network_dock.py" line="256"/>
+        <location filename="../gui/network_dock.py" line="319"/>
         <source>UF:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/network_dock.py" line="224"/>
+        <location filename="../gui/network_dock.py" line="287"/>
         <source>Listar municípios da UF</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/network_dock.py" line="228"/>
+        <location filename="../gui/network_dock.py" line="291"/>
         <source>Município:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/network_dock.py" line="233"/>
+        <location filename="../gui/network_dock.py" line="296"/>
         <source>Código IBGE (7 dígitos):</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/network_dock.py" line="261"/>
+        <location filename="../gui/network_dock.py" line="324"/>
         <source>Forçar novo download (ignorar cache)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/network_dock.py" line="247"/>
+        <location filename="../gui/network_dock.py" line="310"/>
         <source>Baixar arcos e nós (OSM)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/network_dock.py" line="254"/>
+        <location filename="../gui/network_dock.py" line="317"/>
         <source>Estado (SNV/DNIT)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/network_dock.py" line="264"/>
+        <location filename="../gui/network_dock.py" line="327"/>
         <source>Baixar arcos e nós (SNV)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/network_dock.py" line="272"/>
+        <location filename="../gui/network_dock.py" line="340"/>
         <source>&lt;b&gt;Resultados:&lt;/b&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/network_dock.py" line="315"/>
+        <location filename="../gui/network_dock.py" line="391"/>
         <source>Municípios de {uf} carregados com sucesso.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/network_dock.py" line="317"/>
+        <location filename="../gui/network_dock.py" line="393"/>
         <source>Erro ao listar municípios: {str(e)}</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/network_dock.py" line="328"/>
+        <location filename="../gui/network_dock.py" line="457"/>
         <source>Erro</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/network_dock.py" line="326"/>
+        <location filename="../gui/network_dock.py" line="402"/>
         <source>Código IBGE do município deve possuir 7 dígitos.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/network_dock.py" line="241"/>
+        <location filename="../gui/network_dock.py" line="304"/>
         <source>Fonte: GisBR (gisbr:osm_network)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/network_dock.py" line="243"/>
+        <location filename="../gui/network_dock.py" line="306"/>
         <source>Fonte: pipeline interno do logis — instale o GisBR 0.11+ para usar o fluxo único</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../gui/network_dock.py" line="270"/>
+        <source>O painel baixa arcos e nós direto para o projeto. O download roda em primeiro plano; acompanhe o andamento na barra de progresso.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../gui/network_dock.py" line="385"/>
+        <source>Listando municípios…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../gui/network_dock.py" line="407"/>
+        <source>Baixando rede viária OSM…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../gui/network_dock.py" line="446"/>
+        <source>Rede viária OSM ({code_muni}) carregada via {source}: {n_links} arcos, {n_nodes} nós.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../gui/network_dock.py" line="455"/>
+        <source>Por favor, selecione uma UF.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../gui/network_dock.py" line="460"/>
+        <source>Baixando rede viária SNV…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../gui/network_dock.py" line="492"/>
+        <source>Rede viária SNV ({uf}) carregada: {n_links} arcos, {n_nodes} nós.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -4935,29 +4965,6 @@ Parâmetros:
 
 Retorno:
 - Tabela sem geometria com uma feição por setor: 'sector_id', 'num_routes', 'total_load_kg', 'mean_load_kg', 'std_dev_load_kg', 'min_load_kg', 'max_load_kg', 'cv_load', 'total_time_h', 'mean_time_h', 'std_dev_time_h', 'min_time_h', 'max_time_h' e 'cv_time'.</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
-    <name>_CollectingFeedback</name>
-    <message>
-        <location filename="../gui/network_dock.py" line="395"/>
-        <source>Por favor, selecione uma UF.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../gui/network_dock.py" line="397"/>
-        <source>Erro</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../gui/network_dock.py" line="448"/>
-        <source>Rede viária SNV ({uf}) carregada: {n_links} arcos, {n_nodes} nós.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../gui/network_dock.py" line="386"/>
-        <source>Rede viária OSM ({code_muni}) carregada via {source}: {n_links} arcos, {n_nodes} nós.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
