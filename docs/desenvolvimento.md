@@ -27,6 +27,7 @@ logis/
 │   ├── algorithms/           # Algoritmos do QGIS Processing (logis:*)
 │   ├── gui/                  # Painéis de interface (dock panels) por módulo
 │   └── i18n/                 # Arquivos de internacionalização (.ts e .qm)
+├── tests/                    # Suíte de testes automatizados (pytest)
 ├── tools/                    # Scripts de teste headless e validação em desenvolvimento
 ├── docs/                     # Documentação do projeto (MkDocs)
 ├── dist/                     # Pacotes zip gerados para distribuição
@@ -88,7 +89,7 @@ python3 -m pytest -q
 
 ## 4. Regras de Compatibilidade e Segurança
 
-Para garantir que o **logis** seja totalmente compatível tanto com o QGIS 3 (Qt5/PyQt5) quanto com o futuro QGIS 4 (Qt6/PyQt6) — e que o pacote passe no analisador estático do `plugins.qgis.org` — todo o código deve seguir rigorosamente as cinco regras abaixo. As três primeiras são de compatibilidade e são verificadas por `test_qt6_compat.py`; as duas últimas são de segurança e são verificadas por `test_security_scan.py`.
+Para garantir que o **logis** seja totalmente compatível tanto com o QGIS 3 (Qt5/PyQt5) quanto com o futuro QGIS 4 (Qt6/PyQt6) — e que o pacote passe no analisador estático do `plugins.qgis.org` — todo o código deve seguir rigorosamente as cinco regras abaixo. As três primeiras são de compatibilidade e são verificadas por `tests/test_qt6_compat.py`; as duas últimas são de segurança e são verificadas por `tests/test_security_scan.py`.
 
 ### 1. Enums Escopados (*Scoped Enums*)
 O PyQt6 removeu os enums não escopados. Sempre acesse os enums utilizando o namespace completo da classe:
@@ -103,7 +104,7 @@ O PyQt6 removeu os enums não escopados. Sempre acesse os enums utilizando o nam
 - `QgsVectorLayerDirector.Direction.DirectionBoth` (nunca `QgsVectorLayerDirector.DirectionBoth`)
 - `QNetworkReply.NetworkError.NoError` (nunca `QNetworkReply.NoError`)
 
-Em PyQt5, a forma antiga e a forma escopada escrevem o mesmo inteiro — o código funciona e ninguém percebe a diferença. Por isso essa lista não vive apenas nesta documentação: ela é verificada estaticamente por `test_qt6_compat.py`, que reprova qualquer forma desescopada (o QGIS 4/PyQt6 faria o código falhar em runtime).
+Em PyQt5, a forma antiga e a forma escopada escrevem o mesmo inteiro — o código funciona e ninguém percebe a diferença. Por isso essa lista não vive apenas nesta documentação: ela é verificada estaticamente por `tests/test_qt6_compat.py`, que reprova qualquer forma desescopada (o QGIS 4/PyQt6 faria o código falhar em runtime).
 
 ### 2. Tipos de Campo via `field_type()`
 Em Qt6, a enumeração `QVariant.Type` foi substituída por `QMetaType.Type`. Para evitar quebras ao instanciar campos de vetores (`QgsField`), utilize **apenas** a função auxiliar compatível do projeto:
@@ -128,7 +129,7 @@ dialog.exec()
 dialog.exec_()
 ```
 
-Diálogos não modais continuam vivos depois de `show()`, então quem os cria é responsável por fechá-los e liberar a referência no `unload()` do plugin (ver `LogisPlugin.unload` em `logis/logis_plugin.py`). A regra é verificada automaticamente por `test_security_scan.py`, que falha se qualquer arquivo sob `logis/` contiver `exec()`, `.exec()` ou `.exec_()`.
+Diálogos não modais continuam vivos depois de `show()`, então quem os cria é responsável por fechá-los e liberar a referência no `unload()` do plugin (ver `LogisPlugin.unload` em `logis/logis_plugin.py`). A regra é verificada automaticamente por `tests/test_security_scan.py`, que falha se qualquer arquivo sob `logis/` contiver `exec()`, `.exec()` ou `.exec_()`.
 
 Para verificar se o seu ambiente atende às regras de compatibilidade, você pode rodar o utilitário `tools/qgis4_compat_check.py`.
 
@@ -174,10 +175,10 @@ começando com `-` nunca vire flag do `pip` no comando mostrado ao usuário.
 Para rodar apenas as guardas de segurança:
 
 ```bash
-python3 -m pytest -q test_security_scan.py
+python3 -m pytest -q tests/test_security_scan.py
 ```
 
-O `test_security_scan.py` cobre ainda os invariantes herdados das rodadas anteriores —
+O `tests/test_security_scan.py` cobre ainda os invariantes herdados das rodadas anteriores —
 proibição de `pickle`, de `except`/`pass` silencioso e de bypass de verificação SSL
 (`PeerVerifyMode` + `VerifyNone`). A lista completa está na §9 do `GEMINI.md`.
 
@@ -253,11 +254,11 @@ Daí decorrem as quatro cláusulas do contrato:
    mesmo endereço que o item "Documentação" do menu do plugin abre no navegador; as duas
    pontas não podem divergir.
 
-As quatro são verificadas estaticamente por `test_packaging.py`, que não precisa de QGIS
+As quatro são verificadas estaticamente por `tests/test_packaging.py`, que não precisa de QGIS
 rodando:
 
 ```bash
-python3 -m pytest -q test_packaging.py
+python3 -m pytest -q tests/test_packaging.py
 ```
 
 Na prática, ao preparar uma versão: escreva a seção nova no topo do `docs/changelog.md`
