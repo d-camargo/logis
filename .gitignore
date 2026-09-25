@@ -7,3 +7,4 @@ site/
 /vrp_*_edit*.py
 /vrp_*_fix*.py
 /test_*_edit*.py
+/*.zip
