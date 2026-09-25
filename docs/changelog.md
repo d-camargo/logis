@@ -5,6 +5,8 @@ Este documento registra as principais alterações e evoluções do plugin **log
 ## 0.6.5 - 2026-09-25
 
 - **Resíduos: comprimentos, cargas e frota calculados em metros de verdade** — com a rede baixada pelo próprio plugin (SIRGAS 2000, em graus) os valores saíam ~100 mil vezes menores.
+- **Localização de instalações (p-Mediana, MCLP, LSCP): algoritmos não rodavam pela Caixa de Ferramentas** — faltava `createInstance()` nos três; funcionavam só chamando `processAlgorithm()` direto em Python, e travavam em runtime pela Caixa de Ferramentas ou por `processing.run()`.
+- **Rede Viária: parou de logar `ERROR: Status 2` no Log de Mensagens a cada construção de grafo** — a reprojeção interna passava o SRC como string em vez do objeto, e o QGIS tentava abri-la como arquivo; o grafo construído nunca foi afetado.
 
 ## 0.6.4 - 2026-09-25
 
