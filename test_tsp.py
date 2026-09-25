@@ -469,6 +469,15 @@ class TestVrpTspAlgorithm(unittest.TestCase):
         for field in route_fields:
             self.assertIn(field, self.alg_source, f"Campo '{field}' de OUTPUT_ROUTE deve estar no fonte")
 
+    def test_vrp_tsp_checked_transform_usage(self):
+        # (a) teste estático de que o TSP importa de crs_transform e não chama mais .transform(raw_ direto
+        self.assertIn("from ..core.crs_transform import", self.alg_source)
+        self.assertIn("checked_transform", self.alg_source)
+        self.assertIn("transform_points", self.alg_source)
+        self.assertNotIn(".transform(raw_start_pt)", self.alg_source)
+        self.assertNotIn(".transform(raw_end_pt)", self.alg_source)
+        self.assertNotIn(".transform(pt) for pt in raw_visit_pts", self.alg_source)
+
     def test_vrp_tsp_network_guards(self):
         self.assertIn("_UNREACHABLE_COST", self.alg_source)
         self.assertIn("math.isinf", self.alg_source)
@@ -690,7 +699,160 @@ class TestVrpTspRealQgisRegression(unittest.TestCase):
             alg.processAlgorithm(params_5880, context, fb)
         self.assertIn("EPSG:5880", str(ctx.exception))
 
+    def test_regression_0_6_2_network_and_euclidean(self):
+        from logis.algorithms.vrp_tsp import VrpTsp
+        import math
+        
+        # Points in EPSG:4326 around (-46.63, -23.55)
+        start_layer = QgsVectorLayer("Point?crs=EPSG:4326", "start", "memory")
+        f_start = QgsFeature()
+        f_start.setGeometry(QgsGeometry.fromPointXY(QgsPointXY(-46.63, -23.55)))
+        start_layer.dataProvider().addFeature(f_start)
+        start_layer.updateExtents()
+
+        points_layer = QgsVectorLayer("Point?crs=EPSG:4326", "points", "memory")
+        f_pt1 = QgsFeature()
+        f_pt1.setGeometry(QgsGeometry.fromPointXY(QgsPointXY(-46.631, -23.551)))
+        f_pt2 = QgsFeature()
+        f_pt2.setGeometry(QgsGeometry.fromPointXY(QgsPointXY(-46.629, -23.549)))
+        points_layer.dataProvider().addFeatures([f_pt1, f_pt2])
+        points_layer.updateExtents()
+
+        alg = VrpTsp()
+        alg.initAlgorithm()
+        context = QgsProcessingContext()
+        context.setProject(QgsProject.instance())
+        fb = LogFeedback()
+
+        # Network mode
+        params = {
+            "INPUT_START": start_layer,
+            "INPUT_POINTS": points_layer,
+            "INPUT_NETWORK": self.net_layer,
+            "BACKEND": 1,
+            "OUTPUT_ORDER": "memory:",
+            "OUTPUT_ROUTE": "memory:",
+        }
+
+        res = alg.processAlgorithm(params, context, fb)
+
+        # Check outputs
+        out_order = res["OUTPUT_ORDER"]
+        out_route = res["OUTPUT_ROUTE"]
+
+        def _resolve_output(ctx, val, name):
+            if isinstance(val, str):
+                lay = ctx.getMapLayer(val)
+                if lay is not None and lay.isValid():
+                    return lay
+                return QgsVectorLayer(val, name, "ogr")
+            return val
+
+        order_layer = _resolve_output(context, out_order, "order")
+        route_layer = _resolve_output(context, out_route, "route")
+        
+        # Check CRS
+        self.assertEqual(order_layer.crs().authid(), "EPSG:4674")
+        self.assertEqual(route_layer.crs().authid(), "EPSG:4674")
+        
+        # Check Janela de análise
+        extent_log = [log for log in fb.infos if "Janela de análise:" in log]
+        self.assertTrue(len(extent_log) > 0)
+        ext_str = extent_log[0]
+        coords = [float(val) for val in ext_str.replace("Janela de análise:", "").replace(":", ",").split(",") if val.strip()]
+        self.assertTrue(any(c > 5.7e6 for c in coords), "x da janela na casa de 5.7M")
+        
+        # Check distance between input start point and output start point
+        feat = next(order_layer.getFeatures())
+        geom = feat.geometry()
+        out_pt = geom.asPoint()
+        dist = math.hypot(out_pt.x() - (-46.63), out_pt.y() - (-23.55))
+        self.assertTrue(dist < 1e-6)
+        
+        # Euclidean mode
+        fb2 = LogFeedback()
+        params_euc = {
+            "INPUT_START": start_layer,
+            "INPUT_POINTS": points_layer,
+            "BACKEND": 1,
+            "OUTPUT_ORDER": "memory:",
+            "OUTPUT_ROUTE": "memory:",
+        }
+        res_euc = alg.processAlgorithm(params_euc, context, fb2)
+        
+        out_order_euc = res_euc["OUTPUT_ORDER"]
+        out_route_euc = res_euc["OUTPUT_ROUTE"]
+        order_layer_euc = _resolve_output(context, out_order_euc, "order_euc")
+        route_layer_euc = _resolve_output(context, out_route_euc, "route_euc")
+        
+        self.assertEqual(order_layer_euc.crs().authid(), "EPSG:4674")
+        self.assertEqual(route_layer_euc.crs().authid(), "EPSG:4674")
+        
+        feat_euc = next(route_layer_euc.getFeatures())
+        leg_dist = feat_euc.attribute("leg_dist")
+        self.assertTrue(leg_dist > 100) # distance in meters
+
+    def test_utm_fallback_on_fake_transform(self):
+        from logis.algorithms.vrp_tsp import VrpTsp
+        
+        start_layer = QgsVectorLayer("Point?crs=EPSG:4326", "start", "memory")
+        f_start = QgsFeature()
+        f_start.setGeometry(QgsGeometry.fromPointXY(QgsPointXY(-46.63, -23.55)))
+        start_layer.dataProvider().addFeature(f_start)
+        start_layer.updateExtents()
+
+        points_layer = QgsVectorLayer("Point?crs=EPSG:4326", "points", "memory")
+        f_pt1 = QgsFeature()
+        f_pt1.setGeometry(QgsGeometry.fromPointXY(QgsPointXY(-46.631, -23.551)))
+        points_layer.dataProvider().addFeatures([f_pt1])
+        points_layer.updateExtents()
+
+        alg = VrpTsp()
+        alg.initAlgorithm()
+        context = QgsProcessingContext()
+        context.setProject(QgsProject.instance())
+        fb = LogFeedback()
+
+        params = {
+            "INPUT_START": start_layer,
+            "INPUT_POINTS": points_layer,
+            "BACKEND": 1,
+            "OUTPUT_ORDER": "memory:",
+            "OUTPUT_ROUTE": "memory:",
+        }
+        
+        from qgis.core import QgsCoordinateTransform, QgsCoordinateReferenceSystem
+        orig_init = QgsCoordinateTransform.__init__
+        orig_transform = QgsCoordinateTransform.transform
+        orig_isvalid = QgsCoordinateTransform.isValid
+        orig_isshort = QgsCoordinateTransform.isShortCircuited
+
+        class FakeTransform:
+            def __init__(self, src, dst, ctx=None):
+                self.src = src
+                self.dst = dst
+                self._real = None
+                if dst.authid() != "EPSG:5880":
+                    self._real = QgsCoordinateTransform(src, dst, ctx)
+
+            def transform(self, pt, *args):
+                if self.dst.authid() == "EPSG:5880":
+                    return pt
+                return self._real.transform(pt, *args)
+                
+            def isValid(self):
+                return True
+                
+            def isShortCircuited(self):
+                return False
+
+        with patch("logis.core.crs_transform.QgsCoordinateTransform", FakeTransform):
+            res = alg.processAlgorithm(params, context, fb)
+            
+        all_logs = " ".join(fb.infos + fb.warnings)
+        self.assertIn("EPSG:31983", all_logs)
+        self.assertIn("adotando fallback para EPSG:31983", all_logs)
+
 
 if __name__ == "__main__":
     unittest.main()
-

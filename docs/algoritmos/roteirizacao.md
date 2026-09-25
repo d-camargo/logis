@@ -62,9 +62,17 @@ Cancelamento aceito interrompe a execução **antes de gravar qualquer saída**.
 > nunca corre em coordenadas geográficas: havendo `INPUT_NETWORK`, os pontos e a malha são
 > reprojetados para **EPSG:5880** (SIRGAS 2000 / Brazil Polyconic); sem rede, o CRS da
 > camada de pontos só é mantido quando suas **unidades de mapa já são metros**, e nos
-> demais casos o algoritmo também reprojeta para EPSG:5880. Em consequência, todos os
-> campos de distância das saídas (`leg_dist`, `cum_dist`, `tour_dist`, `route_dist`, …) e
-> os totais do painel estão **em metros**.
+> demais casos o algoritmo também reprojeta para EPSG:5880. Se a transformação para
+> EPSG:5880 falhar, o algoritmo adota como fallback o **UTM SIRGAS da zona** dos pontos
+> (por exemplo, EPSG:31983 em São Paulo), com aviso no log; se o UTM também falhar, a
+> execução para com erro e diagnóstico completo (SRC de origem/destino, ponto de prova
+> antes/depois, versões do QGIS e do PROJ). Toda transformação é conferida com um
+> **ponto de prova**, e o log registra, por transformação aceita, a linha "Transformação
+> EPSG:xxxx → EPSG:yyyy ok (prova ...)" com o ponto antes/depois. Em consequência, todos
+> os campos de distância das saídas (`leg_dist`, `cum_dist`, `tour_dist`, `route_dist`, …)
+> e os totais do painel estão **em metros** — os cálculos correm em EPSG:5880 (ou UTM
+> SIRGAS da zona), mas as camadas de saída do TSP e do CVRP são **sempre gravadas em
+> EPSG:4674** (SIRGAS 2000).
 
 ---
 
@@ -159,7 +167,7 @@ Onde:
 - $V = \{1, 2, \dots, N\}$ é o conjunto de pontos a visitar e $(\pi_1, \dots, \pi_N)$ é uma permutação de $V$, com $\pi_0 = s$.
 - $d(u, v)$ é a distância entre os nós $u$ e $v$, calculada sobre a malha viária (`QgsGraph`/Dijkstra, matriz OD) quando `INPUT_NETWORK` é fornecida, ou via distância euclidiana direta caso contrário.
 
-Os cálculos são realizados em CRS métrico: o CRS da camada de entrada quando suas unidades de mapa já forem metros, ou EPSG:5880 (SIRGAS 2000 / Brazil Polyconic) quando houver rede viária ou quando o CRS da camada de pontos não estiver em metros.
+Os cálculos são realizados em CRS métrico: o CRS da camada de entrada quando suas unidades de mapa já forem metros, ou EPSG:5880 (SIRGAS 2000 / Brazil Polyconic) quando houver rede viária ou quando o CRS da camada de pontos não estiver em metros — com fallback para o UTM SIRGAS da zona (por exemplo, EPSG:31983 em São Paulo) se a transformação para EPSG:5880 falhar, com aviso no log. As camadas de saída, por sua vez, são sempre gravadas em EPSG:4674 (SIRGAS 2000); os atributos de distância permanecem em metros.
 
 ### Janela de construção do grafo
 Quando `INPUT_NETWORK` é fornecida, o algoritmo **não constrói o grafo da camada inteira**: ele delimita antes uma janela de análise e só carrega no `QgsGraph` as feições viárias que caem nela. A janela é o retângulo envolvente de **todos** os pontos do problema (inicial, a visitar e final, já no CRS métrico de cálculo), dilatado em uma margem de $\max(3.000\ \text{m},\ diag)$, onde $diag$ é a diagonal desse retângulo envolvente — ou seja, a vizinhança dos pontos, e não o território todo da camada.

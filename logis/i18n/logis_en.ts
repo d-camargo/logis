@@ -19,17 +19,17 @@
         <translation type="obsolete">The {label} layer has metric coordinates, but the declared CRS ({crs}) is geographic.</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_tsp.py" line="112"/>
+        <location filename="../algorithms/vrp_tsp.py" line="117"/>
         <source>SRC da camada de {label} não foi definido; coordenadas dentro do Brasil — assumindo EPSG:4674 (SIRGAS 2000).</source>
         <translation>CRS of the {label} layer was not set; coordinates within Brazil — assuming EPSG:4674 (SIRGAS 2000).</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_tsp.py" line="118"/>
+        <location filename="../algorithms/vrp_tsp.py" line="123"/>
         <source>A camada de {label} está sem SRC válido (declarado: {crs}) e suas coordenadas não caem no Brasil. Defina o SRC da camada em Propriedades › Fonte e rode novamente.</source>
         <translation>The {label} layer has no valid CRS (declared: {crs}) and its coordinates do not fall within Brazil. Set the layer CRS in Properties › Source and run again.</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_tsp.py" line="125"/>
+        <location filename="../algorithms/vrp_tsp.py" line="130"/>
         <source>A camada de {label} declara o SRC {crs}, mas as coordenadas estão em graus. Defina o SRC correto da camada em Propriedades › Fonte.</source>
         <translation>The {label} layer declares CRS {crs}, but the coordinates are in degrees. Set the correct layer CRS in Properties › Source.</translation>
     </message>
@@ -3092,102 +3092,102 @@ Returns:
 <context>
     <name>VrpCvrp</name>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="169"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="175"/>
         <source>Camada de depósito (Pontos/Polígonos)</source>
         <translation>Depot layer (Points/Polygons)</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="176"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="182"/>
         <source>Camada de demanda / clientes (Pontos/Polígonos)</source>
         <translation>Demand / customer layer (Points/Polygons)</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="183"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="189"/>
         <source>Campo de peso/demanda (opcional, default=1.0)</source>
         <translation>Demand/weight field (optional, default=1.0)</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="192"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="198"/>
         <source>Capacidade do veículo</source>
         <translation>Vehicle capacity</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="201"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="207"/>
         <source>Camada de rede viária (Linhas) (opcional)</source>
         <translation>Road network layer (Lines) (optional)</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="209"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="215"/>
         <source>Aplicar busca local (2-opt e Or-opt)</source>
         <translation>Apply local search (2-opt and Or-opt)</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="228"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="234"/>
         <source>Rotas geradas</source>
         <translation>Generated routes</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="234"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="240"/>
         <source>Paradas por rota (opcional)</source>
         <translation>Stops per route (optional)</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="259"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="265"/>
         <source>Camada de depósito inválida.</source>
         <translation>Invalid depot layer.</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="261"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="267"/>
         <source>Camada de demanda inválida.</source>
         <translation>Invalid demand layer.</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="263"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="269"/>
         <source>A capacidade do veículo deve ser estritamente maior que zero.</source>
         <translation>Vehicle capacity must be strictly greater than zero.</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="274"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="280"/>
         <source>Nenhum ponto de depósito válido encontrado.</source>
         <translation>No valid depot point found.</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="281"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="287"/>
         <source>Lendo pontos de demanda...</source>
         <translation>Reading demand points...</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="312"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="318"/>
         <source>A demanda do nó excede a capacidade máxima do veículo ({weight} &gt; {cap}).</source>
         <translation>Node demand exceeds maximum vehicle capacity ({weight} &gt; {cap}).</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="325"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="331"/>
         <source>Nenhum ponto de demanda válido encontrado.</source>
         <translation>No valid demand point found.</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="364"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="414"/>
         <source>Construindo o grafo e calculando a matriz OD na rede...</source>
         <translation>Building graph and calculating network OD matrix...</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="406"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="456"/>
         <source>Erro ao construir o grafo: {}</source>
         <translation>Error building graph: {}</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="413"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="463"/>
         <source>O grafo construído possui menos de 2 vértices.</source>
         <translation>The constructed graph has fewer than 2 vertices.</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="432"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="482"/>
         <source>Erro ao calcular a matriz OD: {}</source>
         <translation>Error calculating OD matrix: {}</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="437"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="487"/>
         <source>Calculando matriz de distâncias euclidianas...</source>
         <translation>Calculating euclidean distance matrix...</translation>
     </message>
@@ -3202,12 +3202,12 @@ Returns:
         <translation type="obsolete">Routing completed. Generated routes: {count} | Total Distance: {dist:.2f}</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="578"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="696"/>
         <source>Roteirização de Veículos Capacitados (CVRP)</source>
         <translation>Capacitated Vehicle Routing (CVRP)</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="581"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="699"/>
         <source>Roteirização</source>
         <translation>Routing</translation>
     </message>
@@ -3243,77 +3243,77 @@ Outputs:
 - Stops per route: ordered point layer with route assignment and cumulative payload.</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="216"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="222"/>
         <source>Backend de otimização</source>
         <translation>Optimization backend</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="216"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="222"/>
         <source>Automático (OR-Tools quando disponível)</source>
         <translation>Automatic (OR-Tools when available)</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="216"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="222"/>
         <source>Python puro (heurística)</source>
         <translation>Pure Python (heuristic)</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="216"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="222"/>
         <source>OR-Tools</source>
         <translation>OR-Tools</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="280"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="286"/>
         <source>Lendo pontos de demanda…</source>
         <translation>Reading demand points…</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="398"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="448"/>
         <source>Janela de análise: {}</source>
         <translation>Analysis window: {}</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="402"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="452"/>
         <source>Construindo o grafo…</source>
         <translation>Building graph…</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="420"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="470"/>
         <source>Calculando a matriz OD…</source>
         <translation>Calculating OD matrix…</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="436"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="486"/>
         <source>Calculando matriz de distâncias euclidianas…</source>
         <translation>Calculating Euclidean distance matrix…</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="452"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="502"/>
         <source>Otimizando (OR-Tools)…</source>
         <translation>Optimizing (OR-Tools)…</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="454"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="504"/>
         <source>Otimizando (heurística Python)…</source>
         <translation>Optimizing (Python heuristic)…</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="462"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="512"/>
         <source>Executando a otimização CVRP...</source>
         <translation>Executing CVRP optimization...</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="480"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="530"/>
         <source>Roteirização concluída. Rotas geradas: {count} | Backend: {backend} | Distância Total: {dist:.2f}</source>
         <translation>Routing completed. Generated routes: {count} | Backend: {backend} | Total Distance: {dist:.2f}</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="487"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="537"/>
         <source>Gravando as saídas…</source>
         <translation>Writing outputs…</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="587"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="705"/>
         <source>Resolve o Problema de Roteirização de Veículos Capacitados (CVRP) a partir de uma camada de depósito e uma camada de pontos de demanda (clientes).
 
 Constroi rotas que iniciam e terminam no depósito, respeitando a capacidade máxima do veículo, utilizando a heurística de economias de Clarke &amp; Wright (1964) e refinamento opcional por busca local 2-opt (Lin, 1965) e Or-opt (Or, 1976).
@@ -3348,135 +3348,155 @@ Outputs:
 - Stops per route: ordered point layer with route assignment and cumulative load.</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="328"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="334"/>
         <source>depósito</source>
         <translation>depot</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="329"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="335"/>
         <source>demanda</source>
         <translation>demand</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="337"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="343"/>
         <source>SRC da rede: {}</source>
         <translation>Network CRS: {}</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="345"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="399"/>
         <source>SRC de depósito: {} → {}</source>
         <translation>Depot CRS: {} → {}</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="346"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="400"/>
         <source>SRC de demanda: {} → {}</source>
         <translation>Demand CRS: {} → {}</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="377"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="427"/>
         <source>Janela de análise calculada a partir dos pontos é inválida: {}</source>
         <translation>Analysis window calculated from points is invalid: {}</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="392"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="442"/>
         <source>Os pontos ({}) não caem na área da rede viária (rede em {}) — confira o SRC das camadas.</source>
         <translation>The points ({}) do not fall within the road network area (network in {}) — check the CRS of the layers.</translation>
+    </message>
+    <message>
+        <location filename="../algorithms/vrp_cvrp.py" line="390"/>
+        <source>Transformação {src} → {dst} ok (prova ({x1:.4f}, {y1:.4f}) → ({x2:.4f}, {y2:.4f}))</source>
+        <translation>Transformation {src} → {dst} ok (probe ({x1:.4f}, {y1:.4f}) → ({x2:.4f}, {y2:.4f}))</translation>
+    </message>
+    <message>
+        <location filename="../algorithms/vrp_cvrp.py" line="370"/>
+        <source>Transformação para EPSG:5880 falhou ({exc}) — adotando fallback para {utm_auth}</source>
+        <translation>Transformation to EPSG:5880 failed ({exc}) — adopting fallback to {utm_auth}</translation>
+    </message>
+    <message>
+        <location filename="../algorithms/vrp_cvrp.py" line="382"/>
+        <source>Transformação para UTM ({utm}) falhou: {exc}</source>
+        <translation>Transformation to UTM ({utm}) failed: {exc}</translation>
+    </message>
+    <message>
+        <location filename="../algorithms/vrp_cvrp.py" line="396"/>
+        <source>Transformação de coordenadas falhou: {exc}</source>
+        <translation>Coordinate transformation failed: {exc}</translation>
     </message>
 </context>
 <context>
     <name>VrpTsp</name>
     <message>
-        <location filename="../algorithms/vrp_tsp.py" line="172"/>
+        <location filename="../algorithms/vrp_tsp.py" line="177"/>
         <source>Camada do ponto inicial</source>
         <translation>Start point layer</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_tsp.py" line="179"/>
+        <location filename="../algorithms/vrp_tsp.py" line="184"/>
         <source>Camada de pontos a visitar</source>
         <translation>Points to visit layer</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_tsp.py" line="186"/>
+        <location filename="../algorithms/vrp_tsp.py" line="191"/>
         <source>Camada do ponto final (opcional; vazia = a rota fecha no ponto inicial)</source>
         <translation>End point layer (optional; empty = route closes at start point)</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_tsp.py" line="194"/>
+        <location filename="../algorithms/vrp_tsp.py" line="199"/>
         <source>Camada de rede viária (Linhas) (opcional)</source>
         <translation>Road network layer (Lines) (optional)</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_tsp.py" line="202"/>
+        <location filename="../algorithms/vrp_tsp.py" line="207"/>
         <source>Aplicar busca local (2-opt e Or-opt)</source>
         <translation>Apply local search (2-opt and Or-opt)</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_tsp.py" line="221"/>
+        <location filename="../algorithms/vrp_tsp.py" line="226"/>
         <source>Ordem de visita</source>
         <translation>Visit order</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_tsp.py" line="227"/>
+        <location filename="../algorithms/vrp_tsp.py" line="232"/>
         <source>Rota (trechos)</source>
         <translation>Route (legs)</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_tsp.py" line="251"/>
+        <location filename="../algorithms/vrp_tsp.py" line="256"/>
         <source>Camada do ponto inicial inválida.</source>
         <translation>Invalid start point layer.</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_tsp.py" line="253"/>
+        <location filename="../algorithms/vrp_tsp.py" line="258"/>
         <source>Camada de pontos a visitar inválida.</source>
         <translation>Invalid points to visit layer.</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_tsp.py" line="264"/>
+        <location filename="../algorithms/vrp_tsp.py" line="269"/>
         <source>Nenhum ponto inicial válido encontrado.</source>
         <translation>No valid start point found.</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_tsp.py" line="270"/>
+        <location filename="../algorithms/vrp_tsp.py" line="275"/>
         <source>Lendo pontos a visitar...</source>
         <translation>Reading points to visit...</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_tsp.py" line="288"/>
+        <location filename="../algorithms/vrp_tsp.py" line="293"/>
         <source>A camada de pontos a visitar está vazia.</source>
         <translation>Points to visit layer is empty.</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_tsp.py" line="300"/>
+        <location filename="../algorithms/vrp_tsp.py" line="305"/>
         <source>Nenhum ponto final válido encontrado na camada fornecida.</source>
         <translation>No valid end point found in provided layer.</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_tsp.py" line="354"/>
+        <location filename="../algorithms/vrp_tsp.py" line="440"/>
         <source>Construindo o grafo e calculando a matriz OD na rede...</source>
         <translation>Building graph and computing network OD matrix...</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_tsp.py" line="396"/>
+        <location filename="../algorithms/vrp_tsp.py" line="482"/>
         <source>Erro ao construir o grafo: {}</source>
         <translation>Error building graph: {}</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_tsp.py" line="404"/>
+        <location filename="../algorithms/vrp_tsp.py" line="490"/>
         <source>O grafo construído possui menos de 2 vértices.</source>
         <translation>Built graph has fewer than 2 vertices.</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_tsp.py" line="429"/>
+        <location filename="../algorithms/vrp_tsp.py" line="515"/>
         <source>Erro ao calcular a matriz OD: {}</source>
         <translation>Error computing OD matrix: {}</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_tsp.py" line="448"/>
+        <location filename="../algorithms/vrp_tsp.py" line="534"/>
         <source>Calculando matriz de distâncias euclidianas...</source>
         <translation>Computing euclidean distance matrix...</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_tsp.py" line="473"/>
+        <location filename="../algorithms/vrp_tsp.py" line="559"/>
         <source>Executando a otimização TSP...</source>
         <translation>Executing TSP optimization...</translation>
     </message>
@@ -3486,12 +3506,12 @@ Outputs:
         <translation type="obsolete">TSP optimization completed. Points: {count} | Backend: {backend} | Total Distance: {dist:.2f}</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_tsp.py" line="693"/>
+        <location filename="../algorithms/vrp_tsp.py" line="801"/>
         <source>Caixeiro Viajante (TSP)</source>
         <translation>Traveling Salesperson (TSP)</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_tsp.py" line="696"/>
+        <location filename="../algorithms/vrp_tsp.py" line="804"/>
         <source>Roteirização</source>
         <translation>Routing</translation>
     </message>
@@ -3527,82 +3547,82 @@ Outputs:
 - Route (legs): line layer with leg geometries classified ('leg_role': 'acesso', 'rota', 'retorno'). 'acesso' and 'retorno' legs represent deadhead movements (from start point to first visit point and from last to end point), summed in 'access_dist' and 'return_dist', with distance totals ('tour_dist', 'service_dist') and deadhead ratio ('dead_ratio') repeated across all features.</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_tsp.py" line="209"/>
+        <location filename="../algorithms/vrp_tsp.py" line="214"/>
         <source>Backend de otimização</source>
         <translation>Optimization backend</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_tsp.py" line="209"/>
+        <location filename="../algorithms/vrp_tsp.py" line="214"/>
         <source>Automático (OR-Tools quando disponível)</source>
         <translation>Automatic (OR-Tools when available)</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_tsp.py" line="209"/>
+        <location filename="../algorithms/vrp_tsp.py" line="214"/>
         <source>Python puro (heurística)</source>
         <translation>Pure Python (heuristic)</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_tsp.py" line="209"/>
+        <location filename="../algorithms/vrp_tsp.py" line="214"/>
         <source>OR-Tools</source>
         <translation>OR-Tools</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_tsp.py" line="269"/>
+        <location filename="../algorithms/vrp_tsp.py" line="274"/>
         <source>Lendo pontos a visitar…</source>
         <translation>Reading points to visit…</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_tsp.py" line="388"/>
+        <location filename="../algorithms/vrp_tsp.py" line="474"/>
         <source>Janela de análise: {}</source>
         <translation>Analysis window: {}</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_tsp.py" line="392"/>
+        <location filename="../algorithms/vrp_tsp.py" line="478"/>
         <source>Construindo o grafo…</source>
         <translation>Building graph…</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_tsp.py" line="409"/>
+        <location filename="../algorithms/vrp_tsp.py" line="495"/>
         <source>Não foi possível amarrar um ou mais pontos à rede viária. Verifique se os pontos estão próximos da malha e no mesmo território dela.</source>
         <translation>Could not snap one or more points to the road network. Verify if points are close to the network and in the same territory.</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_tsp.py" line="417"/>
+        <location filename="../algorithms/vrp_tsp.py" line="503"/>
         <source>Calculando a matriz OD…</source>
         <translation>Calculating OD matrix…</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_tsp.py" line="439"/>
+        <location filename="../algorithms/vrp_tsp.py" line="525"/>
         <source>A rede viária possui {} par(es) de pontos sem caminho entre si. Verifique se a rede está desconectada.</source>
         <translation>The road network has {} pair(s) of points with no path between them. Verify if the network is disconnected.</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_tsp.py" line="447"/>
+        <location filename="../algorithms/vrp_tsp.py" line="533"/>
         <source>Calculando matriz de distâncias euclidianas…</source>
         <translation>Calculating Euclidean distance matrix…</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_tsp.py" line="463"/>
+        <location filename="../algorithms/vrp_tsp.py" line="549"/>
         <source>Otimizando (OR-Tools)…</source>
         <translation>Optimizing (OR-Tools)…</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_tsp.py" line="465"/>
+        <location filename="../algorithms/vrp_tsp.py" line="551"/>
         <source>Otimizando (heurística Python)…</source>
         <translation>Optimizing (Python heuristic)…</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_tsp.py" line="489"/>
+        <location filename="../algorithms/vrp_tsp.py" line="575"/>
         <source>Otimização TSP concluída. Pontos: {count} | Modo: {dist_mode} | Backend: {backend} | Distância Total: {dist:.2f}</source>
         <translation>TSP optimization completed. Points: {count} | Mode: {dist_mode} | Backend: {backend} | Total Distance: {dist:.2f}</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_tsp.py" line="496"/>
+        <location filename="../algorithms/vrp_tsp.py" line="582"/>
         <source>Gravando as saídas…</source>
         <translation>Writing outputs…</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_tsp.py" line="702"/>
+        <location filename="../algorithms/vrp_tsp.py" line="810"/>
         <source>Resolve o Problema do Caixeiro Viajante (TSP) a partir de um ponto inicial, uma camada de pontos a visitar e, opcionalmente, um ponto final ou rede viária.
 
 Determina a sequência de visita de menor distância total utilizando as heurísticas do Vizinho Mais Próximo (Flood, 1956) com refinamento opcional por busca local 2-opt (Lin, 1965) e Or-opt (Or, 1976), ou o solver de programação por restrições do Google OR-Tools.
@@ -3635,42 +3655,42 @@ Outputs:
 - Route (legs): line layer with classified leg geometries ('leg_role': 'acesso', 'rota', 'retorno'). The 'acesso' and 'retorno' legs are deadhead displacements (from start point to first visit point, and from last to end point), summed in 'access_dist' and 'return_dist', with distance totals ('tour_dist', 'service_dist') and deadhead ratio ('dead_ratio') repeated across all features, along with distance mode ('dist_mode') and leg geometry ('leg_geom').</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_tsp.py" line="303"/>
+        <location filename="../algorithms/vrp_tsp.py" line="308"/>
         <source>ponto inicial</source>
         <translation>start point</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_tsp.py" line="304"/>
+        <location filename="../algorithms/vrp_tsp.py" line="309"/>
         <source>pontos a visitar</source>
         <translation>points to visit</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_tsp.py" line="307"/>
+        <location filename="../algorithms/vrp_tsp.py" line="312"/>
         <source>ponto final</source>
         <translation>end point</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_tsp.py" line="315"/>
+        <location filename="../algorithms/vrp_tsp.py" line="320"/>
         <source>SRC da rede: {}</source>
         <translation>Network CRS: {}</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_tsp.py" line="323"/>
+        <location filename="../algorithms/vrp_tsp.py" line="413"/>
         <source>SRC de ponto inicial: {} → {}</source>
         <translation>Start point CRS: {} → {}</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_tsp.py" line="324"/>
+        <location filename="../algorithms/vrp_tsp.py" line="414"/>
         <source>SRC de pontos a visitar: {} → {}</source>
         <translation>Points to visit CRS: {} → {}</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_tsp.py" line="326"/>
+        <location filename="../algorithms/vrp_tsp.py" line="416"/>
         <source>SRC de ponto final: {} → {}</source>
         <translation>End point CRS: {} → {}</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_tsp.py" line="367"/>
+        <location filename="../algorithms/vrp_tsp.py" line="453"/>
         <source>Janela de análise calculada a partir dos pontos é inválida: {}</source>
         <translation>Analysis window calculated from points is invalid: {}</translation>
     </message>
@@ -3680,9 +3700,29 @@ Outputs:
         <translation type="obsolete">The point analysis window ({}) does not intersect the road network extent (network in {}).</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_tsp.py" line="382"/>
+        <location filename="../algorithms/vrp_tsp.py" line="468"/>
         <source>Os pontos ({}) não caem na área da rede viária (rede em {}) — confira o SRC das camadas.</source>
         <translation>The points ({}) do not fall within the road network area (network in {}) — check the CRS of the layers.</translation>
+    </message>
+    <message>
+        <location filename="../algorithms/vrp_tsp.py" line="401"/>
+        <source>Transformação {src} → {dst} ok (prova ({x1:.4f}, {y1:.4f}) → ({x2:.4f}, {y2:.4f}))</source>
+        <translation>Transformation {src} → {dst} ok (probe ({x1:.4f}, {y1:.4f}) → ({x2:.4f}, {y2:.4f}))</translation>
+    </message>
+    <message>
+        <location filename="../algorithms/vrp_tsp.py" line="380"/>
+        <source>Transformação para EPSG:5880 falhou ({exc}) — adotando fallback para {utm_auth}</source>
+        <translation>Transformation to EPSG:5880 failed ({exc}) — adopting fallback to {utm_auth}</translation>
+    </message>
+    <message>
+        <location filename="../algorithms/vrp_tsp.py" line="392"/>
+        <source>Transformação para UTM ({utm}) falhou: {exc}</source>
+        <translation>Transformation to UTM ({utm}) failed: {exc}</translation>
+    </message>
+    <message>
+        <location filename="../algorithms/vrp_tsp.py" line="408"/>
+        <source>Transformação de coordenadas falhou: {exc}</source>
+        <translation>Coordinate transformation failed: {exc}</translation>
     </message>
 </context>
 <context>

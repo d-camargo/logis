@@ -24,16 +24,17 @@ from qgis.core import (
     QgsProcessingParameterBoolean,
     QgsProcessingParameterEnum,
     QgsProcessingParameterFeatureSink,
-    QgsCoordinateTransform,
     QgsCoordinateReferenceSystem,
+    QgsCoordinateTransformContext,
+    QgsProject,
     QgsFields,
     QgsField,
     QgsFeature,
     QgsFeatureSink,
     QgsWkbTypes,
     QgsGeometry,
-    QgsRectangle,
-    QgsCsException
+    QgsPointXY,
+    QgsRectangle
 )
 from qgis.analysis import QgsGraphAnalyzer
 try:
@@ -44,6 +45,8 @@ try:
     from ..core.optim_backend import pick_backend
     from ..core.network.graph_builder import build_graph
     from ..core.network.od_matrix import compute_od_matrix
+    from ..core.crs_transform import TransformCheckError, checked_transform, transform_points, transform_bbox
+    from ..core.crs_check import utm_sirgas_epsg
 except ImportError:
     from core import qgis_compat, crashlog
     from core.crs_check import classify_input_crs, valid_extent
@@ -52,6 +55,8 @@ except ImportError:
     from core.optim_backend import pick_backend
     from core.network.graph_builder import build_graph
     from core.network.od_matrix import compute_od_matrix
+    from core.crs_transform import TransformCheckError, checked_transform, transform_points, transform_bbox
+    from core.crs_check import utm_sirgas_epsg
 
 # Custo limite para conexões inalcançáveis na rede (convenção de urban_mean_circuity.py)
 _UNREACHABLE_COST = 1e18
@@ -318,23 +323,100 @@ class VrpTsp(QgsProcessingAlgorithm):
             else:
                 target_crs = QgsCoordinateReferenceSystem("EPSG:5880")
 
+        # 3) Montar transforms com os três contextos e checked_transform
+        contexts = [
+            context.transformContext(),
+            QgsProject.instance().transformContext(),
+            QgsCoordinateTransformContext()
+        ]
+
+        def _checked(src_crs, dest_crs, probe_pt):
+            try:
+                ct = checked_transform(src_crs, dest_crs, contexts, probe_pt)
+            except TransformCheckError as exc:
+                raise QgsProcessingException(self.tr("Transformação de coordenadas falhou: {exc}").format(exc=str(exc)))
+            if ct is not None and feedback:
+                t_pt = transform_points(ct, [probe_pt], dest_crs)[0]
+                feedback.pushInfo(self.tr("Transformação {src} → {dst} ok (prova ({x1:.4f}, {y1:.4f}) → ({x2:.4f}, {y2:.4f}))").format(
+                    src=src_crs.authid(), dst=dest_crs.authid(),
+                    x1=probe_pt.x(), y1=probe_pt.y(),
+                    x2=t_pt.x(), y2=t_pt.y()
+                ))
+            return ct
+
+        def _utm_fallback_crs():
+            cx = sum(p.x() for p in raw_visit_pts) / len(raw_visit_pts)
+            cy = sum(p.y() for p in raw_visit_pts) / len(raw_visit_pts)
+            centroid = QgsPointXY(cx, cy)
+            if points_crs.mapUnits() == QgsCoordinateReferenceSystem("EPSG:4326").mapUnits():
+                return QgsCoordinateReferenceSystem(utm_sirgas_epsg(cx, cy))
+            ct = _checked(points_crs, QgsCoordinateReferenceSystem("EPSG:4674"), centroid)
+            lonlat = transform_points(ct, [centroid], "EPSG:4674")[0]
+            return QgsCoordinateReferenceSystem(utm_sirgas_epsg(lonlat.x(), lonlat.y()))
+
+        # SRC métrico interno: EPSG:5880, com fallback para UTM SIRGAS da zona do
+        # centroide dos pontos. A prova cobre todas as camadas de entrada e, no modo
+        # Rede, a extensão da rede: se 5880 falhar em qualquer uma, refaz tudo em UTM.
+        net_crs = network_layer.crs() if (network_layer and network_layer.isValid()) else None
+        candidates = [target_crs]
+        if target_crs.authid() == "EPSG:5880":
+            candidates.append(_utm_fallback_crs())
+
+        net_extent = None
+        for cand_idx, cand_crs in enumerate(candidates):
+            is_last = cand_idx == len(candidates) - 1
+            try:
+                transform_start = checked_transform(start_crs, cand_crs, contexts, raw_start_pt)
+                transform_points_ct = checked_transform(points_crs, cand_crs, contexts, raw_visit_pts[0])
+                transform_end = None
+                if end_source is not None and end_crs is not None:
+                    transform_end = checked_transform(end_crs, cand_crs, contexts, raw_end_pts[0])
+                net_extent = None
+                if net_crs is not None:
+                    if net_crs.isValid() and net_crs != cand_crs:
+                        transform_net = checked_transform(net_crs, cand_crs, contexts, network_layer.extent().center())
+                        net_extent = transform_bbox(transform_net, network_layer.extent(), cand_crs)
+                    else:
+                        net_extent = QgsRectangle(network_layer.extent())
+            except TransformCheckError as exc:
+                if is_last:
+                    if len(candidates) == 1:
+                        raise QgsProcessingException(self.tr("Transformação de coordenadas falhou: {exc}").format(exc=str(exc)))
+                    raise QgsProcessingException(self.tr("Transformação para UTM ({utm}) falhou: {exc}").format(utm=cand_crs.authid(), exc=str(exc)))
+                if feedback:
+                    feedback.pushWarning(self.tr("Transformação para EPSG:5880 falhou ({exc}) — adotando fallback para {utm_auth}").format(exc=str(exc), utm_auth=candidates[1].authid()))
+                continue
+            target_crs = cand_crs
+            break
+
+        if feedback:
+            probes = [
+                (start_crs, raw_start_pt, transform_start),
+                (points_crs, raw_visit_pts[0], transform_points_ct),
+            ]
+            if transform_end is not None:
+                probes.append((end_crs, raw_end_pts[0], transform_end))
+            for src_crs, probe_pt, ct in probes:
+                if ct is not None:
+                    t_pt = transform_points(ct, [probe_pt], target_crs)[0]
+                    feedback.pushInfo(self.tr("Transformação {src} → {dst} ok (prova ({x1:.4f}, {y1:.4f}) → ({x2:.4f}, {y2:.4f}))").format(
+                        src=src_crs.authid(), dst=target_crs.authid(),
+                        x1=probe_pt.x(), y1=probe_pt.y(),
+                        x2=t_pt.x(), y2=t_pt.y()
+                    ))
+
         if feedback:
             feedback.pushInfo(self.tr("SRC de ponto inicial: {} → {}").format(start_crs.authid(), target_crs.authid()))
             feedback.pushInfo(self.tr("SRC de pontos a visitar: {} → {}").format(points_crs.authid(), target_crs.authid()))
             if end_source is not None and end_crs is not None:
                 feedback.pushInfo(self.tr("SRC de ponto final: {} → {}").format(end_crs.authid(), target_crs.authid()))
 
-        # 3) Montar transforms com context.transformContext() e transformar pontos
-        transform_start = QgsCoordinateTransform(start_crs, target_crs, context.transformContext())
-        transform_points = QgsCoordinateTransform(points_crs, target_crs, context.transformContext())
-
-        start_pt = transform_start.transform(raw_start_pt)
-        visit_points = [transform_points.transform(pt) for pt in raw_visit_pts]
+        start_pt = transform_points(transform_start, [raw_start_pt], target_crs)[0]
+        visit_points = transform_points(transform_points_ct, raw_visit_pts, target_crs)
 
         end_pt = None
         if end_source is not None and end_crs is not None:
-            transform_end = QgsCoordinateTransform(end_crs, target_crs, context.transformContext())
-            end_pt = transform_end.transform(raw_end_pt)
+            end_pt = transform_points(transform_end, [raw_end_pt], target_crs)[0]
 
         # Indexação dos nós: 0 = ponto inicial, 1..N = pontos a visitar, N+1 = ponto final quando houver
         all_points = [start_pt] + visit_points
@@ -365,16 +447,8 @@ class VrpTsp(QgsProcessingAlgorithm):
             if not valid_extent(extent.xMinimum(), extent.yMinimum(), extent.xMaximum(), extent.yMaximum()):
                 raise QgsProcessingException(self.tr("Janela de análise calculada a partir dos pontos é inválida: {}").format(extent.toString()))
 
-            net_crs = network_layer.crs()
-            try:
-                if net_crs.isValid() and net_crs != target_crs:
-                    transform_net = QgsCoordinateTransform(net_crs, target_crs, context.transformContext())
-                    net_extent = transform_net.transformBoundingBox(network_layer.extent())
-                else:
-                    net_extent = network_layer.extent()
-            except QgsCsException:
-                net_extent = None
-
+            # A extensão da rede já foi provada no SRC interno (checked_transform +
+            # transform_bbox) durante a resolução do SRC métrico; só resta a guarda.
             if net_extent is None or not valid_extent(
                 net_extent.xMinimum(), net_extent.yMinimum(), net_extent.xMaximum(), net_extent.yMaximum()
             ) or not extent.intersects(net_extent):
@@ -498,6 +572,27 @@ class VrpTsp(QgsProcessingAlgorithm):
         else:
             p_out = PhaseProgress(feedback, 85.0, 100.0)
 
+        out_crs = QgsCoordinateReferenceSystem("EPSG:4674")
+        transform_out_start = _checked(start_crs, out_crs, raw_start_pt)
+        start_pt_out = transform_points(transform_out_start, [raw_start_pt], out_crs)[0]
+
+        transform_out_points = _checked(points_crs, out_crs, raw_visit_pts[0])
+        visit_points_out = transform_points(transform_out_points, raw_visit_pts, out_crs)
+
+        end_pt_out = None
+        if end_source is not None and end_crs is not None:
+            transform_out_end = _checked(end_crs, out_crs, raw_end_pts[0])
+            end_pt_out = transform_points(transform_out_end, [raw_end_pt], out_crs)[0]
+
+        all_points_out = [start_pt_out] + visit_points_out
+        if end_pt_out is not None:
+            all_points_out.append(end_pt_out)
+
+        has_network = bool(network_layer and network_layer.isValid() and graph is not None and vertices is not None)
+        transform_out_network = None
+        if has_network:
+            transform_out_network = _checked(target_crs, out_crs, all_points[0])
+
         crashlog.mark("tsp-sinks", "gravando camadas de saida")
         order_fields = QgsFields(points_source.fields())
         order_fields.append(QgsField("visit_seq", qgis_compat.field_type("int")))
@@ -512,7 +607,7 @@ class VrpTsp(QgsProcessingAlgorithm):
             context,
             order_fields,
             QgsWkbTypes.Type.Point,
-            target_crs
+            out_crs
         )
 
         route_fields = QgsFields()
@@ -539,7 +634,7 @@ class VrpTsp(QgsProcessingAlgorithm):
             context,
             route_fields,
             QgsWkbTypes.Type.LineString,
-            target_crs
+            out_crs
         )
 
         closed = (end_idx is None)
@@ -576,7 +671,7 @@ class VrpTsp(QgsProcessingAlgorithm):
                         orig_attrs = visit_features[node - 1].attributes()
 
                 feat = QgsFeature(order_fields)
-                feat.setGeometry(QgsGeometry.fromPointXY(all_points[node]))
+                feat.setGeometry(QgsGeometry.fromPointXY(all_points_out[node]))
                 feat.setAttributes(list(orig_attrs) + [visit_seq, node_role, leg_role, leg_dist, cum_dist])
                 sink_order.addFeature(feat, QgsFeatureSink.Flag.FastInsert)
 
@@ -595,7 +690,6 @@ class VrpTsp(QgsProcessingAlgorithm):
             return_dist = summary["return_dist"]
             dead_ratio = summary["dead_ratio"]
 
-            has_network = bool(network_layer and network_layer.isValid() and graph is not None and vertices is not None)
 
             cum_leg_dist = 0.0
             num_legs = len(legs)
@@ -640,13 +734,15 @@ class VrpTsp(QgsProcessingAlgorithm):
                             path_vtx.append(u_vtx)
                             path_vtx.reverse()
                             pts = [graph.vertex(vtx).point() for vtx in path_vtx]
+                            if transform_out_network is not None:
+                                pts = transform_points(transform_out_network, pts, out_crs)
                             if len(pts) >= 2:
                                 leg_geom = "rede"
                     except Exception:
                         pts = []
 
                 if leg_geom != "rede":
-                    pts = [all_points[u], all_points[v]]
+                    pts = [all_points_out[u], all_points_out[v]]
                     leg_geom = "reta"
 
                 geom = QgsGeometry.fromPolylineXY(pts)

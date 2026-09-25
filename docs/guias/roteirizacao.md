@@ -30,8 +30,17 @@ vale também para a aba **CVRP**, cujos insumos estão na
 > **CRS de cálculo.** O cálculo é sempre feito em CRS **métrico**. Quando há rede viária,
 > o algoritmo reprojeta para **EPSG:5880** (SIRGAS 2000 / Brazil Polyconic); sem rede, ele
 > só mantém o CRS da camada de pontos se as unidades desse CRS já forem **metros**, e
-> reprojeta para EPSG:5880 em qualquer outro caso. Por isso as distâncias das saídas e do
-> painel estão **sempre em metros**.
+> reprojeta para EPSG:5880 em qualquer outro caso. Se a transformação para EPSG:5880
+> falhar, o algoritmo adota o **UTM SIRGAS da zona** dos pontos (por exemplo, EPSG:31983
+> em São Paulo), com aviso no log. Por isso as distâncias das saídas e do painel estão
+> **sempre em metros**. Toda transformação é conferida com um **ponto de prova**: o log
+> registra, por transformação aceita, uma linha "Transformação EPSG:xxxx → EPSG:yyyy ok
+> (prova ...)" com o ponto antes/depois.
+>
+> **CRS das saídas.** As camadas de saída do TSP (**Ordem de visita** e **Rota
+> (trechos)**) e do CVRP (**Rotas geradas** e **Paradas por rota**) são sempre gravadas
+> em **EPSG:4674** (SIRGAS 2000), independentemente do CRS métrico usado no cálculo —
+> os atributos de distância continuam em metros.
 
 > **Pontos sem SRC ou com SRC inconsistente.** Camadas de pontos sem SRC definido são
 > tratadas como EPSG:4674 quando as coordenadas caem no Brasil (com aviso no log); camada

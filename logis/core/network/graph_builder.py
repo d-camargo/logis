@@ -27,6 +27,7 @@ Complexity/Scale limits:
 """
 
 from qgis.core import (
+    Qgis,
     QgsVectorLayer,
     QgsCoordinateReferenceSystem,
     QgsField,
@@ -34,12 +35,14 @@ from qgis.core import (
     QgsProject,
     QgsRectangle,
     QgsCoordinateTransform,
+    QgsCoordinateTransformContext,
     QgsFeatureRequest,
     QgsWkbTypes,
     QgsCsException
 )
 from .. import qgis_compat
 from ..crs_check import valid_extent
+from ..crs_transform import TransformCheckError, checked_transform, transform_bbox
 from qgis.analysis import (
     QgsVectorLayerDirector,
     QgsGraphBuilder,
@@ -168,13 +171,15 @@ def build_graph(
     else:
         if not valid_extent(extent.xMinimum(), extent.yMinimum(), extent.xMaximum(), extent.yMaximum()):
             raise ValueError(f"Invalid analysis window extent: {extent}")
-        transform_back = QgsCoordinateTransform(crs_obj, layer.crs(), QgsProject.instance())
-        try:
-            source_extent = transform_back.transformBoundingBox(extent)
-        except QgsCsException as exc:
-            src = crs_obj.authid()
-            dst = layer.crs().authid()
-            raise RuntimeError(f"Could not transform the analysis window {extent} from {src} to {dst}: {exc}")
+
+        contexts = [
+            QgsProject.instance().transformContext(),
+            QgsCoordinateTransformContext(),
+        ]
+        transform_back = checked_transform(
+            crs_obj, layer.crs(), contexts, extent.center()
+        )
+        source_extent = transform_bbox(transform_back, extent, layer.crs().authid())
         request = QgsFeatureRequest().setFilterRect(source_extent)
 
         geom_str = QgsWkbTypes.displayString(layer.wkbType())
@@ -185,12 +190,19 @@ def build_graph(
         working_layer.dataProvider().addAttributes(layer.fields())
         working_layer.updateFields()
 
-        transform = QgsCoordinateTransform(layer.crs(), crs_obj, QgsProject.instance())
+        transform = checked_transform(
+            layer.crs(), crs_obj, contexts, source_extent.center()
+        )
         feats = []
         for f in layer.getFeatures(request):
             geom = f.geometry()
             if geom:
-                geom.transform(transform)
+                if transform is not None:
+                    res = geom.transform(transform)
+                    if res != Qgis.GeometryOperationResult.Success:
+                        raise TransformCheckError(
+                            f"Failed to transform geometry for feature {f.id()} to {crs_obj.authid()} (result code: {res})."
+                        )
                 f.setGeometry(geom)
             feats.append(f)
 

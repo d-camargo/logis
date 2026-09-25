@@ -20,6 +20,9 @@ try:
 except ImportError:
     _HAS_PROCESSING = False
 
+from logis.core.crs_transform import TransformCheckError
+from logis.core import qgis_compat
+
 
 @unittest.skipUnless(_HAS_QGIS, "QGIS não disponível")
 class TestGraphBuilderExtent(unittest.TestCase):
@@ -81,16 +84,35 @@ class TestGraphBuilderExtent(unittest.TestCase):
     def test_graph_builder_out_of_bounds_extent_transform(self):
         layer_4674 = QgsVectorLayer("LineString?crs=EPSG:4674", "test_network_4674", "memory")
         extent_5880 = QgsRectangle(-3046.67, -3023.63, 2953.40, 2976.51)
-        try:
+        with self.assertRaises(RuntimeError) as ctx:
             build_graph(layer_4674, target_crs="EPSG:5880", extent=extent_5880)
-        except QgsCsException:
-            self.fail("QgsCsException não deve vazar; deveria ter sido capturada e convertida em RuntimeError")
-        except RuntimeError as exc:
-            msg = str(exc)
-            if "Could not transform" in msg:
-                self.assertIn("EPSG:5880", msg)
-        except ValueError:
-            self.fail("Extensão válida não deve lançar ValueError")
+        self.assertIsInstance(ctx.exception, TransformCheckError)
+        self.assertIn("EPSG:5880", str(ctx.exception))
+
+    def test_graph_builder_extent_sao_paulo_5880(self):
+        layer_sp = QgsVectorLayer("LineString?crs=EPSG:4674", "test_network_sp", "memory")
+        layer_sp.dataProvider().addAttributes([
+            QgsField("oneway", qgis_compat.field_type("string")),
+            QgsField("speed", qgis_compat.field_type("double")),
+        ])
+        layer_sp.updateFields()
+
+        geom1 = QgsGeometry.fromPolylineXY([QgsPointXY(-46.635, -23.555), QgsPointXY(-46.630, -23.550)])
+        geom2 = QgsGeometry.fromPolylineXY([QgsPointXY(-46.630, -23.550), QgsPointXY(-46.625, -23.545)])
+        for geom in [geom1, geom2]:
+            feat = QgsFeature(layer_sp.fields())
+            feat.setGeometry(geom)
+            feat.setAttribute("oneway", "B")
+            feat.setAttribute("speed", 40.0)
+            layer_sp.dataProvider().addFeature(feat)
+        layer_sp.updateExtents()
+
+        extent_5880 = QgsRectangle(5750000, 7370000, 5760000, 7380000)
+        res = build_graph(layer_sp, target_crs="EPSG:5880", extent=extent_5880)
+        self.assertIsNotNone(res["graph"])
+        self.assertGreater(res["graph"].vertexCount(), 0)
+        self.assertGreater(res["graph"].edgeCount(), 0)
+        self.assertEqual(res["crs"].authid(), "EPSG:5880")
 
 
 if __name__ == "__main__":

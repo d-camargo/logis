@@ -4,7 +4,11 @@ import unittest
 
 from logis.core.crs_check import (
     BRAZIL_LONLAT_BOUNDS,
+    PLAUSIBLE_BOUNDS,
     classify_input_crs,
+    plausible_coords,
+    point_moved,
+    utm_sirgas_epsg,
     valid_extent,
 )
 
@@ -87,5 +91,86 @@ class TestValidExtent(unittest.TestCase):
         self.assertFalse(valid_extent(0.0, 0.0, 10.0, float("-inf")))
 
 
+class TestUtmSirgasEpsg(unittest.TestCase):
+    """Testes unitários para utm_sirgas_epsg."""
+
+    def test_utm_sirgas_epsg_samples(self):
+        # utm_sirgas_epsg(-46.63, -23.55) == "EPSG:31983", (-60.0, 2.8) -> zona 20 norte "EPSG:31974"
+        self.assertEqual(utm_sirgas_epsg(-46.63, -23.55), "EPSG:31983")
+        self.assertEqual(utm_sirgas_epsg(-60.0, 2.8), "EPSG:31974")
+
+
+class TestPlausibleCoords(unittest.TestCase):
+    """Testes unitários para plausible_coords."""
+
+    def test_plausible_coords_5880(self):
+        # plausible_coords("EPSG:5880", [(5752163, 7375218)]) True e [(-46.6, -23.5)]/[(-3046.67, -3023.63)] False
+        self.assertTrue(plausible_coords("EPSG:5880", [(5752163, 7375218)]))
+        self.assertFalse(plausible_coords("EPSG:5880", [(-46.6, -23.5)]))
+        self.assertFalse(plausible_coords("EPSG:5880", [(-3046.67, -3023.63)]))
+
+    def test_plausible_coords_utm(self):
+        # UTM (333000, 7395000) em EPSG:31983 True e (-46.6, -23.5) False
+        self.assertTrue(plausible_coords("EPSG:31983", [(333000, 7395000)]))
+        self.assertFalse(plausible_coords("EPSG:31983", [(-46.6, -23.5)]))
+
+    def test_plausible_coords_unknown_authid(self):
+        # authid desconhecido com valor finito True e com nan False
+        self.assertTrue(plausible_coords("EPSG:99999", [(100.0, 200.0)]))
+        self.assertFalse(plausible_coords("EPSG:99999", [(float("nan"), 200.0)]))
+
+    def test_plausible_coords_empty_and_duck_typing(self):
+        self.assertTrue(plausible_coords("EPSG:5880", []))
+
+        class MockPoint:
+            def __init__(self, x, y):
+                self._x = x
+                self._y = y
+
+            def x(self):
+                return self._x
+
+            def y(self):
+                return self._y
+
+        self.assertTrue(plausible_coords("EPSG:5880", [MockPoint(5752163, 7375218)]))
+        self.assertFalse(plausible_coords("EPSG:5880", [MockPoint(-46.6, -23.5)]))
+
+
+class TestPointMoved(unittest.TestCase):
+    """Testes unitários para point_moved."""
+
+    def test_point_moved_equal(self):
+        # point_moved com ponto igual False
+        self.assertFalse(point_moved((-46.63, -23.55), (-46.63, -23.55)))
+
+    def test_point_moved_different(self):
+        self.assertTrue(point_moved((-46.63, -23.55), (5752163.0, 7375218.0)))
+
+    def test_point_moved_tolerance(self):
+        self.assertFalse(point_moved((-46.63, -23.55), (-46.63 + 1e-10, -23.55)))
+        self.assertTrue(point_moved((-46.63, -23.55), (-46.63 + 1e-8, -23.55)))
+
+    def test_point_moved_non_finite_and_invalid(self):
+        self.assertFalse(point_moved((float("nan"), 0.0), (0.0, 0.0)))
+        self.assertFalse(point_moved("invalid", (0.0, 0.0)))
+
+
+class TestPlausibleBounds(unittest.TestCase):
+    """Testes da constante PLAUSIBLE_BOUNDS."""
+
+    def test_bounds_entries(self):
+        self.assertIn("EPSG:5880", PLAUSIBLE_BOUNDS)
+        self.assertIn("EPSG:4674", PLAUSIBLE_BOUNDS)
+        self.assertIn("EPSG:4326", PLAUSIBLE_BOUNDS)
+        self.assertEqual(PLAUSIBLE_BOUNDS["EPSG:4674"], BRAZIL_LONLAT_BOUNDS)
+        self.assertEqual(PLAUSIBLE_BOUNDS["EPSG:4326"], BRAZIL_LONLAT_BOUNDS)
+        self.assertEqual(
+            PLAUSIBLE_BOUNDS["EPSG:5880"],
+            (2_500_000, 5_600_000, 8_100_000, 10_900_000),
+        )
+
+
 if __name__ == "__main__":
     unittest.main()
+

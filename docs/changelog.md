@@ -2,6 +2,11 @@
 
 Este documento registra as principais alterações e evoluções do plugin **logis** organizadas por versão.
 
+## 0.6.3 - 2026-09-25
+
+- **TSP e CVRP: transformação de SRC que não fazia nada** — no Windows/QGIS 4 os pontos continuavam em graus e o modo Rede falhava com "Forward transform … of bounding box failed"; agora toda transformação é conferida, com fallback para UTM SIRGAS da zona e diagnóstico (SRC, ponto de prova, versões do QGIS e do PROJ) no log.
+- **Saídas do TSP e do CVRP em SIRGAS 2000 (EPSG:4674)** — antes saíam em EPSG:5880 e podiam não aparecer no mapa; as distâncias nos atributos continuam em metros.
+
 ## 0.6.2 - 2026-09-25
 
 - **TSP e CVRP em modo Rede com pontos sem SRC** — pontos com SRC indefinido não eram reprojetados e o grafo falhava com "Forward transform … of bounding box failed"; agora o SRC é conferido, o log mostra origem e destino, e a mensagem final traz a causa do erro.
