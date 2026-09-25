@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
+import sys
 import unittest
+from pathlib import Path
+
 from logis.core.indicators.waste import (
     sector_waste_generation,
     allocate_generation_by_street_length,
@@ -10,7 +13,8 @@ from logis.core.indicators.waste import (
 try:
     from qgis.core import (
         QgsApplication, QgsVectorLayer, QgsFeature, QgsGeometry, QgsPointXY,
-        QgsField, QgsProcessingContext, QgsProcessingFeedback, NULL
+        QgsField, QgsProcessingContext, QgsProcessingFeedback, NULL,
+        QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsCoordinateTransformContext,
     )
     from qgis.PyQt.QtCore import QVariant
 
@@ -21,6 +25,30 @@ try:
     _HAS_QGIS = True
 except ImportError:
     _HAS_QGIS = False
+
+# Registra o provider "logis" no Processing (mesmo padrão de test_crs_migration.py), para
+# poder chamar processing.run("logis:...") como um usuário real faria. A referência global
+# _logis_provider_instance é obrigatória: sem ela, o wrapper Python do provider é coletado
+# pelo GC e processing.run() deixa de encontrar os algoritmos.
+_HAS_PROCESSING_REGISTRY = False
+processing = None
+_logis_provider_instance = None
+if _HAS_QGIS:
+    try:
+        sys.path.insert(0, str(Path(QgsApplication.pkgDataPath()) / "python" / "plugins"))
+        from processing.core.Processing import Processing
+
+        Processing.initialize()
+        import processing
+
+        from logis.provider import LogisProvider
+
+        if not any(p.id() == "logis" for p in QgsApplication.processingRegistry().providers()):
+            _logis_provider_instance = LogisProvider()
+            QgsApplication.processingRegistry().addProvider(_logis_provider_instance)
+        _HAS_PROCESSING_REGISTRY = True
+    except Exception:
+        _HAS_PROCESSING_REGISTRY = False
 
 
 class TestWaste(unittest.TestCase):
@@ -801,6 +829,231 @@ class TestWaste(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             compute_collection_coverage([], [])
+
+
+@unittest.skipUnless(
+    _HAS_PROCESSING_REGISTRY, "requer QGIS + Processing com o provider logis registrado"
+)
+class TestWasteCrsRegression(unittest.TestCase):
+    """
+    Regressão ponta a ponta (QGIS real, via processing.run) para o comprimento em metros dos
+    algoritmos de resíduos: a mesma malha viária (grade 3x3, ~100 m por trecho, perto de São
+    Paulo) em EPSG:4674 (graus, como a rede que o próprio logis baixa) e em EPSG:31983 (UTM
+    SIRGAS 23S) tem que dar os mesmos comprimentos/deadhead (±2%), com um trecho medindo
+    ~100 m — não ~0,001 (o valor que ``geometry.length()`` em graus dava antes desta migração).
+    """
+
+    # Nós de uma grade 3x3 (~100 m por trecho) em EPSG:31983, ao redor de São Paulo.
+    BASE_X, BASE_Y = 330000.0, 7395000.0
+    STEP_M = 100.0
+
+    @classmethod
+    def _utm_node(cls, i, j):
+        return (cls.BASE_X + i * cls.STEP_M, cls.BASE_Y + j * cls.STEP_M)
+
+    @classmethod
+    def _grid_edges_ij(cls):
+        """Lista de arestas ((i, j), (i, j)) da grade 3x3: 12 trechos de ~100 m cada."""
+        edges = []
+        for j in range(3):
+            for i in range(2):
+                edges.append(((i, j), (i + 1, j)))
+        for i in range(3):
+            for j in range(2):
+                edges.append(((i, j), (i, j + 1)))
+        return edges
+
+    def _grid_layer_31983(self):
+        layer = QgsVectorLayer("LineString?crs=EPSG:31983", "streets_31983", "memory")
+        pr = layer.dataProvider()
+        feats = []
+        for (ni, nj), (mi, mj) in self._grid_edges_ij():
+            x1, y1 = self._utm_node(ni, nj)
+            x2, y2 = self._utm_node(mi, mj)
+            f = QgsFeature()
+            f.setGeometry(QgsGeometry.fromPolylineXY([QgsPointXY(x1, y1), QgsPointXY(x2, y2)]))
+            feats.append(f)
+        pr.addFeatures(feats)
+        layer.updateExtents()
+        return layer
+
+    def _grid_layer_4674(self):
+        ct = QgsCoordinateTransform(
+            QgsCoordinateReferenceSystem("EPSG:31983"),
+            QgsCoordinateReferenceSystem("EPSG:4674"),
+            QgsCoordinateTransformContext(),
+        )
+        layer = QgsVectorLayer("LineString?crs=EPSG:4674", "streets_4674", "memory")
+        pr = layer.dataProvider()
+        feats = []
+        for (ni, nj), (mi, mj) in self._grid_edges_ij():
+            x1, y1 = self._utm_node(ni, nj)
+            x2, y2 = self._utm_node(mi, mj)
+            geom = QgsGeometry.fromPolylineXY([QgsPointXY(x1, y1), QgsPointXY(x2, y2)])
+            geom.transform(ct)
+            f = QgsFeature()
+            f.setGeometry(geom)
+            feats.append(f)
+        pr.addFeatures(feats)
+        layer.updateExtents()
+        return layer
+
+    def _sum_lengths_m(self, layer, deadhead_field, want_deadhead):
+        """Soma, com length_meter (a mesma medição elipsoidal do algorithm), o comprimento das
+        feições cujo campo booleano ``deadhead_field`` é igual a ``want_deadhead``. Devolve
+        (soma_m, comprimento_da_primeira_feição_m)."""
+        from logis.core.crs_transform import length_meter
+
+        context = QgsProcessingContext()
+        length_fn = length_meter(layer.sourceCrs(), context)
+        idx_dh = layer.fields().indexFromName(deadhead_field)
+        total = 0.0
+        one_segment_m = None
+        for feat in layer.getFeatures():
+            is_dh = bool(feat.attribute(idx_dh))
+            if is_dh != want_deadhead:
+                continue
+            length_m = length_fn(feat.geometry())
+            total += length_m
+            if one_segment_m is None:
+                one_segment_m = length_m
+        return total, one_segment_m
+
+    def test_waste_cpp_route_same_length_and_deadhead_in_4674_and_31983(self):
+        """logis:waste_cpp_route dá o mesmo comprimento produtivo e o mesmo deadhead (±2%)
+        para a mesma grade em EPSG:4674 e em EPSG:31983, com um trecho medindo ~100 m."""
+        out_31983 = processing.run(
+            "logis:waste_cpp_route",
+            {
+                "INPUT_STREETS": self._grid_layer_31983(),
+                "NODE_TOLERANCE": 0.01,
+                "OUTPUT": "memory:out",
+            },
+        )["OUTPUT"]
+        out_4674 = processing.run(
+            "logis:waste_cpp_route",
+            {
+                "INPUT_STREETS": self._grid_layer_4674(),
+                "NODE_TOLERANCE": 0.01,
+                "OUTPUT": "memory:out",
+            },
+        )["OUTPUT"]
+
+        prod_31983, seg_31983 = self._sum_lengths_m(out_31983, "route_is_deadhead", False)
+        dh_31983, _ = self._sum_lengths_m(out_31983, "route_is_deadhead", True)
+        prod_4674, seg_4674 = self._sum_lengths_m(out_4674, "route_is_deadhead", False)
+        dh_4674, _ = self._sum_lengths_m(out_4674, "route_is_deadhead", True)
+
+        # Um trecho mede ~100 m nas duas entradas -- não ~0,001 (graus tratados como metros).
+        self.assertAlmostEqual(seg_31983, 100.0, delta=2.0)
+        self.assertAlmostEqual(seg_4674, 100.0, delta=2.0)
+
+        # A grade 3x3 tem 4 nós de grau ímpar -> deadhead > 0 nas duas entradas.
+        self.assertGreater(dh_31983, 0.0)
+        self.assertGreater(dh_4674, 0.0)
+
+        # Mesma extensão produtiva e mesmo deadhead nas duas entradas (±2%).
+        self.assertAlmostEqual(prod_4674, prod_31983, delta=prod_31983 * 0.02)
+        self.assertAlmostEqual(dh_4674, dh_31983, delta=max(dh_31983 * 0.02, 1.0))
+
+    def test_waste_fleet_sizing_same_result_in_4674_and_31983(self):
+        """logis:waste_fleet_sizing, sobre a saída do CPP da mesma grade, dá o mesmo tempo
+        total de rota (±2%) para EPSG:4674 e EPSG:31983."""
+        cpp_31983 = processing.run(
+            "logis:waste_cpp_route",
+            {
+                "INPUT_STREETS": self._grid_layer_31983(),
+                "NODE_TOLERANCE": 0.01,
+                "OUTPUT": "memory:cpp31983",
+            },
+        )["OUTPUT"]
+        cpp_4674 = processing.run(
+            "logis:waste_cpp_route",
+            {
+                "INPUT_STREETS": self._grid_layer_4674(),
+                "NODE_TOLERANCE": 0.01,
+                "OUTPUT": "memory:cpp4674",
+            },
+        )["OUTPUT"]
+
+        fleet_kwargs = {
+            "FIELD_ROUTE_ID": "route_sector_id",
+            "AVG_SPEED": 10.0,
+            "SHIFT_DURATION": 8.0,
+            "UNLOAD_TIME": 0.5,
+            "TRAVEL_TIME": 0.5,
+        }
+        fleet_31983 = processing.run(
+            "logis:waste_fleet_sizing",
+            {"INPUT_ROUTES": cpp_31983, "OUTPUT": "memory:fleet31983", **fleet_kwargs},
+        )["OUTPUT"]
+        fleet_4674 = processing.run(
+            "logis:waste_fleet_sizing",
+            {"INPUT_ROUTES": cpp_4674, "OUTPUT": "memory:fleet4674", **fleet_kwargs},
+        )["OUTPUT"]
+
+        idx_time_31983 = fleet_31983.fields().indexFromName("total_route_time_h")
+        idx_time_4674 = fleet_4674.fields().indexFromName("total_route_time_h")
+        time_31983 = next(fleet_31983.getFeatures()).attribute(idx_time_31983)
+        time_4674 = next(fleet_4674.getFeatures()).attribute(idx_time_4674)
+
+        self.assertGreater(time_31983, 0.0)
+        self.assertAlmostEqual(time_4674, time_31983, delta=max(time_31983 * 0.02, 0.001))
+
+    def test_waste_carp_route_depot_4326_streets_31983_starts_at_right_node(self):
+        """logis:waste_carp_route com depósito em EPSG:4326 e vias em EPSG:31983 roda sem erro
+        e a primeira aresta visitada da rota toca o nó do depósito."""
+        streets_layer = self._grid_layer_31983()
+        streets_layer.dataProvider().addAttributes([QgsField("demand", QVariant.Double)])
+        streets_layer.updateFields()
+        idx_demand = streets_layer.fields().indexFromName("demand")
+        streets_layer.startEditing()
+        for feat in streets_layer.getFeatures():
+            streets_layer.changeAttributeValue(feat.id(), idx_demand, 1.0)
+        streets_layer.commitChanges()
+
+        depot_node_x, depot_node_y = self._utm_node(0, 0)
+        ct = QgsCoordinateTransform(
+            QgsCoordinateReferenceSystem("EPSG:31983"),
+            QgsCoordinateReferenceSystem("EPSG:4326"),
+            QgsCoordinateTransformContext(),
+        )
+        depot_pt_4326 = ct.transform(QgsPointXY(depot_node_x, depot_node_y))
+
+        depot_layer = QgsVectorLayer("Point?crs=EPSG:4326", "depot_4326", "memory")
+        depot_provider = depot_layer.dataProvider()
+        depot_feat = QgsFeature()
+        depot_feat.setGeometry(QgsGeometry.fromPointXY(depot_pt_4326))
+        depot_provider.addFeature(depot_feat)
+        depot_layer.updateExtents()
+
+        result = processing.run(
+            "logis:waste_carp_route",
+            {
+                "INPUT_STREETS": streets_layer,
+                "FIELD_DEMAND": "demand",
+                "CAPACITY": 100.0,
+                "INPUT_DEPOT": depot_layer,
+                "NODE_TOLERANCE": 0.01,
+                "OUTPUT": "memory:carpout",
+            },
+        )
+        out_layer = result["OUTPUT"]
+
+        idx_order = out_layer.fields().indexFromName("route_visit_order")
+        first_feats = [feat for feat in out_layer.getFeatures() if feat.attribute(idx_order) == 1]
+        self.assertEqual(len(first_feats), 1)
+
+        vertices = first_feats[0].geometry().asPolyline()
+        touches_depot_node = any(
+            abs(v.x() - depot_node_x) < 1.0 and abs(v.y() - depot_node_y) < 1.0
+            for v in vertices
+        )
+        self.assertTrue(
+            touches_depot_node,
+            f"primeira aresta da rota ({[(v.x(), v.y()) for v in vertices]}) não toca o nó do "
+            f"depósito ({depot_node_x}, {depot_node_y})",
+        )
 
 
 if __name__ == "__main__":
