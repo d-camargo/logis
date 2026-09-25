@@ -15,6 +15,7 @@ class SignalFeedback(QgsProcessingFeedback, QObject):
     def __init__(self):
         QgsProcessingFeedback.__init__(self)
         QObject.__init__(self)
+        self.last_error = ""
 
     def pushInfo(self, info: str):
         self.message_emitted.emit(info)
@@ -25,6 +26,7 @@ class SignalFeedback(QgsProcessingFeedback, QObject):
         super().pushWarning(warning)
 
     def reportError(self, error: str, fatalError: bool = False):
+        self.last_error = error
         self.message_emitted.emit(error)
         super().reportError(error, fatalError)
 

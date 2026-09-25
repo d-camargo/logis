@@ -780,7 +780,12 @@ class RoutingDock(QgsDockWidget):
                         self.tr("<span style='color: #ecc94b;'>Cálculo cancelado pelo usuário.</span><br>")
                     )
                 else:
-                    err_msg = str(results) if isinstance(results, str) else self.tr("Erro ao calcular rota.")
+                    if isinstance(results, str) and results:
+                        err_msg = results
+                    elif runner and getattr(runner, "feedback", None) and getattr(runner.feedback, "last_error", None):
+                        err_msg = runner.feedback.last_error
+                    else:
+                        err_msg = self.tr("Erro ao calcular rota.")
                     self.txt_results.append(
                         self.tr("<span style='color: #fc8181;'>Erro ao calcular rota: {error}</span><br>").format(error=err_msg)
                     )
@@ -976,7 +981,12 @@ class RoutingDock(QgsDockWidget):
                         self.tr("<span style='color: #ecc94b;'>Cálculo cancelado pelo usuário.</span><br>")
                     )
                 else:
-                    err_msg = str(results) if isinstance(results, str) else self.tr("Erro ao executar CVRP.")
+                    if isinstance(results, str) and results:
+                        err_msg = results
+                    elif runner and getattr(runner, "feedback", None) and getattr(runner.feedback, "last_error", None):
+                        err_msg = runner.feedback.last_error
+                    else:
+                        err_msg = self.tr("Erro ao executar CVRP.")
                     self.txt_results.append(
                         self.tr("<span style='color: #fc8181;'>Erro ao executar CVRP: {error}</span><br>").format(error=err_msg)
                     )

@@ -33,6 +33,11 @@ vale também para a aba **CVRP**, cujos insumos estão na
 > reprojeta para EPSG:5880 em qualquer outro caso. Por isso as distâncias das saídas e do
 > painel estão **sempre em metros**.
 
+> **Pontos sem SRC ou com SRC inconsistente.** Camadas de pontos sem SRC definido são
+> tratadas como EPSG:4674 quando as coordenadas caem no Brasil (com aviso no log); camada
+> que declara SRC métrico mas guarda graus, ou pontos fora da área da rede, são recusados
+> com mensagem que diz como corrigir.
+
 ---
 
 ## 2. Abrir o painel

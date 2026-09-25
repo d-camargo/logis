@@ -2,6 +2,10 @@
 
 Este documento registra as principais alterações e evoluções do plugin **logis** organizadas por versão.
 
+## 0.6.2 - 2026-09-25
+
+- **TSP e CVRP em modo Rede com pontos sem SRC** — pontos com SRC indefinido não eram reprojetados e o grafo falhava com "Forward transform … of bounding box failed"; agora o SRC é conferido, o log mostra origem e destino, e a mensagem final traz a causa do erro.
+
 ## 0.6.1 - 2026-09-25
 
 - **Progresso e Log ao Vivo na Rede Viária** — barra de progresso e log ao vivo durante o download da rede viária (OSM e SNV) no painel Rede Viária, que antes deixava o QGIS congelado sem retorno.

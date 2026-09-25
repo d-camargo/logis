@@ -26,18 +26,19 @@ from qgis.core import (
     QgsProcessingParameterFeatureSink,
     QgsCoordinateTransform,
     QgsCoordinateReferenceSystem,
-    QgsProject,
     QgsFields,
     QgsField,
     QgsFeature,
     QgsFeatureSink,
     QgsWkbTypes,
     QgsGeometry,
-    QgsRectangle
+    QgsRectangle,
+    QgsCsException
 )
 from qgis.analysis import QgsGraphAnalyzer
 try:
     from ..core import qgis_compat, crashlog
+    from ..core.crs_check import classify_input_crs, valid_extent
     from ..core.progress import PhaseProgress
     from ..core.routing.tsp import solve_tsp, split_legs, summarize_legs
     from ..core.optim_backend import pick_backend
@@ -45,6 +46,7 @@ try:
     from ..core.network.od_matrix import compute_od_matrix
 except ImportError:
     from core import qgis_compat, crashlog
+    from core.crs_check import classify_input_crs, valid_extent
     from core.progress import PhaseProgress
     from core.routing.tsp import solve_tsp, split_legs, summarize_legs
     from core.optim_backend import pick_backend
@@ -82,6 +84,50 @@ def _extract_point(geom):
             if not pt.isEmpty():
                 return pt
         raise ValueError("Geometry does not produce a valid point or centroid.")
+
+
+def _resolve_source_crs(source, raw_points, label, feedback):
+    """
+    Resolve o SRC efetivo da camada via classify_input_crs.
+
+    - "assume_4674": SRC inválido e todas as coordenadas dentro do Brasil → aviso no
+      feedback e retorna EPSG:4674 (SRC padrão do projeto).
+    - "missing" e "degrees_in_projected": lança QgsProcessingException com o nome da
+      camada, o SRC declarado e como corrigir.
+    """
+    from qgis.PyQt.QtCore import QCoreApplication
+
+    def tr(string):
+        return QCoreApplication.translate("VrpTsp", string)
+
+    crs = source.sourceCrs()
+    status = classify_input_crs(
+        crs.isValid(), crs.isGeographic(), [(p.x(), p.y()) for p in raw_points]
+    )
+    declared = crs.authid() if crs.authid() else "indefinido"
+
+    if status == "assume_4674":
+        if feedback:
+            feedback.pushWarning(
+                tr("SRC da camada de {label} não foi definido; coordenadas dentro do Brasil — assumindo EPSG:4674 (SIRGAS 2000).").format(label=label)
+            )
+        return QgsCoordinateReferenceSystem("EPSG:4674")
+
+    if status == "missing":
+        raise QgsProcessingException(
+            tr("A camada de {label} está sem SRC válido (declarado: {crs}) e suas coordenadas não caem no Brasil. Defina o SRC da camada em Propriedades › Fonte e rode novamente.").format(
+                label=label, crs=declared
+            )
+        )
+
+    if status == "degrees_in_projected":
+        raise QgsProcessingException(
+            tr("A camada de {label} declara o SRC {crs}, mas as coordenadas estão em graus. Defina o SRC correto da camada em Propriedades › Fonte.").format(
+                label=label, crs=declared
+            )
+        )
+
+    return crs
 
 
 class VrpTsp(QgsProcessingAlgorithm):
@@ -205,37 +251,23 @@ class VrpTsp(QgsProcessingAlgorithm):
         if points_source is None:
             raise QgsProcessingException(self.tr("Camada de pontos a visitar inválida."))
 
-        # 1) CRS de cálculo
-        dist_mode = "rede" if (network_layer and network_layer.isValid()) else "euclidiana"
-        crashlog.mark("tsp-inicio", f"modo={dist_mode} backend={req_backend}")
-        if network_layer and network_layer.isValid():
-            target_crs = QgsCoordinateReferenceSystem("EPSG:5880")
-        else:
-            source_crs = points_source.sourceCrs()
-            if source_crs.mapUnits() == QgsCoordinateReferenceSystem("EPSG:5880").mapUnits():
-                target_crs = source_crs
-            else:
-                target_crs = QgsCoordinateReferenceSystem("EPSG:5880")
-
-        transform_start = QgsCoordinateTransform(start_source.sourceCrs(), target_crs, QgsProject.instance())
-        transform_points = QgsCoordinateTransform(points_source.sourceCrs(), target_crs, QgsProject.instance())
-
-        # 2) Leitura do ponto inicial (primeira feição válida)
-        start_pt = None
+        # 1) Leitura das geometrias cruas
+        raw_start_pt = None
         for feat in start_source.getFeatures():
             geom = feat.geometry()
             if geom and not geom.isEmpty():
-                start_pt = transform_start.transform(_extract_point(geom))
+                raw_start_pt = _extract_point(geom)
                 break
 
-        if start_pt is None:
+        if raw_start_pt is None:
             raise QgsProcessingException(self.tr("Nenhum ponto inicial válido encontrado."))
 
-        # 3) Leitura dos pontos a visitar na ordem de leitura (Faixa: 0–8)
+        raw_start_pts = [raw_start_pt]
+
         p_read = PhaseProgress(feedback, 0.0, 8.0)
         feedback.setProgressText(self.tr("Lendo pontos a visitar…"))
         feedback.pushInfo(self.tr("Lendo pontos a visitar..."))
-        visit_points = []
+        raw_visit_pts = []
         visit_features = []
         total_pts = points_source.featureCount()
         for i, feat in enumerate(points_source.getFeatures()):
@@ -246,25 +278,63 @@ class VrpTsp(QgsProcessingAlgorithm):
             geom = feat.geometry()
             if geom is None or geom.isEmpty():
                 continue
-            pt_transformed = transform_points.transform(_extract_point(geom))
-            visit_points.append(pt_transformed)
+            raw_pt = _extract_point(geom)
+            raw_visit_pts.append(raw_pt)
             visit_features.append(feat)
         p_read.setProgress(100.0)
 
-        if not visit_points:
+        if not raw_visit_pts:
             raise QgsProcessingException(self.tr("A camada de pontos a visitar está vazia."))
 
-        # 4) Leitura do ponto final (opcional; primeira feição válida se a camada foi fornecida)
-        end_pt = None
+        raw_end_pt = None
+        raw_end_pts = []
         if end_source is not None:
-            transform_end = QgsCoordinateTransform(end_source.sourceCrs(), target_crs, QgsProject.instance())
             for feat in end_source.getFeatures():
                 geom = feat.geometry()
                 if geom and not geom.isEmpty():
-                    end_pt = transform_end.transform(_extract_point(geom))
+                    raw_end_pt = _extract_point(geom)
+                    raw_end_pts = [raw_end_pt]
                     break
-            if end_pt is None:
+            if raw_end_pt is None:
                 raise QgsProcessingException(self.tr("Nenhum ponto final válido encontrado na camada fornecida."))
+
+        # 2) Resolver SRCs efetivos e target_crs
+        start_crs = _resolve_source_crs(start_source, raw_start_pts, self.tr("ponto inicial"), feedback)
+        points_crs = _resolve_source_crs(points_source, raw_visit_pts, self.tr("pontos a visitar"), feedback)
+        end_crs = None
+        if end_source is not None:
+            end_crs = _resolve_source_crs(end_source, raw_end_pts, self.tr("ponto final"), feedback)
+
+        dist_mode = "rede" if (network_layer and network_layer.isValid()) else "euclidiana"
+        crashlog.mark("tsp-inicio", f"modo={dist_mode} backend={req_backend}")
+
+        if network_layer and network_layer.isValid():
+            target_crs = QgsCoordinateReferenceSystem("EPSG:5880")
+            if feedback:
+                feedback.pushInfo(self.tr("SRC da rede: {}").format(network_layer.crs().authid()))
+        else:
+            if points_crs.mapUnits() == QgsCoordinateReferenceSystem("EPSG:5880").mapUnits():
+                target_crs = points_crs
+            else:
+                target_crs = QgsCoordinateReferenceSystem("EPSG:5880")
+
+        if feedback:
+            feedback.pushInfo(self.tr("SRC de ponto inicial: {} → {}").format(start_crs.authid(), target_crs.authid()))
+            feedback.pushInfo(self.tr("SRC de pontos a visitar: {} → {}").format(points_crs.authid(), target_crs.authid()))
+            if end_source is not None and end_crs is not None:
+                feedback.pushInfo(self.tr("SRC de ponto final: {} → {}").format(end_crs.authid(), target_crs.authid()))
+
+        # 3) Montar transforms com context.transformContext() e transformar pontos
+        transform_start = QgsCoordinateTransform(start_crs, target_crs, context.transformContext())
+        transform_points = QgsCoordinateTransform(points_crs, target_crs, context.transformContext())
+
+        start_pt = transform_start.transform(raw_start_pt)
+        visit_points = [transform_points.transform(pt) for pt in raw_visit_pts]
+
+        end_pt = None
+        if end_source is not None and end_crs is not None:
+            transform_end = QgsCoordinateTransform(end_crs, target_crs, context.transformContext())
+            end_pt = transform_end.transform(raw_end_pt)
 
         # Indexação dos nós: 0 = ponto inicial, 1..N = pontos a visitar, N+1 = ponto final quando houver
         all_points = [start_pt] + visit_points
@@ -292,6 +362,28 @@ class VrpTsp(QgsProcessingAlgorithm):
                 bbox.xMaximum() + margin,
                 bbox.yMaximum() + margin
             )
+            if not valid_extent(extent.xMinimum(), extent.yMinimum(), extent.xMaximum(), extent.yMaximum()):
+                raise QgsProcessingException(self.tr("Janela de análise calculada a partir dos pontos é inválida: {}").format(extent.toString()))
+
+            net_crs = network_layer.crs()
+            try:
+                if net_crs.isValid() and net_crs != target_crs:
+                    transform_net = QgsCoordinateTransform(net_crs, target_crs, context.transformContext())
+                    net_extent = transform_net.transformBoundingBox(network_layer.extent())
+                else:
+                    net_extent = network_layer.extent()
+            except QgsCsException:
+                net_extent = None
+
+            if net_extent is None or not valid_extent(
+                net_extent.xMinimum(), net_extent.yMinimum(), net_extent.xMaximum(), net_extent.yMaximum()
+            ) or not extent.intersects(net_extent):
+                raise QgsProcessingException(
+                    self.tr("Os pontos ({}) não caem na área da rede viária (rede em {}) — confira o SRC das camadas.").format(
+                        target_crs.authid(), net_crs.authid() if net_crs.isValid() else "SRC desconhecido"
+                    )
+                )
+
             feedback.pushInfo(self.tr("Janela de análise: {}").format(extent.toString()))
             crashlog.mark("tsp-build-graph", f"camada com {network_layer.featureCount()} feicoes")
 

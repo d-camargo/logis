@@ -35,9 +35,11 @@ from qgis.core import (
     QgsRectangle,
     QgsCoordinateTransform,
     QgsFeatureRequest,
-    QgsWkbTypes
+    QgsWkbTypes,
+    QgsCsException
 )
 from .. import qgis_compat
+from ..crs_check import valid_extent
 from qgis.analysis import (
     QgsVectorLayerDirector,
     QgsGraphBuilder,
@@ -164,8 +166,15 @@ def build_graph(
         if not working_layer or not working_layer.isValid():
             raise RuntimeError("Failed to reproject network layer.")
     else:
+        if not valid_extent(extent.xMinimum(), extent.yMinimum(), extent.xMaximum(), extent.yMaximum()):
+            raise ValueError(f"Invalid analysis window extent: {extent}")
         transform_back = QgsCoordinateTransform(crs_obj, layer.crs(), QgsProject.instance())
-        source_extent = transform_back.transformBoundingBox(extent)
+        try:
+            source_extent = transform_back.transformBoundingBox(extent)
+        except QgsCsException as exc:
+            src = crs_obj.authid()
+            dst = layer.crs().authid()
+            raise RuntimeError(f"Could not transform the analysis window {extent} from {src} to {dst}: {exc}")
         request = QgsFeatureRequest().setFilterRect(source_extent)
 
         geom_str = QgsWkbTypes.displayString(layer.wkbType())

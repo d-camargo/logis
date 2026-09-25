@@ -3,6 +3,30 @@ import os
 import unittest
 from unittest.mock import patch
 
+try:
+    from qgis.core import (
+        QgsApplication,
+        QgsVectorLayer,
+        QgsField,
+        QgsFeature,
+        QgsGeometry,
+        QgsPointXY,
+        QgsCoordinateReferenceSystem,
+        QgsProcessingContext,
+        QgsProcessingFeedback,
+        QgsProcessingException,
+        QgsProject,
+    )
+    from qgis.PyQt.QtCore import QVariant
+
+    _qgs = QgsApplication.instance()
+    if not _qgs:
+        _qgs = QgsApplication([], False)
+        _qgs.initQgis()
+    _HAS_QGIS = True
+except ImportError:
+    _HAS_QGIS = False
+
 from logis.core.routing.tsp import (
     compute_tour_cost,
     nearest_neighbor,
@@ -495,7 +519,8 @@ class TestVrpTspAlgorithm(unittest.TestCase):
 
     def test_vrp_tsp_metric_crs_check(self):
         # (passo 6 do plano) Garantir CRS métrico no cálculo: mapUnits() comparado com EPSG:5880
-        self.assertIn('source_crs.mapUnits() == QgsCoordinateReferenceSystem("EPSG:5880").mapUnits()', self.alg_source)
+        self.assertIn('points_crs.mapUnits() == QgsCoordinateReferenceSystem("EPSG:5880").mapUnits()', self.alg_source)
+        self.assertNotIn("points_crs.isGeographic()", self.alg_source)
         self.assertNotIn("source_crs.isGeographic()", self.alg_source)
 
     def test_extract_point(self):
@@ -537,5 +562,135 @@ class TestVrpTspAlgorithm(unittest.TestCase):
             _extract_point(QgsGeometry.fromWkt("MULTIPOINT EMPTY"))
 
 
+class LogFeedback(QgsProcessingFeedback if _HAS_QGIS else object):
+    def __init__(self):
+        if _HAS_QGIS:
+            super().__init__()
+        self.infos = []
+        self.warnings = []
+
+    def pushInfo(self, info):
+        self.infos.append(info)
+
+    def pushWarning(self, warning):
+        self.warnings.append(warning)
+        if _HAS_QGIS:
+            super().pushWarning(warning)
+
+
+@unittest.skipUnless(_HAS_QGIS, "QGIS não disponível")
+class TestVrpTspRealQgisRegression(unittest.TestCase):
+    """
+    Teste de regressão com QGIS real para VrpTsp:
+    - Rede em EPSG:4674 em torno de (-46.63, -23.55).
+    - Pontos de início e visita em graus com SRC inválido (layer.setCrs(QgsCoordinateReferenceSystem()))
+      -> a rota é calculada, a janela de análise logada está em metros (|x| > 1e5) e o log contém o aviso de EPSG:4674 assumido.
+    - Pontos declarados em EPSG:5880 -> QgsProcessingException citando o SRC.
+    """
+
+    def setUp(self):
+        net_layer = QgsVectorLayer("LineString?crs=EPSG:4674", "net", "memory")
+        dp = net_layer.dataProvider()
+        dp.addAttributes([QgsField("oneway", QVariant.String), QgsField("speed", QVariant.Double)])
+        net_layer.updateFields()
+
+        lines = [
+            [QgsPointXY(-46.64, -23.56), QgsPointXY(-46.62, -23.56)],
+            [QgsPointXY(-46.62, -23.56), QgsPointXY(-46.62, -23.54)],
+            [QgsPointXY(-46.62, -23.54), QgsPointXY(-46.64, -23.54)],
+            [QgsPointXY(-46.64, -23.54), QgsPointXY(-46.64, -23.56)],
+            [QgsPointXY(-46.63, -23.56), QgsPointXY(-46.63, -23.54)],
+            [QgsPointXY(-46.64, -23.55), QgsPointXY(-46.62, -23.55)],
+        ]
+        for pts in lines:
+            f = QgsFeature(net_layer.fields())
+            f.setGeometry(QgsGeometry.fromPolylineXY(pts))
+            f.setAttribute("oneway", "B")
+            f.setAttribute("speed", 40.0)
+            dp.addFeature(f)
+        net_layer.updateExtents()
+        self.net_layer = net_layer
+
+    def test_invalid_crs_fallback_and_degrees_in_projected_exception(self):
+        from logis.algorithms.vrp_tsp import VrpTsp
+
+        start_layer = QgsVectorLayer("Point?crs=EPSG:4674", "start", "memory")
+        f_start = QgsFeature()
+        f_start.setGeometry(QgsGeometry.fromPointXY(QgsPointXY(-46.63, -23.55)))
+        start_layer.dataProvider().addFeature(f_start)
+        start_layer.updateExtents()
+
+        points_layer = QgsVectorLayer("Point?crs=EPSG:4674", "points", "memory")
+        for pt in [QgsPointXY(-46.631, -23.551), QgsPointXY(-46.629, -23.549)]:
+            f_pt = QgsFeature()
+            f_pt.setGeometry(QgsGeometry.fromPointXY(pt))
+            points_layer.dataProvider().addFeature(f_pt)
+        points_layer.updateExtents()
+
+        # 2. Pontos com SRC inválido
+        start_layer.setCrs(QgsCoordinateReferenceSystem())
+        points_layer.setCrs(QgsCoordinateReferenceSystem())
+
+        alg = VrpTsp()
+        alg.initAlgorithm()
+        context = QgsProcessingContext()
+        context.setProject(QgsProject.instance())
+        fb = LogFeedback()
+
+        params = {
+            "INPUT_START": start_layer,
+            "INPUT_POINTS": points_layer,
+            "INPUT_NETWORK": self.net_layer,
+            "BACKEND": 1,  # Python
+            "OUTPUT_ORDER": "memory:",
+            "OUTPUT_ROUTE": "memory:",
+        }
+
+        res = alg.processAlgorithm(params, context, fb)
+        self.assertIn("OUTPUT_ORDER", res)
+        self.assertIn("OUTPUT_ROUTE", res)
+
+        # Log contém o aviso de EPSG:4674 assumido
+        all_logs = " ".join(fb.infos)
+        self.assertIn("EPSG:4674", all_logs)
+        self.assertTrue(
+            any("assumindo EPSG:4674" in w for w in fb.warnings),
+            "O aviso de EPSG:4674 assumido deve chegar via pushWarning.",
+        )
+
+        # Janela de análise logada está em metros (|x| > 1e5)
+        extent_log = [log for log in fb.infos if "Janela de análise:" in log]
+        self.assertTrue(len(extent_log) > 0)
+        ext_str = extent_log[0]
+        coords = [float(val) for val in ext_str.replace("Janela de análise:", "").replace(":", ",").split(",") if val.strip()]
+        self.assertTrue(any(abs(c) > 1e5 for c in coords))
+
+        # 3. Pontos declarados em EPSG:5880 -> QgsProcessingException citando o SRC
+        start_layer_5880 = QgsVectorLayer("Point?crs=EPSG:5880", "start_5880", "memory")
+        start_layer_5880.dataProvider().addFeature(f_start)
+        start_layer_5880.updateExtents()
+
+        points_layer_5880 = QgsVectorLayer("Point?crs=EPSG:5880", "points_5880", "memory")
+        for pt in [QgsPointXY(-46.631, -23.551), QgsPointXY(-46.629, -23.549)]:
+            f_pt = QgsFeature()
+            f_pt.setGeometry(QgsGeometry.fromPointXY(pt))
+            points_layer_5880.dataProvider().addFeature(f_pt)
+        points_layer_5880.updateExtents()
+
+        params_5880 = {
+            "INPUT_START": start_layer_5880,
+            "INPUT_POINTS": points_layer_5880,
+            "INPUT_NETWORK": self.net_layer,
+            "BACKEND": 1,
+            "OUTPUT_ORDER": "memory:",
+            "OUTPUT_ROUTE": "memory:",
+        }
+
+        with self.assertRaises(QgsProcessingException) as ctx:
+            alg.processAlgorithm(params_5880, context, fb)
+        self.assertIn("EPSG:5880", str(ctx.exception))
+
+
 if __name__ == "__main__":
     unittest.main()
+

@@ -68,6 +68,20 @@ class TestI18n(unittest.TestCase):
             "A tradução de 'Erro ao iniciar o cálculo...' em RoutingDock não corresponde ao esperado.",
         )
 
+        translated_cvrp_depot = translator.translate("VrpCvrp", "depósito".encode("utf-8"))
+        self.assertEqual(
+            translated_cvrp_depot,
+            "depot",
+            "A tradução de 'depósito' em VrpCvrp não corresponde ao esperado.",
+        )
+
+        translated_tsp_crs = translator.translate("VrpTsp", "SRC da rede: {}")
+        self.assertEqual(
+            translated_tsp_crs,
+            "Network CRS: {}",
+            "A tradução de 'SRC da rede: {}' em VrpTsp não corresponde ao esperado.",
+        )
+
     def test_logis_pt_qm_does_not_exist(self):
         pt_qm_path = os.path.join(
             os.path.dirname(__file__), "logis", "i18n", "logis_pt.qm"

@@ -167,13 +167,15 @@ class TestAlgTaskRunner(unittest.TestCase):
             mock_task.cancel.assert_called_once()
 
     def test_report_error_emits_message(self):
-        """(f) reportError emite message_emitted."""
+        """(f) reportError emite message_emitted e atualiza last_error."""
         feedback = SignalFeedback()
+        self.assertEqual(feedback.last_error, "")
         mock_slot = MagicMock()
         feedback.message_emitted.connect(mock_slot)
 
         feedback.reportError("Mensagem de erro", fatalError=False)
         mock_slot.assert_called_once_with("Mensagem de erro")
+        self.assertEqual(feedback.last_error, "Mensagem de erro")
 
 
 if __name__ == "__main__":

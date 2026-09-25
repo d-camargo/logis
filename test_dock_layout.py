@@ -330,6 +330,10 @@ class TestDockLayout(unittest.TestCase):
         # Verificar conexão de cancelamento
         self.assertIn("self.btn_cancel.clicked.connect(self._tsp_runner.cancel)", content)
 
+        # Verificar uso de last_error no callback
+        on_tsp_finished_code = content.split("def _on_tsp_finished(self, ok, results):")[1].split("def ")[0]
+        self.assertIn("last_error", on_tsp_finished_code)
+
     def test_routing_dock_cvrp_background_task(self):
         content = (pathlib.Path(__file__).parent / "logis/gui/routing_dock.py").read_text(
             encoding="utf-8"
@@ -346,6 +350,10 @@ class TestDockLayout(unittest.TestCase):
 
         # Verificar conexão de cancelamento
         self.assertIn("self.btn_cancel.clicked.connect(self._cvrp_runner.cancel)", content)
+
+        # Verificar uso de last_error no callback
+        on_cvrp_finished_code = content.split("def _on_cvrp_finished(self, ok, results):")[1].split("def ")[0]
+        self.assertIn("last_error", on_cvrp_finished_code)
 
     def test_routing_dock_start_error_handling(self):
         content = (pathlib.Path(__file__).parent / "logis/gui/routing_dock.py").read_text(

@@ -28,17 +28,18 @@ from qgis.core import (
     QgsProcessingParameterFeatureSink,
     QgsCoordinateTransform,
     QgsCoordinateReferenceSystem,
-    QgsProject,
     QgsFields,
     QgsField,
     QgsFeature,
     QgsFeatureSink,
     QgsWkbTypes,
     QgsGeometry,
-    QgsRectangle
+    QgsRectangle,
+    QgsCsException
 )
 try:
     from ..core import qgis_compat, crashlog
+    from ..core.crs_check import classify_input_crs, valid_extent
     from ..core.progress import PhaseProgress
     from ..core.optim_backend import pick_backend
     from ..core.routing.vrp import solve_cvrp, compute_route_distance
@@ -46,6 +47,7 @@ try:
     from ..core.network.od_matrix import compute_od_matrix
 except ImportError:
     from core import qgis_compat, crashlog
+    from core.crs_check import classify_input_crs, valid_extent
     from core.progress import PhaseProgress
     from core.optim_backend import pick_backend
     from core.routing.vrp import solve_cvrp, compute_route_distance
@@ -54,11 +56,76 @@ except ImportError:
 
 
 def _extract_point(geom):
-    """Retorna um QgsPointXY representando a geometria (ponto ou centroide de polígono)."""
+    """
+    Returns a QgsPointXY representing the geometry.
+
+    Handles single points, multipoints (using the first point), and polygons (using the centroid).
+    Raises ValueError when the geometry is null, empty, or fails to produce a valid point.
+    """
+    if geom is None or geom.isEmpty():
+        raise ValueError("Geometry is null or empty.")
+
     if geom.type() == QgsWkbTypes.GeometryType.PointGeometry:
-        return geom.asPoint()
+        if QgsWkbTypes.isMultiType(geom.wkbType()):
+            pts = geom.asMultiPoint()
+            if pts and not pts[0].isEmpty():
+                return pts[0]
+            raise ValueError("MultiPoint geometry does not contain a valid point.")
+        pt = geom.asPoint()
+        if not pt.isEmpty():
+            return pt
+        raise ValueError("Point geometry does not produce a valid point.")
     else:
-        return geom.centroid().asPoint()
+        centroid_geom = geom.centroid()
+        if centroid_geom and not centroid_geom.isEmpty():
+            pt = centroid_geom.asPoint()
+            if not pt.isEmpty():
+                return pt
+        raise ValueError("Geometry does not produce a valid point or centroid.")
+
+
+def _resolve_source_crs(source, raw_points, label, feedback):
+    """
+    Resolve o SRC efetivo da camada via classify_input_crs.
+
+    - "assume_4674": SRC inválido e todas as coordenadas dentro do Brasil → aviso no
+      feedback e retorna EPSG:4674 (SRC padrão do projeto).
+    - "missing" e "degrees_in_projected": lança QgsProcessingException com o nome da
+      camada, o SRC declarado e como corrigir.
+    """
+    from qgis.PyQt.QtCore import QCoreApplication
+
+    def tr(string):
+        return QCoreApplication.translate("VrpCvrp", string)
+
+    crs = source.sourceCrs()
+    status = classify_input_crs(
+        crs.isValid(), crs.isGeographic(), [(p.x(), p.y()) for p in raw_points]
+    )
+    declared = crs.authid() if crs.authid() else "indefinido"
+
+    if status == "assume_4674":
+        if feedback:
+            feedback.pushWarning(
+                tr("SRC da camada de {label} não foi definido; coordenadas dentro do Brasil — assumindo EPSG:4674 (SIRGAS 2000).").format(label=label)
+            )
+        return QgsCoordinateReferenceSystem("EPSG:4674")
+
+    if status == "missing":
+        raise QgsProcessingException(
+            tr("A camada de {label} está sem SRC válido (declarado: {crs}) e suas coordenadas não caem no Brasil. Defina o SRC da camada em Propriedades › Fonte e rode novamente.").format(
+                label=label, crs=declared
+            )
+        )
+
+    if status == "degrees_in_projected":
+        raise QgsProcessingException(
+            tr("A camada de {label} declara o SRC {crs}, mas as coordenadas estão em graus. Defina o SRC correto da camada em Propriedades › Fonte.").format(
+                label=label, crs=declared
+            )
+        )
+
+    return crs
 
 
 class VrpCvrp(QgsProcessingAlgorithm):
@@ -194,34 +261,20 @@ class VrpCvrp(QgsProcessingAlgorithm):
         if capacity <= 0:
             raise QgsProcessingException(self.tr("A capacidade do veículo deve ser estritamente maior que zero."))
 
-        # 1) CRS de cálculo
-        dist_mode = "rede" if (network_layer and network_layer.isValid()) else "euclidiana"
-        crashlog.mark("cvrp-inicio", f"modo={dist_mode} backend={req_backend}")
-
-        if network_layer and network_layer.isValid():
-            target_crs = QgsCoordinateReferenceSystem("EPSG:5880")
-        else:
-            source_crs = demand_source.sourceCrs()
-            if source_crs.mapUnits() == QgsCoordinateReferenceSystem("EPSG:5880").mapUnits():
-                target_crs = source_crs
-            else:
-                target_crs = QgsCoordinateReferenceSystem("EPSG:5880")
-
-        transform_depot = QgsCoordinateTransform(depot_source.sourceCrs(), target_crs, QgsProject.instance())
-        transform_demand = QgsCoordinateTransform(demand_source.sourceCrs(), target_crs, QgsProject.instance())
-
-        # 2) Leitura do depósito (primeira feição válida)
-        depot_pt = None
+        # 1) Leitura das geometrias cruas do depósito
+        raw_depot_pt = None
         for feat in depot_source.getFeatures():
             geom = feat.geometry()
             if geom and not geom.isEmpty():
-                depot_pt = transform_depot.transform(_extract_point(geom))
+                raw_depot_pt = _extract_point(geom)
                 break
 
-        if depot_pt is None:
+        if raw_depot_pt is None:
             raise QgsProcessingException(self.tr("Nenhum ponto de depósito válido encontrado."))
 
-        # 3) Leitura das demandas, pontos e pesos
+        raw_depot_pts = [raw_depot_pt]
+
+        # 2) Leitura das geometrias cruas da demanda e pesos
         p_read = PhaseProgress(feedback, 0.0, 8.0)
         feedback.setProgressText(self.tr("Lendo pontos de demanda…"))
         feedback.pushInfo(self.tr("Lendo pontos de demanda..."))
@@ -229,7 +282,7 @@ class VrpCvrp(QgsProcessingAlgorithm):
         demand_field_idx = demand_source.fields().indexOf(demand_field_name) if demand_field_name else -1
 
         demand_features = []
-        demand_points = []
+        raw_demand_pts = []
         demand_weights = []
 
         total_pts = demand_source.featureCount()
@@ -241,7 +294,7 @@ class VrpCvrp(QgsProcessingAlgorithm):
             geom = feat.geometry()
             if geom is None or geom.isEmpty():
                 continue
-            pt_transformed = transform_demand.transform(_extract_point(geom))
+            raw_pt = _extract_point(geom)
 
             weight = 1.0
             if demand_field_idx != -1:
@@ -262,13 +315,41 @@ class VrpCvrp(QgsProcessingAlgorithm):
                 )
 
             demand_features.append(feat)
-            demand_points.append(pt_transformed)
+            raw_demand_pts.append(raw_pt)
             demand_weights.append(weight)
 
         p_read.setProgress(100.0)
 
-        if not demand_points:
+        if not raw_demand_pts:
             raise QgsProcessingException(self.tr("Nenhum ponto de demanda válido encontrado."))
+
+        # 3) Resolver SRCs efetivos e target_crs
+        depot_crs = _resolve_source_crs(depot_source, raw_depot_pts, self.tr("depósito"), feedback)
+        demand_crs = _resolve_source_crs(demand_source, raw_demand_pts, self.tr("demanda"), feedback)
+
+        dist_mode = "rede" if (network_layer and network_layer.isValid()) else "euclidiana"
+        crashlog.mark("cvrp-inicio", f"modo={dist_mode} backend={req_backend}")
+
+        if network_layer and network_layer.isValid():
+            target_crs = QgsCoordinateReferenceSystem("EPSG:5880")
+            if feedback:
+                feedback.pushInfo(self.tr("SRC da rede: {}").format(network_layer.crs().authid()))
+        else:
+            if demand_crs.mapUnits() == QgsCoordinateReferenceSystem("EPSG:5880").mapUnits():
+                target_crs = demand_crs
+            else:
+                target_crs = QgsCoordinateReferenceSystem("EPSG:5880")
+
+        if feedback:
+            feedback.pushInfo(self.tr("SRC de depósito: {} → {}").format(depot_crs.authid(), target_crs.authid()))
+            feedback.pushInfo(self.tr("SRC de demanda: {} → {}").format(demand_crs.authid(), target_crs.authid()))
+
+        # 4) Montar transforms com context.transformContext() e transformar pontos
+        transform_depot = QgsCoordinateTransform(depot_crs, target_crs, context.transformContext())
+        transform_demand = QgsCoordinateTransform(demand_crs, target_crs, context.transformContext())
+
+        depot_pt = transform_depot.transform(raw_depot_pt)
+        demand_points = [transform_demand.transform(pt) for pt in raw_demand_pts]
 
         crashlog.mark("cvrp-transform", f"1 deposito, {len(demand_points)} demandas -> CRS {target_crs.authid()}")
 
@@ -291,6 +372,28 @@ class VrpCvrp(QgsProcessingAlgorithm):
                 bbox.xMaximum() + margin,
                 bbox.yMaximum() + margin
             )
+            if not valid_extent(extent.xMinimum(), extent.yMinimum(), extent.xMaximum(), extent.yMaximum()):
+                raise QgsProcessingException(self.tr("Janela de análise calculada a partir dos pontos é inválida: {}").format(extent.toString()))
+
+            net_crs = network_layer.crs()
+            try:
+                if net_crs.isValid() and net_crs != target_crs:
+                    transform_net = QgsCoordinateTransform(net_crs, target_crs, context.transformContext())
+                    net_extent = transform_net.transformBoundingBox(network_layer.extent())
+                else:
+                    net_extent = network_layer.extent()
+            except QgsCsException:
+                net_extent = None
+
+            if net_extent is None or not valid_extent(
+                net_extent.xMinimum(), net_extent.yMinimum(), net_extent.xMaximum(), net_extent.yMaximum()
+            ) or not extent.intersects(net_extent):
+                raise QgsProcessingException(
+                    self.tr("Os pontos ({}) não caem na área da rede viária (rede em {}) — confira o SRC das camadas.").format(
+                        target_crs.authid(), net_crs.authid() if net_crs.isValid() else "SRC desconhecido"
+                    )
+                )
+
             feedback.pushInfo(self.tr("Janela de análise: {}").format(extent.toString()))
             crashlog.mark("cvrp-build-graph", f"camada com {network_layer.featureCount()} feicoes")
 
@@ -414,7 +517,7 @@ class VrpCvrp(QgsProcessingAlgorithm):
             context,
             stop_fields,
             demand_source.wkbType(),
-            demand_source.sourceCrs()
+            demand_crs
         )
 
         total_route_items = len(routes) if sink_routes is not None else 0
