@@ -22,8 +22,10 @@ from qgis.core import (
     QgsCoordinateTransform,
     QgsCoordinateTransformContext,
     QgsCsException,
+    QgsFeatureRequest,
     QgsPointXY,
     QgsRectangle,
+    QgsWkbTypes,
 )
 
 try:
@@ -290,3 +292,117 @@ def transform_bbox(ct: Any, rect: Any, dst_authid: Any) -> Any:
         )
 
     return res
+
+
+def _extract_point_from_geom(geom: Any) -> QgsPointXY:
+    """Return a QgsPointXY for a geometry (the point itself, or the centroid for a polygon)."""
+    if geom.type() == QgsWkbTypes.GeometryType.PointGeometry:
+        return geom.asPoint()
+    return geom.centroid().asPoint()
+
+
+def read_points_in_crs(
+    source: Any,
+    dst_crs: Any,
+    context: Any,
+    label: str,
+) -> Tuple[List[Any], List[Any]]:
+    """
+    Read point (or polygon centroid) geometries from a QGIS Processing feature source,
+    reprojected to ``dst_crs``, detecting the silent no-op documented for
+    ``QgsFeatureRequest().setDestinationCrs()``: a feature whose transform fails comes back
+    with an empty geometry instead of raising an exception or calling
+    ``setTransformErrorCallback``.
+
+    The source is read twice: once untouched, to keep the original features (with their
+    original, non-empty geometry) that go to the output sink exactly as before; and once
+    with the destination CRS request, to get the reprojected point (or centroid, for
+    polygons). Both passes are matched by ``feat.id()``, and the returned lists follow the
+    order of the first (untouched) pass.
+
+    :param source: QgsProcessingFeatureSource (or QgsVectorLayer) to read from.
+    :param dst_crs: Destination CRS (QgsCoordinateReferenceSystem or authid string).
+    :param context: QgsProcessingContext; its ``transformContext()`` feeds the request.
+    :param label: Human-readable identifier of the source, used in diagnostics.
+    :return: Tuple ``(features, points)`` with the original features and their reprojected
+             QgsPointXY, aligned by position. Features without geometry are skipped in both
+             passes without error.
+    :raises TransformCheckError: If a feature's geometry does not survive reprojection (comes
+             back empty), or if the resulting points are implausible or did not move for
+             ``dst_crs``.
+    """
+    dst = QgsCoordinateReferenceSystem(dst_crs) if isinstance(dst_crs, str) else dst_crs
+    src_crs = source.sourceCrs()
+
+    features: List[Any] = []
+    original_points: List[Any] = []
+    for feat in source.getFeatures():
+        geom = feat.geometry()
+        if geom is None or geom.isEmpty():
+            continue
+        features.append(feat)
+        original_points.append(_extract_point_from_geom(geom))
+
+    if not features:
+        return [], []
+
+    src_valid = bool(hasattr(src_crs, "isValid") and src_crs.isValid())
+    dst_valid = bool(hasattr(dst, "isValid") and dst.isValid())
+
+    src_authid = src_crs.authid() if src_valid and src_crs.authid() else str(src_crs)
+    dst_authid = dst.authid() if dst_valid and dst.authid() else str(dst_crs)
+
+    same_crs = bool(
+        src_valid and dst_valid
+        and (src_crs == dst or (src_crs.authid() and src_crs.authid() == dst.authid()))
+    )
+    if same_crs:
+        return features, original_points
+
+    request = QgsFeatureRequest().setDestinationCrs(dst, context.transformContext())
+    reprojected_by_id = {feat.id(): feat.geometry() for feat in source.getFeatures(request)}
+
+    points: List[Any] = []
+    for feat in features:
+        geom = reprojected_by_id.get(feat.id())
+        if geom is None or geom.isEmpty():
+            raise TransformCheckError(
+                f"Failed to reproject feature id {feat.id()} of '{label}' from {src_authid} "
+                f"to {dst_authid}: the transformed geometry came back empty (silent no-op of "
+                f"QgsFeatureRequest().setDestinationCrs())."
+            )
+        points.append(_extract_point_from_geom(geom))
+
+    if not plausible_coords(dst_authid, points):
+        qgis_ver = _qgis_version()
+        proj_ver = _proj_version()
+        offenders = [
+            f"id {feat.id()}: ({pt.x():.4f}, {pt.y():.4f})"
+            for feat, pt in zip(features, points)
+            if not plausible_coords(dst_authid, [pt])
+        ]
+        raise TransformCheckError(
+            f"Reprojected points of '{label}' from {src_authid} to {dst_authid} are "
+            f"implausible for the destination CRS.\n"
+            f"QGIS version: {qgis_ver}, PROJ version: {proj_ver}.\n"
+            f"Offending feature(s): {', '.join(offenders)}"
+        )
+
+    is_both_geo = bool(
+        hasattr(src_crs, "isGeographic")
+        and hasattr(dst, "isGeographic")
+        and src_crs.isGeographic()
+        and dst.isGeographic()
+    )
+    if not is_both_geo and not point_moved(original_points[0], points[0]):
+        qgis_ver = _qgis_version()
+        proj_ver = _proj_version()
+        raise TransformCheckError(
+            f"Failed to verify coordinate transformation of '{label}' from {src_authid} to "
+            f"{dst_authid}: probe feature id {features[0].id()} "
+            f"({original_points[0].x():.4f}, {original_points[0].y():.4f}) did not move after "
+            f"reprojection to ({points[0].x():.4f}, {points[0].y():.4f}).\n"
+            f"QGIS version: {qgis_ver}, PROJ version: {proj_ver}."
+        )
+
+    return features, points

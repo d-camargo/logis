@@ -9,8 +9,12 @@ try:
         QgsCoordinateTransform,
         QgsCoordinateTransformContext,
         QgsCsException,
+        QgsFeature,
+        QgsGeometry,
         QgsPointXY,
+        QgsProcessingContext,
         QgsRectangle,
+        QgsVectorLayer,
     )
     _qgs = QgsApplication.instance()
     if not _qgs:
@@ -23,6 +27,7 @@ except ImportError:
 from logis.core.crs_transform import (
     TransformCheckError,
     checked_transform,
+    read_points_in_crs,
     transform_bbox,
     transform_points,
 )
@@ -163,6 +168,101 @@ class TestCrsTransform(unittest.TestCase):
 
         msg = str(ctx.exception)
         self.assertIn("index 1", msg)
+
+
+@unittest.skipUnless(_HAS_QGIS, "QGIS não disponível")
+class TestReadPointsInCrs(unittest.TestCase):
+    """Testes para core/crs_transform.py: read_points_in_crs."""
+
+    def _memory_layer(self, geom_type, crs, wkts):
+        layer = QgsVectorLayer(f"{geom_type}?crs={crs}", "test", "memory")
+        pr = layer.dataProvider()
+        feats = []
+        for wkt in wkts:
+            f = QgsFeature()
+            f.setGeometry(QgsGeometry.fromWkt(wkt))
+            feats.append(f)
+        pr.addFeatures(feats)
+        layer.updateExtents()
+        return layer
+
+    def test_two_valid_points_to_5880_preserve_order(self):
+        """2 pontos válidos (São Paulo, Rio) 4326 -> 5880, ~(5752164, 7375218) e ordem preservada."""
+        layer = self._memory_layer(
+            "Point", "EPSG:4326",
+            ["POINT(-46.63 -23.55)", "POINT(-43.20 -22.90)"],
+        )
+        context = QgsProcessingContext()
+        dst = QgsCoordinateReferenceSystem("EPSG:5880")
+
+        features, points = read_points_in_crs(layer, dst, context, "camada de teste")
+
+        self.assertEqual(len(features), 2)
+        self.assertEqual(len(points), 2)
+        self.assertAlmostEqual(points[0].x(), 5752164.0, delta=20.0)
+        self.assertAlmostEqual(points[0].y(), 7375218.0, delta=20.0)
+        # Rio está a leste de São Paulo: x maior, ordem preservada (posição 0 = São Paulo).
+        self.assertGreater(points[1].x(), points[0].x())
+
+    def test_point_500_500_raises_transform_check_error_citing_id(self):
+        """Ponto (500, 500) não transforma (geometria vazia) -> TransformCheckError citando o id."""
+        layer = self._memory_layer("Point", "EPSG:4326", ["POINT(500 500)"])
+        context = QgsProcessingContext()
+        dst = QgsCoordinateReferenceSystem("EPSG:5880")
+
+        feat = next(layer.getFeatures())
+        with self.assertRaises(TransformCheckError) as ctx:
+            read_points_in_crs(layer, dst, context, "camada de teste")
+
+        msg = str(ctx.exception)
+        self.assertIn(f"id {feat.id()}", msg)
+        self.assertIn("EPSG:4326", msg)
+        self.assertIn("EPSG:5880", msg)
+
+    def test_polygon_uses_centroid(self):
+        """Polígono -> ponto no centroide, reprojetado corretamente."""
+        layer = self._memory_layer(
+            "Polygon", "EPSG:4326",
+            ["POLYGON((-46.64 -23.56, -46.62 -23.56, -46.62 -23.54, -46.64 -23.54, -46.64 -23.56))"],
+        )
+        context = QgsProcessingContext()
+        dst = QgsCoordinateReferenceSystem("EPSG:5880")
+
+        features, points = read_points_in_crs(layer, dst, context, "camada de teste")
+
+        self.assertEqual(len(points), 1)
+        self.assertAlmostEqual(points[0].x(), 5752164.0, delta=200.0)
+        self.assertAlmostEqual(points[0].y(), 7375218.0, delta=200.0)
+
+    def test_same_crs_returns_untransformed_points(self):
+        """Mesmo SRC de entrada e saída -> pontos idênticos aos originais, sem passada reprojetada."""
+        layer = self._memory_layer("Point", "EPSG:4326", ["POINT(-46.63 -23.55)"])
+        context = QgsProcessingContext()
+        dst = QgsCoordinateReferenceSystem("EPSG:4326")
+
+        features, points = read_points_in_crs(layer, dst, context, "camada de teste")
+
+        self.assertEqual(len(points), 1)
+        self.assertAlmostEqual(points[0].x(), -46.63)
+        self.assertAlmostEqual(points[0].y(), -23.55)
+
+    def test_feature_without_geometry_is_ignored_without_error(self):
+        """Feição sem geometria é ignorada nas duas passadas, sem erro."""
+        layer = QgsVectorLayer("Point?crs=EPSG:4326", "test", "memory")
+        pr = layer.dataProvider()
+        f_no_geom = QgsFeature()
+        f_with_geom = QgsFeature()
+        f_with_geom.setGeometry(QgsGeometry.fromWkt("POINT(-46.63 -23.55)"))
+        pr.addFeatures([f_no_geom, f_with_geom])
+        layer.updateExtents()
+
+        context = QgsProcessingContext()
+        dst = QgsCoordinateReferenceSystem("EPSG:5880")
+
+        features, points = read_points_in_crs(layer, dst, context, "camada de teste")
+
+        self.assertEqual(len(features), 1)
+        self.assertEqual(len(points), 1)
 
 
 if __name__ == "__main__":
