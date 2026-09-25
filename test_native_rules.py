@@ -19,6 +19,7 @@
 # é migrado para o helper conferido ou para leitura já reprojetada; nenhum arquivo
 # novo entra nela.
 
+import ast
 import pathlib
 import re
 import unittest
@@ -46,6 +47,51 @@ def _count_occurrences_by_file():
         if matches:
             occurrences[py_path.name] = matches
     return occurrences
+
+
+def _algorithm_classes_missing_create_instance():
+    """Retorna {nome_arquivo: [nome_da_classe, ...]} para cada subclasse direta de
+    QgsProcessingAlgorithm em logis/algorithms/*.py que não define createInstance().
+
+    Sem createInstance(), QgsProcessingRegistry.createAlgorithmById() falha em runtime
+    ("QgsProcessingAlgorithm.createInstance() is abstract") — o algoritmo não roda nem
+    pela caixa de ferramentas nem via processing.run(), só chamando processAlgorithm()
+    diretamente em Python.
+    """
+    missing = {}
+    for py_path in sorted(_algorithms_dir().glob("*.py")):
+        tree = ast.parse(py_path.read_text(encoding="utf-8"), filename=str(py_path))
+        for node in ast.walk(tree):
+            if not isinstance(node, ast.ClassDef):
+                continue
+            base_names = {
+                base.id if isinstance(base, ast.Name) else getattr(base, "attr", None)
+                for base in node.bases
+            }
+            if "QgsProcessingAlgorithm" not in base_names:
+                continue
+            method_names = {
+                item.name for item in node.body if isinstance(item, ast.FunctionDef)
+            }
+            if "createInstance" not in method_names:
+                missing.setdefault(py_path.name, []).append(node.name)
+    return missing
+
+
+class TestAlgorithmsDefineCreateInstance(unittest.TestCase):
+    """Toda subclasse de QgsProcessingAlgorithm em logis/algorithms/ precisa de createInstance()."""
+
+    def test_all_algorithms_define_create_instance(self):
+        missing = _algorithm_classes_missing_create_instance()
+        if missing:
+            details = "\n".join(
+                f"{name}: {', '.join(classes)}" for name, classes in sorted(missing.items())
+            )
+            self.fail(
+                "QgsProcessingAlgorithm sem createInstance() (processing.run()/"
+                "createAlgorithmById() falha em runtime pela caixa de ferramentas):\n"
+                + details
+            )
 
 
 class TestNativeRules(unittest.TestCase):

@@ -368,3 +368,6 @@ class FacilityPMedian(QgsProcessingAlgorithm):
             "- Instalações selecionadas: camada de candidatos escolhidos com totais de demanda e custo.\n"
             "- Atribuição de demandas: camada de demanda com o ID da instalação atribuída e o custo de atendimento."
         )
+
+    def createInstance(self):
+        return FacilityPMedian()

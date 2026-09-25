@@ -372,3 +372,6 @@ class FacilityLSCP(QgsProcessingAlgorithm):
             "- Instalações selecionadas: camada de candidatos escolhidos com total de demanda e pontos cobertos.\n"
             "- Atribuição e cobertura de demandas: camada de demanda com o status de cobertura (is_covered) e a instalação atribuída."
         )
+
+    def createInstance(self):
+        return FacilityLSCP()
