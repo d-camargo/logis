@@ -5,6 +5,7 @@ Este documento registra as principais alterações e evoluções do plugin **log
 ## 0.6.1 - 2026-09-25
 
 - **Progresso e Log ao Vivo na Rede Viária** — barra de progresso e log ao vivo durante o download da rede viária (OSM e SNV) no painel Rede Viária, que antes deixava o QGIS congelado sem retorno.
+- **Correção no TSP e CVRP** — o cálculo não iniciava (erro `QgsProcessingAlgRunnerTask(): argument 1 has unexpected type 'str'`) e o painel de Roteirização ficava travado com os botões desabilitados; agora qualquer falha mostra o erro no painel e restaura botões e barra.
 
 ## 0.6.0 - 2026-09-24
 

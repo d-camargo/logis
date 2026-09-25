@@ -306,6 +306,10 @@ passos, a execução para **sem gravar saída nenhuma** e o painel registra em a
 "Cálculo cancelado pelo usuário.". A barra some, os botões voltam a ficar habilitados e
 nada é adicionado ao projeto.
 
+Se o cálculo falhar — ao iniciar ou no meio da execução —, a mensagem de erro do algoritmo
+aparece em vermelho no campo de resultados, a barra some e os botões voltam a ficar
+habilitados para uma nova tentativa, sem nada adicionado ao projeto.
+
 > **Limite conhecido — cancelar no meio da busca do OR-Tools.** Com o backend OR-Tools, o
 > pedido de cancelamento só é lido **quando o solver devolve uma solução nova** — é no
 > retorno de cada solução que o plugin manda o solver encerrar a busca corrente. Se a

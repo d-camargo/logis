@@ -49,6 +49,25 @@ class TestI18n(unittest.TestCase):
             "A tradução de 'Baixando rede viária OSM…' não corresponde ao esperado.",
         )
 
+        translated_alg = translator.translate(
+            "AlgTaskRunner", "Algoritmo {id} não encontrado no registro do Processing.".encode("utf-8")
+        )
+        self.assertEqual(
+            translated_alg,
+            "Algorithm {id} not found in the Processing registry.",
+            "A tradução de 'Algoritmo...' em AlgTaskRunner não corresponde ao esperado.",
+        )
+
+        translated_err = translator.translate(
+            "RoutingDock",
+            "<span style='color: #fc8181;'>Erro ao iniciar o cálculo: {error}</span><br>".encode("utf-8"),
+        )
+        self.assertEqual(
+            translated_err,
+            "<span style='color: #fc8181;'>Error starting the calculation: {error}</span><br>",
+            "A tradução de 'Erro ao iniciar o cálculo...' em RoutingDock não corresponde ao esperado.",
+        )
+
     def test_logis_pt_qm_does_not_exist(self):
         pt_qm_path = os.path.join(
             os.path.dirname(__file__), "logis", "i18n", "logis_pt.qm"

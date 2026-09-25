@@ -347,6 +347,35 @@ class TestDockLayout(unittest.TestCase):
         # Verificar conexão de cancelamento
         self.assertIn("self.btn_cancel.clicked.connect(self._cvrp_runner.cancel)", content)
 
+    def test_routing_dock_start_error_handling(self):
+        content = (pathlib.Path(__file__).parent / "logis/gui/routing_dock.py").read_text(
+            encoding="utf-8"
+        )
+
+        run_tsp_code = content.split("def run_tsp(self):")[1].split("def _on_tsp_finished")[0]
+        self.assertIn("self._tsp_runner.start()", run_tsp_code)
+        self.assertIn("except Exception as e:", run_tsp_code)
+        self.assertIn("self._finish_progress()", run_tsp_code)
+        start_tsp_idx = run_tsp_code.find("self._tsp_runner.start()")
+        except_tsp_idx = run_tsp_code.find("except Exception as e:")
+        finish_tsp_idx = run_tsp_code.find("self._finish_progress()", except_tsp_idx)
+        self.assertTrue(
+            start_tsp_idx < except_tsp_idx < finish_tsp_idx,
+            "Em run_tsp, start() deve estar dentro de try e _finish_progress() no except correspondente"
+        )
+
+        run_cvrp_code = content.split("def run_cvrp(self):")[1].split("def _on_cvrp_finished")[0]
+        self.assertIn("self._cvrp_runner.start()", run_cvrp_code)
+        self.assertIn("except Exception as e:", run_cvrp_code)
+        self.assertIn("self._finish_progress()", run_cvrp_code)
+        start_cvrp_idx = run_cvrp_code.find("self._cvrp_runner.start()")
+        except_cvrp_idx = run_cvrp_code.find("except Exception as e:")
+        finish_cvrp_idx = run_cvrp_code.find("self._finish_progress()", except_cvrp_idx)
+        self.assertTrue(
+            start_cvrp_idx < except_cvrp_idx < finish_cvrp_idx,
+            "Em run_cvrp, start() deve estar dentro de try e _finish_progress() no except correspondente"
+        )
+
     def test_routing_dock_persist_outputs(self):
         content = (pathlib.Path(__file__).parent / "logis/gui/routing_dock.py").read_text(
             encoding="utf-8"

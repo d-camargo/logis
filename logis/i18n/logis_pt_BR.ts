@@ -2,6 +2,14 @@
 <!DOCTYPE TS>
 <TS version="2.1">
 <context>
+    <name>AlgTaskRunner</name>
+    <message>
+        <location filename="../gui/task_runner.py" line="52"/>
+        <source>Algoritmo {id} não encontrado no registro do Processing.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>FacilityLSCP</name>
     <message>
         <location filename="../algorithms/facility_lscp.py" line="84"/>
@@ -673,22 +681,22 @@ Retorno:
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/network_dock.py" line="391"/>
+        <location filename="../gui/network_dock.py" line="389"/>
         <source>Municípios de {uf} carregados com sucesso.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/network_dock.py" line="393"/>
+        <location filename="../gui/network_dock.py" line="391"/>
         <source>Erro ao listar municípios: {str(e)}</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/network_dock.py" line="457"/>
+        <location filename="../gui/network_dock.py" line="455"/>
         <source>Erro</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/network_dock.py" line="402"/>
+        <location filename="../gui/network_dock.py" line="400"/>
         <source>Código IBGE do município deve possuir 7 dígitos.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -708,32 +716,32 @@ Retorno:
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/network_dock.py" line="385"/>
+        <location filename="../gui/network_dock.py" line="383"/>
         <source>Listando municípios…</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/network_dock.py" line="407"/>
+        <location filename="../gui/network_dock.py" line="405"/>
         <source>Baixando rede viária OSM…</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/network_dock.py" line="446"/>
+        <location filename="../gui/network_dock.py" line="444"/>
         <source>Rede viária OSM ({code_muni}) carregada via {source}: {n_links} arcos, {n_nodes} nós.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/network_dock.py" line="455"/>
+        <location filename="../gui/network_dock.py" line="453"/>
         <source>Por favor, selecione uma UF.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/network_dock.py" line="460"/>
+        <location filename="../gui/network_dock.py" line="458"/>
         <source>Baixando rede viária SNV…</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/network_dock.py" line="492"/>
+        <location filename="../gui/network_dock.py" line="490"/>
         <source>Rede viária SNV ({uf}) carregada: {n_links} arcos, {n_nodes} nós.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1212,7 +1220,7 @@ Retornos:
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/routing_dock.py" line="902"/>
+        <location filename="../gui/routing_dock.py" line="908"/>
         <source>Aviso</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1242,37 +1250,37 @@ Retornos:
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/routing_dock.py" line="832"/>
+        <location filename="../gui/routing_dock.py" line="838"/>
         <source>-&gt; &lt;b&gt;Pontos visitados:&lt;/b&gt; {n}</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/routing_dock.py" line="844"/>
+        <location filename="../gui/routing_dock.py" line="850"/>
         <source>-&gt; &lt;b&gt;Razão de deadhead (dead_ratio):&lt;/b&gt; {dr:.4f}</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/routing_dock.py" line="847"/>
+        <location filename="../gui/routing_dock.py" line="853"/>
         <source>Sim (fecha no ponto inicial)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/routing_dock.py" line="847"/>
+        <location filename="../gui/routing_dock.py" line="853"/>
         <source>Não (termina no ponto final)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/routing_dock.py" line="848"/>
+        <location filename="../gui/routing_dock.py" line="854"/>
         <source>-&gt; &lt;b&gt;Fechamento:&lt;/b&gt; {closed}</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/routing_dock.py" line="873"/>
+        <location filename="../gui/routing_dock.py" line="879"/>
         <source>&lt;span style=&apos;color: #fc8181;&apos;&gt;Erro ao calcular rota: {error}&lt;/span&gt;&lt;br&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/routing_dock.py" line="1036"/>
+        <location filename="../gui/routing_dock.py" line="1048"/>
         <source>&lt;b&gt;=== CÁLCULO CONCLUÍDO ===&lt;/b&gt;</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1322,47 +1330,47 @@ Retornos:
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/routing_dock.py" line="893"/>
+        <location filename="../gui/routing_dock.py" line="899"/>
         <source>Por favor, selecione a camada de depósito.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/routing_dock.py" line="898"/>
+        <location filename="../gui/routing_dock.py" line="904"/>
         <source>&lt;span style='color: #fc8181;'&gt;Erro: Depósito não selecionado.&lt;/span&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/routing_dock.py" line="902"/>
+        <location filename="../gui/routing_dock.py" line="908"/>
         <source>Por favor, selecione a camada de demanda / clientes.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/routing_dock.py" line="907"/>
+        <location filename="../gui/routing_dock.py" line="913"/>
         <source>&lt;span style='color: #fc8181;'&gt;Erro: Camada de demanda não selecionada.&lt;/span&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/routing_dock.py" line="910"/>
+        <location filename="../gui/routing_dock.py" line="916"/>
         <source>&lt;b&gt;=== EXECUTANDO ROTEIRIZAÇÃO (CVRP) ===&lt;/b&gt;&lt;br&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/routing_dock.py" line="1009"/>
+        <location filename="../gui/routing_dock.py" line="1021"/>
         <source>-&gt; &lt;b&gt;Rotas geradas:&lt;/b&gt; {n}</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/routing_dock.py" line="1012"/>
+        <location filename="../gui/routing_dock.py" line="1024"/>
         <source>-&gt; &lt;b&gt;Paradas atendidas:&lt;/b&gt; {n}</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/routing_dock.py" line="1015"/>
+        <location filename="../gui/routing_dock.py" line="1027"/>
         <source>-&gt; &lt;b&gt;Carga total:&lt;/b&gt; {load:.2f}</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/routing_dock.py" line="1038"/>
+        <location filename="../gui/routing_dock.py" line="1050"/>
         <source>&lt;span style=&apos;color: #fc8181;&apos;&gt;Erro ao executar CVRP: {error}&lt;/span&gt;&lt;br&gt;</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1462,73 +1470,78 @@ Retornos:
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/routing_dock.py" line="913"/>
+        <location filename="../gui/routing_dock.py" line="919"/>
         <source>&lt;span style='color: #ecc94b;'&gt;Aviso: O OR-Tools está desativado por ter derrubado a sessão anterior. O rearme fica no diálogo de Dependências.&lt;/span&gt;&lt;br&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/routing_dock.py" line="963"/>
+        <location filename="../gui/routing_dock.py" line="975"/>
         <source>&lt;span style='color: #ecc94b;'&gt;Cálculo cancelado pelo usuário.&lt;/span&gt;&lt;br&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/routing_dock.py" line="777"/>
+        <location filename="../gui/routing_dock.py" line="783"/>
         <source>Erro ao calcular rota.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/routing_dock.py" line="835"/>
+        <location filename="../gui/routing_dock.py" line="841"/>
         <source>-&gt; &lt;b&gt;Distância total do tour:&lt;/b&gt; {dist:.2f}&amp;nbsp;m</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/routing_dock.py" line="838"/>
+        <location filename="../gui/routing_dock.py" line="844"/>
         <source>-&gt; &lt;b&gt;Custo de acesso:&lt;/b&gt; {acc:.2f}&amp;nbsp;m</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/routing_dock.py" line="841"/>
+        <location filename="../gui/routing_dock.py" line="847"/>
         <source>-&gt; &lt;b&gt;Custo de retorno:&lt;/b&gt; {ret:.2f}&amp;nbsp;m</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/routing_dock.py" line="851"/>
+        <location filename="../gui/routing_dock.py" line="857"/>
         <source>-&gt; &lt;b&gt;Modo de distância:&lt;/b&gt; {mode}</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/routing_dock.py" line="854"/>
+        <location filename="../gui/routing_dock.py" line="860"/>
         <source>-&gt; &lt;b&gt;Backend de otimização:&lt;/b&gt; {backend}</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/routing_dock.py" line="1029"/>
+        <location filename="../gui/routing_dock.py" line="1041"/>
         <source>-&gt; &lt;b&gt;Tempo de cálculo:&lt;/b&gt; {t} s</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/routing_dock.py" line="1032"/>
+        <location filename="../gui/routing_dock.py" line="1044"/>
         <source>-&gt; &lt;b&gt;Unidade das distâncias:&lt;/b&gt; metros&lt;br&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/routing_dock.py" line="865"/>
+        <location filename="../gui/routing_dock.py" line="871"/>
         <source>&lt;span style='color: #ecc94b;'&gt;Aviso: {n} trecho(s) caíram no segmento reto por falta de caminho na malha.&lt;/span&gt;&lt;br&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/routing_dock.py" line="967"/>
+        <location filename="../gui/routing_dock.py" line="979"/>
         <source>Erro ao executar CVRP.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/routing_dock.py" line="1004"/>
+        <location filename="../gui/routing_dock.py" line="1016"/>
         <source>Rota {id}: {n} paradas | carga {load:.2f} | distância {dist:.2f}&amp;nbsp;m</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/routing_dock.py" line="1018"/>
+        <location filename="../gui/routing_dock.py" line="1030"/>
         <source>-&gt; &lt;b&gt;Distância total:&lt;/b&gt; {dist:.2f}&amp;nbsp;m&lt;br&gt;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../gui/routing_dock.py" line="962"/>
+        <source>&lt;span style='color: #fc8181;'&gt;Erro ao iniciar o cálculo: {error}&lt;/span&gt;&lt;br&gt;</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

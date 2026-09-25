@@ -1,4 +1,4 @@
-from qgis.PyQt.QtCore import QObject, pyqtSignal
+from qgis.PyQt.QtCore import QObject, pyqtSignal, QCoreApplication
 from qgis.core import (
     QgsProcessingContext,
     QgsProcessingFeedback,
@@ -24,6 +24,10 @@ class SignalFeedback(QgsProcessingFeedback, QObject):
         self.message_emitted.emit(warning)
         super().pushWarning(warning)
 
+    def reportError(self, error: str, fatalError: bool = False):
+        self.message_emitted.emit(error)
+        super().reportError(error, fatalError)
+
 
 class AlgTaskRunner:
     def __init__(self, alg_id, params, on_finished, on_message=None, on_progress=None):
@@ -43,22 +47,42 @@ class AlgTaskRunner:
         self.task = None
 
     def start(self):
-        if not hasattr(QgsApplication, 'taskManager') or QgsApplication.taskManager() is None:
-            results = processing.run(
-                self.alg_id,
-                self.params,
-                context=self.context,
-                feedback=self.feedback
-            )
+        alg = QgsApplication.processingRegistry().algorithmById(self.alg_id)
+        if alg is None:
+            msg = QCoreApplication.translate(
+                "AlgTaskRunner", "Algoritmo {id} não encontrado no registro do Processing."
+            ).format(id=self.alg_id)
+            self.on_finished(False, msg)
+            return
+
+        if not hasattr(QgsApplication, "taskManager") or QgsApplication.taskManager() is None:
+            try:
+                results = processing.run(
+                    self.alg_id,
+                    self.params,
+                    context=self.context,
+                    feedback=self.feedback,
+                )
+            except Exception as e:
+                self.on_finished(False, str(e))
+                return
             self.on_finished(True, results)
             return
 
-        self.task = QgsProcessingAlgRunnerTask(self.alg_id, self.params, self.context, self.feedback)
-        self.task.executed.connect(self.on_finished)
-        QgsApplication.taskManager().addTask(self.task)
+        try:
+            self.task = QgsProcessingAlgRunnerTask(
+                alg, self.params, self.context, self.feedback
+            )
+            self.task.executed.connect(self.on_finished)
+            QgsApplication.taskManager().addTask(self.task)
+        except Exception as e:
+            self.on_finished(False, str(e))
+            return
 
     def cancel(self):
         self.feedback.cancel()
+        if self.task:
+            self.task.cancel()
 
     def resolve_layer(self, results, chave):
         if not results or chave not in results:

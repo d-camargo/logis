@@ -743,24 +743,30 @@ class RoutingDock(QgsDockWidget):
         }
 
         try:
-            from logis.gui.task_runner import AlgTaskRunner
-        except ImportError:
-            from .task_runner import AlgTaskRunner
+            try:
+                from logis.gui.task_runner import AlgTaskRunner
+            except ImportError:
+                from .task_runner import AlgTaskRunner
 
-        self._tsp_runner = AlgTaskRunner(
-            "logis:vrp_tsp",
-            params,
-            self._on_tsp_finished,
-            on_message=self.txt_results.append,
-            on_progress=self._update_progress
-        )
+            self._tsp_runner = AlgTaskRunner(
+                "logis:vrp_tsp",
+                params,
+                self._on_tsp_finished,
+                on_message=self.txt_results.append,
+                on_progress=self._update_progress
+            )
 
-        try:
-            self.btn_cancel.clicked.disconnect()
-        except (TypeError, RuntimeError):
-            pass
-        self.btn_cancel.clicked.connect(self._tsp_runner.cancel)
-        self._tsp_runner.start()
+            try:
+                self.btn_cancel.clicked.disconnect()
+            except (TypeError, RuntimeError):
+                pass
+            self.btn_cancel.clicked.connect(self._tsp_runner.cancel)
+            self._tsp_runner.start()
+        except Exception as e:
+            self.txt_results.append(
+                self.tr("<span style='color: #fc8181;'>Erro ao iniciar o cálculo: {error}</span><br>").format(error=str(e))
+            )
+            self._finish_progress()
 
     def _on_tsp_finished(self, ok, results):
         """
@@ -933,24 +939,30 @@ class RoutingDock(QgsDockWidget):
         }
 
         try:
-            from logis.gui.task_runner import AlgTaskRunner
-        except ImportError:
-            from .task_runner import AlgTaskRunner
+            try:
+                from logis.gui.task_runner import AlgTaskRunner
+            except ImportError:
+                from .task_runner import AlgTaskRunner
 
-        self._cvrp_runner = AlgTaskRunner(
-            "logis:vrp_cvrp",
-            params,
-            self._on_cvrp_finished,
-            on_message=self.txt_results.append,
-            on_progress=self._update_progress
-        )
+            self._cvrp_runner = AlgTaskRunner(
+                "logis:vrp_cvrp",
+                params,
+                self._on_cvrp_finished,
+                on_message=self.txt_results.append,
+                on_progress=self._update_progress
+            )
 
-        try:
-            self.btn_cancel.clicked.disconnect()
-        except (TypeError, RuntimeError):
-            pass
-        self.btn_cancel.clicked.connect(self._cvrp_runner.cancel)
-        self._cvrp_runner.start()
+            try:
+                self.btn_cancel.clicked.disconnect()
+            except (TypeError, RuntimeError):
+                pass
+            self.btn_cancel.clicked.connect(self._cvrp_runner.cancel)
+            self._cvrp_runner.start()
+        except Exception as e:
+            self.txt_results.append(
+                self.tr("<span style='color: #fc8181;'>Erro ao iniciar o cálculo: {error}</span><br>").format(error=str(e))
+            )
+            self._finish_progress()
 
     def _on_cvrp_finished(self, ok, results):
         """
