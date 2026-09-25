@@ -193,12 +193,12 @@ Outputs:
     <message>
         <location filename="../algorithms/facility_lscp.py" line="157"/>
         <source>camada de demanda</source>
-        <translation type="unfinished"></translation>
+        <translation>demand layer</translation>
     </message>
     <message>
         <location filename="../algorithms/facility_lscp.py" line="184"/>
         <source>instalações candidatas</source>
-        <translation type="unfinished"></translation>
+        <translation>candidate facilities</translation>
     </message>
 </context>
 <context>
@@ -359,12 +359,12 @@ Outputs:
     <message>
         <location filename="../algorithms/facility_mclp.py" line="168"/>
         <source>camada de demanda</source>
-        <translation type="unfinished"></translation>
+        <translation>demand layer</translation>
     </message>
     <message>
         <location filename="../algorithms/facility_mclp.py" line="195"/>
         <source>instalações candidatas</source>
-        <translation type="unfinished"></translation>
+        <translation>candidate facilities</translation>
     </message>
 </context>
 <context>
@@ -516,12 +516,12 @@ Outputs:
     <message>
         <location filename="../algorithms/facility_p_median.py" line="165"/>
         <source>camada de demanda</source>
-        <translation type="unfinished"></translation>
+        <translation>demand layer</translation>
     </message>
     <message>
         <location filename="../algorithms/facility_p_median.py" line="192"/>
         <source>instalações candidatas</source>
-        <translation type="unfinished"></translation>
+        <translation>candidate facilities</translation>
     </message>
 </context>
 <context>
@@ -2025,12 +2025,12 @@ Returns:
     <message>
         <location filename="../algorithms/urban_delivery_distance.py" line="110"/>
         <source>camada de depósitos</source>
-        <translation type="unfinished"></translation>
+        <translation>depot layer</translation>
     </message>
     <message>
         <location filename="../algorithms/urban_delivery_distance.py" line="122"/>
         <source>camada de zonas</source>
-        <translation type="unfinished"></translation>
+        <translation>zone layer</translation>
     </message>
 </context>
 <context>
@@ -2823,12 +2823,12 @@ Returns:
     <message>
         <location filename="../algorithms/urban_gravity_accessibility.py" line="127"/>
         <source>camada de origem</source>
-        <translation type="unfinished"></translation>
+        <translation>origin layer</translation>
     </message>
     <message>
         <location filename="../algorithms/urban_gravity_accessibility.py" line="139"/>
         <source>camada de destinos</source>
-        <translation type="unfinished"></translation>
+        <translation>destination layer</translation>
     </message>
 </context>
 <context>
@@ -4402,12 +4402,12 @@ Returns:
     <message>
         <location filename="../algorithms/waste_destination_distance.py" line="128"/>
         <source>camada de destinos de resíduos</source>
-        <translation type="unfinished"></translation>
+        <translation>waste destination layer</translation>
     </message>
     <message>
         <location filename="../algorithms/waste_destination_distance.py" line="140"/>
         <source>camada de setores/origens</source>
-        <translation type="unfinished"></translation>
+        <translation>collection sectors/origins layer</translation>
     </message>
 </context>
 <context>

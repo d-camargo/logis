@@ -160,12 +160,12 @@ Saídas:
     <message>
         <location filename="../algorithms/facility_lscp.py" line="157"/>
         <source>camada de demanda</source>
-        <translation type="unfinished"></translation>
+        <translation>camada de demanda</translation>
     </message>
     <message>
         <location filename="../algorithms/facility_lscp.py" line="184"/>
         <source>instalações candidatas</source>
-        <translation type="unfinished"></translation>
+        <translation>instalações candidatas</translation>
     </message>
 </context>
 <context>
@@ -312,12 +312,12 @@ Saídas:
     <message>
         <location filename="../algorithms/facility_mclp.py" line="168"/>
         <source>camada de demanda</source>
-        <translation type="unfinished"></translation>
+        <translation>camada de demanda</translation>
     </message>
     <message>
         <location filename="../algorithms/facility_mclp.py" line="195"/>
         <source>instalações candidatas</source>
-        <translation type="unfinished"></translation>
+        <translation>instalações candidatas</translation>
     </message>
 </context>
 <context>
@@ -457,12 +457,12 @@ Saídas:
     <message>
         <location filename="../algorithms/facility_p_median.py" line="165"/>
         <source>camada de demanda</source>
-        <translation type="unfinished"></translation>
+        <translation>camada de demanda</translation>
     </message>
     <message>
         <location filename="../algorithms/facility_p_median.py" line="192"/>
         <source>instalações candidatas</source>
-        <translation type="unfinished"></translation>
+        <translation>instalações candidatas</translation>
     </message>
 </context>
 <context>
@@ -1818,12 +1818,12 @@ Retorno:
     <message>
         <location filename="../algorithms/urban_delivery_distance.py" line="110"/>
         <source>camada de depósitos</source>
-        <translation type="unfinished"></translation>
+        <translation>camada de depósitos</translation>
     </message>
     <message>
         <location filename="../algorithms/urban_delivery_distance.py" line="122"/>
         <source>camada de zonas</source>
-        <translation type="unfinished"></translation>
+        <translation>camada de zonas</translation>
     </message>
 </context>
 <context>
@@ -2575,12 +2575,12 @@ Retorno:
     <message>
         <location filename="../algorithms/urban_gravity_accessibility.py" line="127"/>
         <source>camada de origem</source>
-        <translation type="unfinished"></translation>
+        <translation>camada de origem</translation>
     </message>
     <message>
         <location filename="../algorithms/urban_gravity_accessibility.py" line="139"/>
         <source>camada de destinos</source>
-        <translation type="unfinished"></translation>
+        <translation>camada de destinos</translation>
     </message>
 </context>
 <context>
@@ -3966,12 +3966,12 @@ Retorno:
     <message>
         <location filename="../algorithms/waste_destination_distance.py" line="128"/>
         <source>camada de destinos de resíduos</source>
-        <translation type="unfinished"></translation>
+        <translation>camada de destinos de resíduos</translation>
     </message>
     <message>
         <location filename="../algorithms/waste_destination_distance.py" line="140"/>
         <source>camada de setores/origens</source>
-        <translation type="unfinished"></translation>
+        <translation>camada de setores/origens</translation>
     </message>
 </context>
 <context>
