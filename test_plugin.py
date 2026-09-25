@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import inspect
 import unittest
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 import sys
 import os
 
@@ -52,7 +52,9 @@ class TestLogisPlugin(unittest.TestCase):
     def test_init_gui(self):
         try:
             from qgis.core import QgsApplication
-            QgsApplication.processingRegistry = MagicMock()
+            patcher = patch.object(QgsApplication, "processingRegistry", MagicMock())
+            patcher.start()
+            self.addCleanup(patcher.stop)
         except Exception:
             pass
 
