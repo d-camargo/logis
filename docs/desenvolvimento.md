@@ -82,8 +82,10 @@ python3 -m pytest -q
     ```bash
     QT_QPA_PLATFORM=offscreen python3 -m pytest -q
     ```
-    Resultado esperado, medido em 2026-08-22 nesta VPS: **240 testes passando + 9
-    subtests, em ~22 s**.
+    Resultado esperado, medido em 2026-09-25 nesta VPS: **491 testes passando + 9
+    subtests, em ~45 s**. Com Qt5, o processo pode terminar com código 139 (falha de
+    segmentação no encerramento do Qt) **depois** de imprimir o resumo — se o resumo
+    diz "passed" e não há "failed"/"error", a suíte passou.
 
 ---
 
