@@ -3778,132 +3778,132 @@ Outputs:
 <context>
     <name>WasteCarpRoute</name>
     <message>
-        <location filename="../algorithms/waste_carp_route.py" line="105"/>
+        <location filename="../algorithms/waste_carp_route.py" line="102"/>
         <source>Camada de vias</source>
         <translation>Roads layer</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_carp_route.py" line="112"/>
+        <location filename="../algorithms/waste_carp_route.py" line="109"/>
         <source>Campo de geração/demanda de resíduos (kg)</source>
         <translation>Waste generation/demand field (kg)</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_carp_route.py" line="121"/>
+        <location filename="../algorithms/waste_carp_route.py" line="118"/>
         <source>Campo de via obrigatória para coleta (opcional)</source>
         <translation>Required road field for collection (optional)</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_carp_route.py" line="129"/>
+        <location filename="../algorithms/waste_carp_route.py" line="126"/>
         <source>Campo de setor de coleta (opcional)</source>
         <translation>Collection sector field (optional)</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_carp_route.py" line="137"/>
+        <location filename="../algorithms/waste_carp_route.py" line="134"/>
         <source>Capacidade do veículo (em toneladas ou kg)</source>
         <translation>Vehicle capacity (in tonnes or kg)</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_carp_route.py" line="146"/>
+        <location filename="../algorithms/waste_carp_route.py" line="143"/>
         <source>Camada de ponto do depósito/aterro (exatamente 1 feição)</source>
         <translation>Depot/landfill point layer (exactly 1 feature)</translation>
     </message>
     <message>
         <location filename="../algorithms/waste_carp_route.py" line="153"/>
         <source>Tolerância de nó em metros (requer CRS métrico)</source>
-        <translation>Node tolerance in meters (requires metric CRS)</translation>
+        <translation type="obsolete">Node tolerance in meters (requires metric CRS)</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_carp_route.py" line="162"/>
+        <location filename="../algorithms/waste_carp_route.py" line="159"/>
         <source>Vias com rota de coleta (CARP)</source>
         <translation>Roads with collection route (CARP)</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_carp_route.py" line="179"/>
+        <location filename="../algorithms/waste_carp_route.py" line="176"/>
         <source>Camada de vias inválida.</source>
         <translation>Invalid roads layer.</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_carp_route.py" line="181"/>
+        <location filename="../algorithms/waste_carp_route.py" line="178"/>
         <source>A capacidade do veículo deve ser maior que zero.</source>
         <translation>Vehicle capacity must be greater than zero.</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_carp_route.py" line="199"/>
+        <location filename="../algorithms/waste_carp_route.py" line="196"/>
         <source>Lendo trechos de via...</source>
         <translation>Reading road segments...</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_carp_route.py" line="254"/>
+        <location filename="../algorithms/waste_carp_route.py" line="259"/>
         <source>Demanda do trecho '{fid}' ({dem:.2f}) excede a capacidade do veículo ({cap:.2f}).</source>
         <translation>Segment '{fid}' demand ({dem:.2f}) exceeds vehicle capacity ({cap:.2f}).</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_carp_route.py" line="273"/>
+        <location filename="../algorithms/waste_carp_route.py" line="278"/>
         <source>{count} trecho(s) com geometria inválida foram ignorados.</source>
         <translation>{count} segment(s) with invalid geometry were ignored.</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_carp_route.py" line="280"/>
+        <location filename="../algorithms/waste_carp_route.py" line="285"/>
         <source>Nenhum trecho de via válido encontrado na camada de entrada.</source>
         <translation>No valid road segment found in input layer.</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_carp_route.py" line="286"/>
+        <location filename="../algorithms/waste_carp_route.py" line="293"/>
         <source>Camada de depósito inválida.</source>
         <translation>Invalid depot layer.</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_carp_route.py" line="296"/>
+        <location filename="../algorithms/waste_carp_route.py" line="303"/>
         <source>A camada de ponto do depósito deve conter exatamente 1 feição (encontradas {count}).</source>
         <translation>Depot point layer must contain exactly 1 feature (found {count}).</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_carp_route.py" line="320"/>
+        <location filename="../algorithms/waste_carp_route.py" line="327"/>
         <source>Não foi possível criar a camada de saída.</source>
         <translation>Could not create output layer.</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_carp_route.py" line="331"/>
+        <location filename="../algorithms/waste_carp_route.py" line="338"/>
         <source>Setor '{sec}': nenhum trecho de coleta obrigatória. Ignorando setor.</source>
         <translation>Sector '{sec}': no required collection segment. Ignoring sector.</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_carp_route.py" line="351"/>
+        <location filename="../algorithms/waste_carp_route.py" line="358"/>
         <source>Calculando rotas CARP para o setor '{sec}' ({req_count} trechos obrigatórios)...</source>
         <translation>Calculating CARP routes for sector '{sec}' ({req_count} required segments)...</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_carp_route.py" line="365"/>
+        <location filename="../algorithms/waste_carp_route.py" line="372"/>
         <source>Erro ao calcular rotas CARP para o setor &apos;{sec}&apos;: {err}</source>
         <translation>Error calculating CARP routes for sector '{sec}': {err}</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_carp_route.py" line="371"/>
+        <location filename="../algorithms/waste_carp_route.py" line="378"/>
         <source>Setor &apos;{sec}&apos;: {count} rota(s)/viagem(ns) gerada(s).</source>
         <translation>Sector '{sec}': {count} route(s)/trip(s) generated.</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_carp_route.py" line="391"/>
+        <location filename="../algorithms/waste_carp_route.py" line="398"/>
         <source>Setor &apos;{sec}&apos;, rota {idx}: carga {load:.2f} kg, {dh_km:.2f} km de deadhead.</source>
         <translation>Sector '{sec}', route {idx}: load {load:.2f} kg, {dh_km:.2f} km deadhead.</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_carp_route.py" line="397"/>
+        <location filename="../algorithms/waste_carp_route.py" line="404"/>
         <source>Aviso: rota {idx} do setor &apos;{sec}&apos; usa menos de 50% da capacidade ({load:.2f} kg de {cap:.2f} kg).</source>
         <translation>Warning: route {idx} in sector '{sec}' uses less than 50% capacity ({load:.2f} kg of {cap:.2f} kg).</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_carp_route.py" line="433"/>
+        <location filename="../algorithms/waste_carp_route.py" line="440"/>
         <source>Roteirização por Arcos Capacitada (CARP)</source>
         <translation>Capacitated Arc Routing (CARP)</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_carp_route.py" line="436"/>
+        <location filename="../algorithms/waste_carp_route.py" line="443"/>
         <source>Logística Especializada — Coleta de Lixo</source>
         <translation>Specialized Logistics — Waste Collection</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_carp_route.py" line="442"/>
+        <location filename="../algorithms/waste_carp_route.py" line="449"/>
         <source>Calcula rotas de veículos capacitados para coleta de lixo por arcos usando o Problema de Roteirização por Arcos Capacitada (Capacitated Arc Routing Problem - CARP) com a heurística Path-Scanning (Golden et al., 1983).
 
 Parâmetros:
@@ -3935,106 +3935,121 @@ An isolated segment with demand greater than vehicle capacity produces an explic
 Returns:
 - Line layer with road features and additional fields: 'route_id' (route/trip identifier within sector), 'route_visit_order' (visit order in route), 'route_sector_id' (collection sector), 'route_is_deadhead' (boolean indicating duplicated/deadhead travel), 'route_load_kg' (total route load in kg), and 'route_distance_km' (total route distance in km).</translation>
     </message>
+    <message>
+        <location filename="../algorithms/waste_carp_route.py" line="150"/>
+        <source>Tolerância de nó (m)</source>
+        <translation>Node tolerance (m)</translation>
+    </message>
+    <message>
+        <location filename="../algorithms/waste_carp_route.py" line="203"/>
+        <source>camada de vias</source>
+        <translation>roads layer</translation>
+    </message>
+    <message>
+        <location filename="../algorithms/waste_carp_route.py" line="296"/>
+        <source>camada de depósito</source>
+        <translation>depot layer</translation>
+    </message>
 </context>
 <context>
     <name>WasteCollectionCoverage</name>
     <message>
-        <location filename="../algorithms/waste_collection_coverage.py" line="70"/>
+        <location filename="../algorithms/waste_collection_coverage.py" line="72"/>
         <source>Camada de vias exigidas (faixa de frequência)</source>
         <translation>Required roads layer (frequency band)</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_collection_coverage.py" line="77"/>
+        <location filename="../algorithms/waste_collection_coverage.py" line="79"/>
         <source>Campo de setor da camada de vias exigidas (opcional)</source>
         <translation>Sector field in required roads layer (optional)</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_collection_coverage.py" line="85"/>
+        <location filename="../algorithms/waste_collection_coverage.py" line="87"/>
         <source>Camada de rota coberta (vias percorridas)</source>
         <translation>Covered route layer (traversed roads)</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_collection_coverage.py" line="92"/>
+        <location filename="../algorithms/waste_collection_coverage.py" line="94"/>
         <source>Campo indicador de deadhead/conector (opcional)</source>
         <translation>Deadhead/connector indicator field (optional)</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_collection_coverage.py" line="102"/>
+        <location filename="../algorithms/waste_collection_coverage.py" line="104"/>
         <source>Campo de setor da camada de rota coberta (opcional)</source>
         <translation>Sector field in covered route layer (optional)</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_collection_coverage.py" line="110"/>
+        <location filename="../algorithms/waste_collection_coverage.py" line="112"/>
         <source>Rótulo de frequência de coleta</source>
         <translation>Collection frequency label</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_collection_coverage.py" line="118"/>
+        <location filename="../algorithms/waste_collection_coverage.py" line="120"/>
         <source>Tabela de cobertura por setor</source>
         <translation>Coverage table by sector</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_collection_coverage.py" line="134"/>
+        <location filename="../algorithms/waste_collection_coverage.py" line="136"/>
         <source>Camada de vias exigidas inválida.</source>
         <translation>Invalid required roads layer.</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_collection_coverage.py" line="136"/>
+        <location filename="../algorithms/waste_collection_coverage.py" line="138"/>
         <source>Camada de rota coberta inválida.</source>
         <translation>Invalid covered route layer.</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_collection_coverage.py" line="154"/>
+        <location filename="../algorithms/waste_collection_coverage.py" line="156"/>
         <source>Calculando extensão exigida por setor...</source>
         <translation>Calculating required length per sector...</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_collection_coverage.py" line="174"/>
+        <location filename="../algorithms/waste_collection_coverage.py" line="182"/>
         <source>Calculando extensão coberta por setor...</source>
         <translation>Calculating covered length per sector...</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_collection_coverage.py" line="206"/>
+        <location filename="../algorithms/waste_collection_coverage.py" line="214"/>
         <source>Nenhum trecho válido encontrado nas camadas de entrada.</source>
         <translation>No valid segment found in input layers.</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_collection_coverage.py" line="226"/>
+        <location filename="../algorithms/waste_collection_coverage.py" line="234"/>
         <source>Erro ao calcular a cobertura da coleta: {err}</source>
         <translation>Error calculating collection coverage: {err}</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_collection_coverage.py" line="250"/>
+        <location filename="../algorithms/waste_collection_coverage.py" line="258"/>
         <source>Não foi possível criar a camada de saída.</source>
         <translation>Could not create output layer.</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_collection_coverage.py" line="267"/>
+        <location filename="../algorithms/waste_collection_coverage.py" line="275"/>
         <source>Setor &apos;{sid}&apos;: {req:.2f} km exigidos | {cov:.2f} km cobertos | Cobertura: {pct}</source>
         <translation>Sector '{sid}': {req:.2f} km required | {cov:.2f} km covered | Coverage: {pct}</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_collection_coverage.py" line="279"/>
+        <location filename="../algorithms/waste_collection_coverage.py" line="287"/>
         <source>Aviso: Setor &apos;{sid}&apos; possui cobertura baixa ({pct:.1f}% &lt; 80.0%).</source>
         <translation>Warning: Sector '{sid}' has low coverage ({pct:.1f}% &lt; 80.0%).</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_collection_coverage.py" line="318"/>
+        <location filename="../algorithms/waste_collection_coverage.py" line="326"/>
         <source>Total geral: {req:.2f} km exigidos | {cov:.2f} km cobertos | Cobertura total: {pct}</source>
         <translation>Grand total: {req:.2f} km required | {cov:.2f} km covered | Total coverage: {pct}</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_collection_coverage.py" line="335"/>
+        <location filename="../algorithms/waste_collection_coverage.py" line="343"/>
         <source>Cobertura da Coleta de Resíduos por Setor</source>
         <translation>Waste Collection Coverage by Sector</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_collection_coverage.py" line="338"/>
+        <location filename="../algorithms/waste_collection_coverage.py" line="346"/>
         <source>Logística Especializada — Coleta de Lixo</source>
         <translation>Specialized Logistics — Waste Collection</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_collection_coverage.py" line="344"/>
+        <location filename="../algorithms/waste_collection_coverage.py" line="352"/>
         <source>Calcula a extensão de via exigida (required_km), extensão efetivamente coberta por rotas de coleta (covered_km) e a taxa de cobertura (coverage_pct) por setor e no total acumulado.
 
 Parâmetros:
@@ -4064,77 +4079,77 @@ Returns:
 <context>
     <name>WasteCppRoute</name>
     <message>
-        <location filename="../algorithms/waste_cpp_route.py" line="91"/>
+        <location filename="../algorithms/waste_cpp_route.py" line="94"/>
         <source>Camada de vias</source>
         <translation>Roads layer</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_cpp_route.py" line="98"/>
+        <location filename="../algorithms/waste_cpp_route.py" line="101"/>
         <source>Campo de setor de coleta (opcional)</source>
         <translation>Collection sector field (optional)</translation>
     </message>
     <message>
         <location filename="../algorithms/waste_cpp_route.py" line="106"/>
         <source>Tolerância de nó em metros (requer CRS métrico)</source>
-        <translation>Node tolerance in meters (requires metric CRS)</translation>
+        <translation type="obsolete">Node tolerance in meters (requires metric CRS)</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_cpp_route.py" line="115"/>
+        <location filename="../algorithms/waste_cpp_route.py" line="118"/>
         <source>Vias com rota de coleta (CPP)</source>
         <translation>Roads with collection route (CPP)</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_cpp_route.py" line="128"/>
+        <location filename="../algorithms/waste_cpp_route.py" line="131"/>
         <source>Camada de vias inválida.</source>
         <translation>Invalid roads layer.</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_cpp_route.py" line="136"/>
+        <location filename="../algorithms/waste_cpp_route.py" line="139"/>
         <source>Lendo trechos de via e agrupando por setor...</source>
         <translation>Reading road segments and grouping by sector...</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_cpp_route.py" line="184"/>
+        <location filename="../algorithms/waste_cpp_route.py" line="195"/>
         <source>{count} trecho(s) com geometria inválida foram ignorados.</source>
         <translation>{count} segment(s) with invalid geometry were ignored.</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_cpp_route.py" line="191"/>
+        <location filename="../algorithms/waste_cpp_route.py" line="202"/>
         <source>Nenhum trecho de via válido encontrado na camada de entrada.</source>
         <translation>No valid road segment found in input layer.</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_cpp_route.py" line="209"/>
+        <location filename="../algorithms/waste_cpp_route.py" line="220"/>
         <source>Não foi possível criar a camada de saída.</source>
         <translation>Could not create output layer.</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_cpp_route.py" line="218"/>
+        <location filename="../algorithms/waste_cpp_route.py" line="229"/>
         <source>Calculando rota CPP para o setor &apos;{sec}&apos; com {count} trecho(s)...</source>
         <translation>Calculating CPP route for sector '{sec}' with {count} segment(s)...</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_cpp_route.py" line="230"/>
+        <location filename="../algorithms/waste_cpp_route.py" line="241"/>
         <source>Erro ao calcular rota CPP para o setor &apos;{sec}&apos;: {err}</source>
         <translation>Error calculating CPP route for sector '{sec}': {err}</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_cpp_route.py" line="240"/>
+        <location filename="../algorithms/waste_cpp_route.py" line="251"/>
         <source>Setor &apos;{sec}&apos;: {dup} trecho(s) duplicado(s) (deadhead), {km:.2f} km improdutivos.</source>
         <translation>Sector '{sec}': {dup} duplicated segment(s) (deadhead), {km:.2f} km unproductive.</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_cpp_route.py" line="270"/>
+        <location filename="../algorithms/waste_cpp_route.py" line="281"/>
         <source>Roteirização por Arcos (CPP)</source>
         <translation>Arc Routing (CPP)</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_cpp_route.py" line="273"/>
+        <location filename="../algorithms/waste_cpp_route.py" line="284"/>
         <source>Logística Especializada — Coleta de Lixo</source>
         <translation>Specialized Logistics — Waste Collection</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_cpp_route.py" line="279"/>
+        <location filename="../algorithms/waste_cpp_route.py" line="290"/>
         <source>Calcula a sequência de percurso para coleta de lixo por arcos usando o Problema do Carteiro Chinês (Chinese Postman Problem - CPP).
 
 Parâmetros:
@@ -4154,81 +4169,91 @@ Parameters:
 Returns:
 - Line layer with duplicated features on deadhead segments and additional fields: 'route_visit_order' (sequential position in circuit), 'route_sector_id' (collection sector), and 'route_is_deadhead' (boolean indicating duplicated/deadhead pass).</translation>
     </message>
+    <message>
+        <location filename="../algorithms/waste_cpp_route.py" line="109"/>
+        <source>Tolerância de nó (m)</source>
+        <translation>Node tolerance (m)</translation>
+    </message>
+    <message>
+        <location filename="../algorithms/waste_cpp_route.py" line="146"/>
+        <source>camada de vias</source>
+        <translation>roads layer</translation>
+    </message>
 </context>
 <context>
     <name>WasteDeadheadRatio</name>
     <message>
-        <location filename="../algorithms/waste_deadhead_ratio.py" line="66"/>
+        <location filename="../algorithms/waste_deadhead_ratio.py" line="68"/>
         <source>Camada de rotas/vias de coleta</source>
         <translation>Collection routes/roads layer</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_deadhead_ratio.py" line="73"/>
+        <location filename="../algorithms/waste_deadhead_ratio.py" line="75"/>
         <source>Campo indicador de deadhead/improdutivo</source>
         <translation>Deadhead/unproductive indicator field</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_deadhead_ratio.py" line="83"/>
+        <location filename="../algorithms/waste_deadhead_ratio.py" line="85"/>
         <source>Campo de identificação da rota/setor (opcional)</source>
         <translation>Route/sector identification field (optional)</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_deadhead_ratio.py" line="91"/>
+        <location filename="../algorithms/waste_deadhead_ratio.py" line="93"/>
         <source>Razão de deadhead por rota</source>
         <translation>Deadhead ratio by route</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_deadhead_ratio.py" line="104"/>
+        <location filename="../algorithms/waste_deadhead_ratio.py" line="106"/>
         <source>Camada de rotas de coleta inválida.</source>
         <translation>Invalid collection routes layer.</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_deadhead_ratio.py" line="108"/>
+        <location filename="../algorithms/waste_deadhead_ratio.py" line="110"/>
         <source>Campo indicador de deadhead inválido.</source>
         <translation>Invalid deadhead indicator field.</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_deadhead_ratio.py" line="116"/>
+        <location filename="../algorithms/waste_deadhead_ratio.py" line="118"/>
         <source>Lendo feições da camada e calculando comprimentos...</source>
         <translation>Reading layer features and calculating lengths...</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_deadhead_ratio.py" line="140"/>
+        <location filename="../algorithms/waste_deadhead_ratio.py" line="147"/>
         <source>Nenhum trecho válido encontrado na camada de entrada.</source>
         <translation>No valid segment found in input layer.</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_deadhead_ratio.py" line="151"/>
+        <location filename="../algorithms/waste_deadhead_ratio.py" line="158"/>
         <source>Erro ao calcular a razão de deadhead: {err}</source>
         <translation>Error calculating deadhead ratio: {err}</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_deadhead_ratio.py" line="171"/>
+        <location filename="../algorithms/waste_deadhead_ratio.py" line="178"/>
         <source>Não foi possível criar a camada de saída.</source>
         <translation>Could not create output layer.</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_deadhead_ratio.py" line="186"/>
+        <location filename="../algorithms/waste_deadhead_ratio.py" line="193"/>
         <source>Rota '{rid}': {prod:.2f} km produtivos | {dh:.2f} km deadhead | Razão: {ratio}</source>
         <translation>Route '{rid}': {prod:.2f} km productive | {dh:.2f} km deadhead | Ratio: {ratio}</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_deadhead_ratio.py" line="211"/>
+        <location filename="../algorithms/waste_deadhead_ratio.py" line="218"/>
         <source>Total acumulado de todas as rotas: {prod:.2f} km produtivos | {dh:.2f} km deadhead | Razão total: {ratio}</source>
         <translation>Accumulated total of all routes: {prod:.2f} km productive | {dh:.2f} km deadhead | Total ratio: {ratio}</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_deadhead_ratio.py" line="238"/>
+        <location filename="../algorithms/waste_deadhead_ratio.py" line="245"/>
         <source>Razão de Deadhead por Rota</source>
         <translation>Deadhead Ratio by Route</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_deadhead_ratio.py" line="241"/>
+        <location filename="../algorithms/waste_deadhead_ratio.py" line="248"/>
         <source>Logística Especializada — Coleta de Lixo</source>
         <translation>Specialized Logistics — Waste Collection</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_deadhead_ratio.py" line="247"/>
+        <location filename="../algorithms/waste_deadhead_ratio.py" line="254"/>
         <source>Calcula a extensão de deslocamento produtivo (coleta), improdutivo (deadhead/conector) e a razão de deadhead (deadhead_km / productive_km) para cada rota de coleta e no total.
 
 Parâmetros:
@@ -4413,97 +4438,97 @@ Returns:
 <context>
     <name>WasteDistricting</name>
     <message>
-        <location filename="../algorithms/waste_districting.py" line="97"/>
+        <location filename="../algorithms/waste_districting.py" line="100"/>
         <source>Camada de vias</source>
         <translation>Roads layer</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_districting.py" line="104"/>
+        <location filename="../algorithms/waste_districting.py" line="107"/>
         <source>Campo de carga (opcional, default=comprimento do trecho)</source>
         <translation>Load field (optional, default=segment length)</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_districting.py" line="113"/>
+        <location filename="../algorithms/waste_districting.py" line="116"/>
         <source>Número de setores de coleta desejado</source>
         <translation>Desired number of collection sectors</translation>
     </message>
     <message>
         <location filename="../algorithms/waste_districting.py" line="122"/>
         <source>Tolerância de nó em metros (requer CRS métrico)</source>
-        <translation>Node tolerance in meters (requires metric CRS)</translation>
+        <translation type="obsolete">Node tolerance in meters (requires metric CRS)</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_districting.py" line="131"/>
+        <location filename="../algorithms/waste_districting.py" line="134"/>
         <source>Máximo de iterações de rebalanceamento de fronteira</source>
         <translation>Maximum boundary rebalancing iterations</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_districting.py" line="140"/>
+        <location filename="../algorithms/waste_districting.py" line="143"/>
         <source>Vias com setor de coleta atribuído</source>
         <translation>Roads with assigned collection sector</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_districting.py" line="155"/>
+        <location filename="../algorithms/waste_districting.py" line="158"/>
         <source>Camada de vias inválida.</source>
         <translation>Invalid roads layer.</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_districting.py" line="160"/>
+        <location filename="../algorithms/waste_districting.py" line="163"/>
         <source>Lendo trechos de via e construindo adjacência...</source>
         <translation>Reading road segments and building adjacency...</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_districting.py" line="195"/>
+        <location filename="../algorithms/waste_districting.py" line="207"/>
         <source>{count} trecho(s) com geometria inválida foram ignorados.</source>
         <translation>{count} segment(s) with invalid geometry were ignored.</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_districting.py" line="202"/>
+        <location filename="../algorithms/waste_districting.py" line="214"/>
         <source>Nenhum trecho de via válido encontrado na camada de entrada.</source>
         <translation>No valid road segment found in input layer.</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_districting.py" line="205"/>
+        <location filename="../algorithms/waste_districting.py" line="217"/>
         <source>O número de setores ({k}) não pode exceder o número de trechos válidos ({n}).</source>
         <translation>Number of sectors ({k}) cannot exceed valid segment count ({n}).</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_districting.py" line="212"/>
+        <location filename="../algorithms/waste_districting.py" line="224"/>
         <source>Selecionando sementes (farthest-first)...</source>
         <translation>Selecting seeds (farthest-first)...</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_districting.py" line="216"/>
+        <location filename="../algorithms/waste_districting.py" line="228"/>
         <source>Crescendo setores a partir das sementes...</source>
         <translation>Growing sectors from seeds...</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_districting.py" line="219"/>
+        <location filename="../algorithms/waste_districting.py" line="231"/>
         <source>Rebalanceando trechos de fronteira...</source>
         <translation>Rebalancing boundary segments...</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_districting.py" line="230"/>
+        <location filename="../algorithms/waste_districting.py" line="242"/>
         <source>Setorização concluída. Setores: {k} | carga mín={min:.2f} | carga máx={max:.2f} | carga média={avg:.2f}</source>
         <translation>Districting completed. Sectors: {k} | min load={min:.2f} | max load={max:.2f} | avg load={avg:.2f}</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_districting.py" line="246"/>
+        <location filename="../algorithms/waste_districting.py" line="258"/>
         <source>Não foi possível criar a camada de saída.</source>
         <translation>Could not create output layer.</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_districting.py" line="271"/>
+        <location filename="../algorithms/waste_districting.py" line="283"/>
         <source>Setorização de Coleta de Resíduos (Districting)</source>
         <translation>Waste Collection Districting</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_districting.py" line="274"/>
+        <location filename="../algorithms/waste_districting.py" line="286"/>
         <source>Logística Especializada — Coleta de Lixo</source>
         <translation>Specialized Logistics — Waste Collection</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_districting.py" line="280"/>
+        <location filename="../algorithms/waste_districting.py" line="292"/>
         <source>Particiona os trechos de uma camada de vias em k setores de coleta contíguos e balanceados por carga (resíduos gerados ou, na ausência do campo, comprimento do trecho).
 
 Usa a heurística de sementes farthest-first (Gonzalez, 1985), seguida de crescimento de regiões a partir das sementes e refinamento local por troca de trechos de fronteira para equilibrar a carga entre setores mantendo contiguidade. A solução é boa, não necessariamente ótima.
@@ -4530,6 +4555,16 @@ Parameters:
 
 Output:
 - Roads layer with new attribute 'collection_sector_id' (collection sector ID).</translation>
+    </message>
+    <message>
+        <location filename="../algorithms/waste_districting.py" line="125"/>
+        <source>Tolerância de nó (m)</source>
+        <translation>Node tolerance (m)</translation>
+    </message>
+    <message>
+        <location filename="../algorithms/waste_districting.py" line="170"/>
+        <source>camada de vias</source>
+        <translation>roads layer</translation>
     </message>
 </context>
 <context>
@@ -5168,102 +5203,102 @@ Output:
 <context>
     <name>WasteFleetSizing</name>
     <message>
-        <location filename="../algorithms/waste_fleet_sizing.py" line="69"/>
+        <location filename="../algorithms/waste_fleet_sizing.py" line="71"/>
         <source>Camada de rotas de coleta (saída de logis:waste_carp_route)</source>
         <translation>Collection routes layer (output from logis:waste_carp_route)</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_fleet_sizing.py" line="76"/>
+        <location filename="../algorithms/waste_fleet_sizing.py" line="78"/>
         <source>Campo de identificação da rota</source>
         <translation>Route identification field</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_fleet_sizing.py" line="84"/>
+        <location filename="../algorithms/waste_fleet_sizing.py" line="86"/>
         <source>Campo de setor de coleta (opcional)</source>
         <translation>Collection sector field (optional)</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_fleet_sizing.py" line="92"/>
+        <location filename="../algorithms/waste_fleet_sizing.py" line="94"/>
         <source>Velocidade média de coleta (km/h)</source>
         <translation>Average collection speed (km/h)</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_fleet_sizing.py" line="101"/>
+        <location filename="../algorithms/waste_fleet_sizing.py" line="103"/>
         <source>Duração da jornada de trabalho diária (horas)</source>
         <translation>Daily work shift duration (hours)</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_fleet_sizing.py" line="110"/>
+        <location filename="../algorithms/waste_fleet_sizing.py" line="112"/>
         <source>Tempo fixo de descarga por rota (horas)</source>
         <translation>Fixed unloading time per route (hours)</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_fleet_sizing.py" line="119"/>
+        <location filename="../algorithms/waste_fleet_sizing.py" line="121"/>
         <source>Tempo fixo de deslocamento ao destino por rota (horas)</source>
         <translation>Fixed travel time to destination per route (hours)</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_fleet_sizing.py" line="128"/>
+        <location filename="../algorithms/waste_fleet_sizing.py" line="130"/>
         <source>Dimensionamento de frota por setor</source>
         <translation>Fleet sizing by sector</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_fleet_sizing.py" line="145"/>
+        <location filename="../algorithms/waste_fleet_sizing.py" line="147"/>
         <source>Camada de rotas de coleta inválida.</source>
         <translation>Invalid collection routes layer.</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_fleet_sizing.py" line="149"/>
+        <location filename="../algorithms/waste_fleet_sizing.py" line="151"/>
         <source>Campo de identificação da rota inválido.</source>
         <translation>Invalid route identification field.</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_fleet_sizing.py" line="157"/>
+        <location filename="../algorithms/waste_fleet_sizing.py" line="159"/>
         <source>Lendo rotas e somando distâncias por setor...</source>
         <translation>Reading routes and summing distances by sector...</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_fleet_sizing.py" line="179"/>
+        <location filename="../algorithms/waste_fleet_sizing.py" line="186"/>
         <source>Nenhuma rota válida encontrada na camada de entrada.</source>
         <translation>No valid route found in input layer.</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_fleet_sizing.py" line="199"/>
+        <location filename="../algorithms/waste_fleet_sizing.py" line="206"/>
         <source>Não foi possível criar a camada de saída.</source>
         <translation>Could not create output layer.</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_fleet_sizing.py" line="210"/>
+        <location filename="../algorithms/waste_fleet_sizing.py" line="217"/>
         <source>Dimensionando frota do setor &apos;{sec}&apos; ({count} rota(s))...</source>
         <translation>Sizing fleet for sector '{sec}' ({count} route(s))...</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_fleet_sizing.py" line="225"/>
+        <location filename="../algorithms/waste_fleet_sizing.py" line="232"/>
         <source>Erro ao dimensionar a frota do setor &apos;{sec}&apos;: {err}</source>
         <translation>Error sizing fleet for sector '{sec}': {err}</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_fleet_sizing.py" line="231"/>
+        <location filename="../algorithms/waste_fleet_sizing.py" line="238"/>
         <source>Setor '{sec}': {fleet} veículo(s) necessário(s) | Utilização média: {util:.1f}% | Tempo total de rotas: {total:.2f} h</source>
         <translation>Sector '{sec}': {fleet} vehicle(s) required | Average utilization: {util:.1f}% | Total route time: {total:.2f} h</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_fleet_sizing.py" line="243"/>
+        <location filename="../algorithms/waste_fleet_sizing.py" line="250"/>
         <source>Aviso: frota do setor '{sec}' com utilização média abaixo de 50% ({util:.1f}%) — possível sobredimensionamento.</source>
         <translation>Warning: fleet in sector '{sec}' has average utilization under 50% ({util:.1f}%) — possible oversizing.</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_fleet_sizing.py" line="270"/>
+        <location filename="../algorithms/waste_fleet_sizing.py" line="277"/>
         <source>Dimensionamento de Frota de Coleta</source>
         <translation>Collection Fleet Sizing</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_fleet_sizing.py" line="273"/>
+        <location filename="../algorithms/waste_fleet_sizing.py" line="280"/>
         <source>Logística Especializada — Coleta de Lixo</source>
         <translation>Specialized Logistics — Waste Collection</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_fleet_sizing.py" line="279"/>
+        <location filename="../algorithms/waste_fleet_sizing.py" line="286"/>
         <source>Dimensiona a frota de veículos necessária para atender às rotas de coleta de resíduos sólidos durante a jornada de trabalho, aplicando o algoritmo First-Fit Decreasing (FFD) para o problema de empacotamento (Bin Packing).
 
 Parâmetros:
@@ -5299,112 +5334,112 @@ Returns:
 <context>
     <name>WasteGenerationEstimate</name>
     <message>
-        <location filename="../algorithms/waste_generation_estimate.py" line="61"/>
+        <location filename="../algorithms/waste_generation_estimate.py" line="62"/>
         <source>Camada de setores (população)</source>
         <translation>Sectors layer (population)</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_generation_estimate.py" line="68"/>
+        <location filename="../algorithms/waste_generation_estimate.py" line="69"/>
         <source>Campo de identificação do setor</source>
         <translation>Sector identification field</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_generation_estimate.py" line="76"/>
+        <location filename="../algorithms/waste_generation_estimate.py" line="77"/>
         <source>Campo de população (habitantes)</source>
         <translation>Population field (inhabitants)</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_generation_estimate.py" line="84"/>
+        <location filename="../algorithms/waste_generation_estimate.py" line="85"/>
         <source>Camada de vias (com setor já associado)</source>
         <translation>Roads layer (with sector already assigned)</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_generation_estimate.py" line="91"/>
+        <location filename="../algorithms/waste_generation_estimate.py" line="92"/>
         <source>Campo de identificação do setor na camada de vias</source>
         <translation>Sector identification field in roads layer</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_generation_estimate.py" line="99"/>
+        <location filename="../algorithms/waste_generation_estimate.py" line="100"/>
         <source>Geração per capita (kg/hab/dia)</source>
         <translation>Per capita generation (kg/hab/day)</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_generation_estimate.py" line="108"/>
+        <location filename="../algorithms/waste_generation_estimate.py" line="109"/>
         <source>Fração de cobertura da coleta (0 a 1)</source>
         <translation>Collection coverage fraction (0 to 1)</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_generation_estimate.py" line="118"/>
+        <location filename="../algorithms/waste_generation_estimate.py" line="119"/>
         <source>Vias com estimativa de geração de resíduos</source>
         <translation>Roads with estimated waste generation</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_generation_estimate.py" line="135"/>
+        <location filename="../algorithms/waste_generation_estimate.py" line="136"/>
         <source>Camada de setores inválida.</source>
         <translation>Invalid sectors layer.</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_generation_estimate.py" line="137"/>
+        <location filename="../algorithms/waste_generation_estimate.py" line="138"/>
         <source>Camada de vias inválida.</source>
         <translation>Invalid roads layer.</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_generation_estimate.py" line="141"/>
+        <location filename="../algorithms/waste_generation_estimate.py" line="142"/>
         <source>Campo de população '{field}' não encontrado na camada de setores.</source>
         <translation>Population field '{field}' not found in sectors layer.</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_generation_estimate.py" line="146"/>
+        <location filename="../algorithms/waste_generation_estimate.py" line="147"/>
         <source>Campo de identificação do setor '{field}' não encontrado na camada de setores.</source>
         <translation>Sector identification field '{field}' not found in sectors layer.</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_generation_estimate.py" line="151"/>
+        <location filename="../algorithms/waste_generation_estimate.py" line="152"/>
         <source>Campo de identificação do setor '{field}' não encontrado na camada de vias.</source>
         <translation>Sector identification field '{field}' not found in roads layer.</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_generation_estimate.py" line="156"/>
+        <location filename="../algorithms/waste_generation_estimate.py" line="157"/>
         <source>Lendo população dos setores...</source>
         <translation>Reading sector population...</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_generation_estimate.py" line="168"/>
+        <location filename="../algorithms/waste_generation_estimate.py" line="169"/>
         <source>Agrupando trechos de via por setor...</source>
         <translation>Grouping road segments by sector...</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_generation_estimate.py" line="175"/>
+        <location filename="../algorithms/waste_generation_estimate.py" line="176"/>
         <source>Trecho {fid} sem setor associado — ignorado.</source>
         <translation>Segment {fid} with no associated sector — ignored.</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_generation_estimate.py" line="185"/>
+        <location filename="../algorithms/waste_generation_estimate.py" line="191"/>
         <source>Setor '{sector}' presente na camada de vias mas não encontrado na camada de setores — ignorado.</source>
         <translation>Sector '{sector}' present in roads layer but not found in sectors layer — ignored.</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_generation_estimate.py" line="208"/>
+        <location filename="../algorithms/waste_generation_estimate.py" line="214"/>
         <source>Não foi possível criar a camada de saída.</source>
         <translation>Could not create output layer.</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_generation_estimate.py" line="226"/>
+        <location filename="../algorithms/waste_generation_estimate.py" line="232"/>
         <source>Geração de resíduos estimada para {count} trecho(s) de via.</source>
         <translation>Estimated waste generation for {count} road segment(s).</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_generation_estimate.py" line="237"/>
+        <location filename="../algorithms/waste_generation_estimate.py" line="243"/>
         <source>Estimativa de Geração de Resíduos Sólidos</source>
         <translation>Solid Waste Generation Estimation</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_generation_estimate.py" line="240"/>
+        <location filename="../algorithms/waste_generation_estimate.py" line="246"/>
         <source>Logística Especializada — Coleta de Lixo</source>
         <translation>Specialized Logistics — Waste Collection</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_generation_estimate.py" line="246"/>
+        <location filename="../algorithms/waste_generation_estimate.py" line="252"/>
         <source>Estima a geração de resíduos sólidos (em kg/dia) por trecho de via, a partir da população de cada setor e do rateio proporcional ao comprimento dos trechos de via associados a esse setor.
 
 A camada de vias deve chegar com um campo de identificação do setor já preenchido (ex.: executando native:joinbylocation manualmente no QGIS antes deste algorithm, ou trazendo o campo de outra fonte) — este algorithm não faz nenhum spatial join.
@@ -5440,87 +5475,87 @@ Returns:
 <context>
     <name>WasteRppRoute</name>
     <message>
-        <location filename="../algorithms/waste_rpp_route.py" line="111"/>
+        <location filename="../algorithms/waste_rpp_route.py" line="114"/>
         <source>Camada de vias</source>
         <translation>Roads layer</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_rpp_route.py" line="118"/>
+        <location filename="../algorithms/waste_rpp_route.py" line="121"/>
         <source>Campo de via obrigatória para coleta (opcional)</source>
         <translation>Required road field for collection (optional)</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_rpp_route.py" line="126"/>
+        <location filename="../algorithms/waste_rpp_route.py" line="129"/>
         <source>Campo de setor de coleta (opcional)</source>
         <translation>Collection sector field (optional)</translation>
     </message>
     <message>
         <location filename="../algorithms/waste_rpp_route.py" line="134"/>
         <source>Tolerância de nó em metros (requer CRS métrico)</source>
-        <translation>Node tolerance in meters (requires metric CRS)</translation>
+        <translation type="obsolete">Node tolerance in meters (requires metric CRS)</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_rpp_route.py" line="143"/>
+        <location filename="../algorithms/waste_rpp_route.py" line="146"/>
         <source>Vias com rota de coleta (RPP)</source>
         <translation>Roads with collection route (RPP)</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_rpp_route.py" line="157"/>
+        <location filename="../algorithms/waste_rpp_route.py" line="160"/>
         <source>Camada de vias inválida.</source>
         <translation>Invalid roads layer.</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_rpp_route.py" line="170"/>
+        <location filename="../algorithms/waste_rpp_route.py" line="173"/>
         <source>Lendo trechos de via e agrupando por setor...</source>
         <translation>Reading road segments and grouping by sector...</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_rpp_route.py" line="224"/>
+        <location filename="../algorithms/waste_rpp_route.py" line="235"/>
         <source>{count} trecho(s) com geometria inválida foram ignorados.</source>
         <translation>{count} segment(s) with invalid geometry were ignored.</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_rpp_route.py" line="231"/>
+        <location filename="../algorithms/waste_rpp_route.py" line="242"/>
         <source>Nenhum trecho de via válido encontrado na camada de entrada.</source>
         <translation>No valid road segment found in input layer.</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_rpp_route.py" line="249"/>
+        <location filename="../algorithms/waste_rpp_route.py" line="260"/>
         <source>Não foi possível criar a camada de saída.</source>
         <translation>Could not create output layer.</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_rpp_route.py" line="262"/>
+        <location filename="../algorithms/waste_rpp_route.py" line="273"/>
         <source>Setor '{sec}': nenhum trecho de coleta obrigatória. Ignorando setor.</source>
         <translation>Sector '{sec}': no required collection segment. Ignoring sector.</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_rpp_route.py" line="271"/>
+        <location filename="../algorithms/waste_rpp_route.py" line="282"/>
         <source>Calculando rota RPP para o setor '{sec}' ({req_count} obrigatórios de {tot_count} trechos)...</source>
         <translation>Calculating RPP route for sector '{sec}' ({req_count} required of {tot_count} segments)...</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_rpp_route.py" line="316"/>
+        <location filename="../algorithms/waste_rpp_route.py" line="327"/>
         <source>Erro ao calcular rota RPP para o setor &apos;{sec}&apos;: {err}</source>
         <translation>Error calculating RPP route for sector '{sec}': {err}</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_rpp_route.py" line="327"/>
+        <location filename="../algorithms/waste_rpp_route.py" line="338"/>
         <source>Setor '{sec}': RPP concluído com {steps} passo(s). {km:.2f} km de deadhead/deslocamento.</source>
         <translation>Sector '{sec}': RPP completed in {steps} step(s). {km:.2f} km deadhead/travel.</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_rpp_route.py" line="354"/>
+        <location filename="../algorithms/waste_rpp_route.py" line="365"/>
         <source>Roteirização por Arcos (RPP)</source>
         <translation>Arc Routing (RPP)</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_rpp_route.py" line="357"/>
+        <location filename="../algorithms/waste_rpp_route.py" line="368"/>
         <source>Logística Especializada — Coleta de Lixo</source>
         <translation>Specialized Logistics — Waste Collection</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_rpp_route.py" line="363"/>
+        <location filename="../algorithms/waste_rpp_route.py" line="374"/>
         <source>Calcula a sequência de percurso para coleta de lixo por arcos em um subconjunto de vias obrigatórias usando o Problema do Carteiro Rural (Rural Postman Problem - RPP).
 
 Parâmetros:
@@ -5542,111 +5577,121 @@ Parameters:
 Returns:
 - Line layer with duplicated features in traversal sequence and three additional fields: 'route_visit_order' (sequential position in circuit), 'route_sector_id' (collection sector), and 'route_is_connector' (boolean indicating connector road).</translation>
     </message>
+    <message>
+        <location filename="../algorithms/waste_rpp_route.py" line="137"/>
+        <source>Tolerância de nó (m)</source>
+        <translation>Node tolerance (m)</translation>
+    </message>
+    <message>
+        <location filename="../algorithms/waste_rpp_route.py" line="180"/>
+        <source>camada de vias</source>
+        <translation>roads layer</translation>
+    </message>
 </context>
 <context>
     <name>WasteSectorBalance</name>
     <message>
-        <location filename="../algorithms/waste_sector_balance.py" line="72"/>
+        <location filename="../algorithms/waste_sector_balance.py" line="74"/>
         <source>Camada de rotas de coleta (ex.: saída de logis:waste_carp_route)</source>
         <translation>Collection routes layer (e.g. output from logis:waste_carp_route)</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_sector_balance.py" line="79"/>
+        <location filename="../algorithms/waste_sector_balance.py" line="81"/>
         <source>Campo de carga da rota (kg)</source>
         <translation>Route load field (kg)</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_sector_balance.py" line="89"/>
+        <location filename="../algorithms/waste_sector_balance.py" line="91"/>
         <source>Campo de distância da rota em km (opcional)</source>
         <translation>Route distance field in km (optional)</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_sector_balance.py" line="99"/>
+        <location filename="../algorithms/waste_sector_balance.py" line="101"/>
         <source>Campo de identificação da rota (opcional)</source>
         <translation>Route identification field (optional)</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_sector_balance.py" line="108"/>
+        <location filename="../algorithms/waste_sector_balance.py" line="110"/>
         <source>Campo de setor de coleta (opcional)</source>
         <translation>Collection sector field (optional)</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_sector_balance.py" line="117"/>
+        <location filename="../algorithms/waste_sector_balance.py" line="119"/>
         <source>Velocidade média de coleta (km/h)</source>
         <translation>Average collection speed (km/h)</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_sector_balance.py" line="127"/>
+        <location filename="../algorithms/waste_sector_balance.py" line="129"/>
         <source>Tempo fixo de descarga por rota (horas)</source>
         <translation>Fixed unloading time per route (hours)</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_sector_balance.py" line="136"/>
+        <location filename="../algorithms/waste_sector_balance.py" line="138"/>
         <source>Tempo fixo de deslocamento ao destino por rota (horas)</source>
         <translation>Fixed travel time to destination per route (hours)</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_sector_balance.py" line="145"/>
+        <location filename="../algorithms/waste_sector_balance.py" line="147"/>
         <source>Indicadores de equilíbrio entre rotas por setor</source>
         <translation>Route balance indicators by sector</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_sector_balance.py" line="163"/>
+        <location filename="../algorithms/waste_sector_balance.py" line="165"/>
         <source>Camada de rotas de coleta inválida.</source>
         <translation>Invalid collection routes layer.</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_sector_balance.py" line="167"/>
+        <location filename="../algorithms/waste_sector_balance.py" line="169"/>
         <source>Campo de carga da rota '{field}' não encontrado.</source>
         <translation>Route load field '{field}' not found.</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_sector_balance.py" line="189"/>
+        <location filename="../algorithms/waste_sector_balance.py" line="191"/>
         <source>Agrupando feições e calculando cargas e distâncias de rotas por setor...</source>
         <translation>Grouping features and calculating route loads and distances by sector...</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_sector_balance.py" line="228"/>
+        <location filename="../algorithms/waste_sector_balance.py" line="235"/>
         <source>Nenhuma rota válida encontrada na camada de entrada.</source>
         <translation>No valid route found in input layer.</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_sector_balance.py" line="257"/>
+        <location filename="../algorithms/waste_sector_balance.py" line="264"/>
         <source>Não foi possível criar a camada de saída.</source>
         <translation>Could not create output layer.</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_sector_balance.py" line="310"/>
+        <location filename="../algorithms/waste_sector_balance.py" line="317"/>
         <source>Erro ao calcular equilíbrio do setor '{sec}': {err}</source>
         <translation>Error calculating balance for sector '{sec}': {err}</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_sector_balance.py" line="319"/>
+        <location filename="../algorithms/waste_sector_balance.py" line="326"/>
         <source>Setor '{sec}': {num} rota(s) | Carga média: {m_load:.2f} kg (σ={std_load:.2f}, CV={cv_load:.1f}%)</source>
         <translation>Sector '{sec}': {num} route(s) | Average load: {m_load:.2f} kg (σ={std_load:.2f}, CV={cv_load:.1f}%)</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_sector_balance.py" line="332"/>
+        <location filename="../algorithms/waste_sector_balance.py" line="339"/>
         <source>Aviso: setor '{sec}' apresenta desbalanço de carga alto (CV={cv:.1f}% &gt; 20%).</source>
         <translation>Warning: sector '{sec}' exhibits high load imbalance (CV={cv:.1f}% &gt; 20%).</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_sector_balance.py" line="339"/>
+        <location filename="../algorithms/waste_sector_balance.py" line="346"/>
         <source>Setor '{sec}': Tempo médio: {m_time:.2f} h (σ={std_time:.2f}, CV={cv_time:.1f}%)</source>
         <translation>Sector '{sec}': Average time: {m_time:.2f} h (σ={std_time:.2f}, CV={cv_time:.1f}%)</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_sector_balance.py" line="379"/>
+        <location filename="../algorithms/waste_sector_balance.py" line="386"/>
         <source>Equilíbrio entre Setores/Rotas de Coleta</source>
         <translation>Balance between Collection Sectors/Routes</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_sector_balance.py" line="382"/>
+        <location filename="../algorithms/waste_sector_balance.py" line="389"/>
         <source>Logística Especializada — Coleta de Lixo</source>
         <translation>Specialized Logistics — Waste Collection</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_sector_balance.py" line="388"/>
+        <location filename="../algorithms/waste_sector_balance.py" line="395"/>
         <source>Avalia o equilíbrio (balanço) de carga e tempo operacional entre rotas/setores de coleta de resíduos sólidos, calculando média, desvio padrão, mínimo, máximo e coeficiente de variação (CV).
 
 Parâmetros:

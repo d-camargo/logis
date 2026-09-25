@@ -30,6 +30,15 @@ TRANSFORM_PATTERN = re.compile(r"\bQgsCoordinateTransform\(")
 # QgsCoordinateTransform( ainda toleradas, por arquivo, em logis/algorithms/.
 LEGACY_ALLOWED = {}
 
+# geometry.length()/.area() é planar, na unidade de mapa do SRC da camada: para uma
+# camada geográfica (graus, ex.: EPSG:4674 -- o SRC em que a rede que o próprio logis baixa
+# chega) isso corrompeu comprimentos, cargas e frota nos algoritmos de resíduos em ~1e5x
+# (0.6.5, ver docs/changelog.md). A forma correta é o comprimento/área elipsoidal via
+# QgsDistanceArea (logis/core/crs_transform.py:length_meter, no padrão de
+# urban_network_density.py). Sem lista de exceções: o plano da 0.6.5 zerou todo o débito de
+# uma vez, e nenhum algoritmo novo pode reintroduzi-lo.
+LENGTH_AREA_PATTERN = re.compile(r"\b(geom|geometry|\w+\.geometry\(\))\.(length|area)\(\)")
+
 
 def _algorithms_dir() -> pathlib.Path:
     return pathlib.Path(__file__).parent / "logis" / "algorithms"
@@ -43,6 +52,21 @@ def _count_occurrences_by_file():
         with open(py_path, "r", encoding="utf-8") as f:
             for line_idx, line in enumerate(f, start=1):
                 if TRANSFORM_PATTERN.search(line):
+                    matches.append((line_idx, line.strip()))
+        if matches:
+            occurrences[py_path.name] = matches
+    return occurrences
+
+
+def _count_length_area_occurrences_by_file():
+    """Retorna {nome_arquivo: [(linha, texto), ...]} para cada chamada de .length()/.area()
+    sobre geometria (LENGTH_AREA_PATTERN) em logis/algorithms/."""
+    occurrences = {}
+    for py_path in sorted(_algorithms_dir().glob("*.py")):
+        matches = []
+        with open(py_path, "r", encoding="utf-8") as f:
+            for line_idx, line in enumerate(f, start=1):
+                if LENGTH_AREA_PATTERN.search(line):
                     matches.append((line_idx, line.strip()))
         if matches:
             occurrences[py_path.name] = matches
@@ -155,6 +179,25 @@ class TestNativeRules(unittest.TestCase):
                 "LEGACY_ALLOWED desatualizada (arquivo migrado ou removido); "
                 "atualize a lista para acompanhar as migrações:\n"
                 + "\n".join(stale)
+            )
+
+
+class TestNoLengthOrAreaOnGeometry(unittest.TestCase):
+    """Proíbe geometry.length()/.area() (planar, na unidade de mapa do SRC da camada) em
+    logis/algorithms/, sem lista de exceções (ver LENGTH_AREA_PATTERN)."""
+
+    def test_no_length_or_area_calls_on_geometry(self):
+        occurrences = _count_length_area_occurrences_by_file()
+        if occurrences:
+            details = []
+            for name, matches in sorted(occurrences.items()):
+                for line_idx, text in matches:
+                    details.append(f"{name}:{line_idx}: {text}")
+            self.fail(
+                "geometry.length()/.area() (planar, na unidade de mapa do SRC da camada) "
+                "em logis/algorithms/ -- use logis/core/crs_transform.py:length_meter "
+                "(comprimento/área elipsoidal via QgsDistanceArea, padrão de "
+                "urban_network_density.py):\n" + "\n".join(details)
             )
 
 

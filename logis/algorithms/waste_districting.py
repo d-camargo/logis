@@ -125,7 +125,7 @@ class WasteDistricting(QgsProcessingAlgorithm):
         self.addParameter(
             QgsProcessingParameterNumber(
                 self.NODE_TOLERANCE,
-                self.tr("Tolerância de nó em metros (requer CRS métrico)"),
+                self.tr("Tolerância de nó (m)"),
                 type=QgsProcessingParameterNumber.Type.Double,
                 defaultValue=0.01,
                 minValue=0.0001
