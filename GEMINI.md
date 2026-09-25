@@ -26,7 +26,7 @@ Cada módulo entrega três camadas de funcionalidade (nível de ambição defini
 2. **Roteirização** — VRP/TSP (por nós) e Arc Routing (por arestas, no módulo especializado).
 3. **Localização de instalações (facility location)** — p-mediana, p-centro, cobertura máxima (MCLP), cobertura de conjuntos (LSCP), para posicionar CDs, hubs, garagens, ecopontos, estações de transbordo.
 
-**Estado atual:** repositório sem commits, sem código e sem Makefile ainda; a arquitetura da seção 7 e o roadmap da seção 8 (F1–F7) são planejados, não implementados; a Fase F1 (fundação) é o próximo trabalho a fazer.
+**Estado atual:** plugin publicado e em desenvolvimento ativo; versão corrente em `logis/metadata.txt`; módulos de indicadores, roteirização (TSP/CVRP, arc routing de resíduos) e localização de instalações já implementados; o plano de trabalho vive em `~/.hermes/projects/logis/PLAN.md`.
 
 ## 2. Restrição técnica fundamental
 
@@ -35,7 +35,10 @@ Cada módulo entrega três camadas de funcionalidade (nível de ambição defini
 Consequências práticas:
 
 - Grafos e caminhos mínimos: usar `QgsGraph`, `QgsGraphBuilder`, `QgsGraphAnalyzer` (Dijkstra) do módulo `qgis.analysis`. **Não usar** networkx, igraph, OSMnx.
-- Algoritmos de processamento: preferir `processing.run()` com providers `native:` e `qgis:` (ex.: `native:shortestpathpointtopoint`, `native:serviceareafrompoint`, `qgis:distancematrix`, `native:clip`, `native:joinbylocation`).
+- Algoritmos de processamento: uso de `processing.run()` com providers `native:` e `qgis:` (ex.: `native:shortestpathpointtopoint`, `native:serviceareafrompoint`, `qgis:distancematrix`, `native:clip`, `native:joinbylocation`) é **obrigatório**, não preferência:
+  - antes de escrever código próprio de geoprocessamento (reprojeção, recorte, junção espacial, distância, caminho mínimo, área de serviço), o **plano** cita qual algoritmo `native:`/`qgis:` ou classe PyQGIS foi avaliado e por que não serve — plano sem essa justificativa volta;
+  - camada de entrada em outro SRC, dentro de algoritmo de Processing, é lida já reprojetada: `source.getFeatures(QgsFeatureRequest().setDestinationCrs(crs, context.transformContext()))` ou `native:reprojectlayer`; `QgsCoordinateTransform` cru em `logis/algorithms/` é proibido — a exceção é o helper conferido `logis/core/crs_transform.py` (`checked_transform`/`transform_points`/`transform_bbox`) quando for preciso transformar pontos soltos;
+  - verificado estaticamente por `test_native_rules.py`; a lista `LEGACY_ALLOWED` (facility_*, urban_delivery_distance, urban_gravity_accessibility, waste_destination_distance) é débito e só diminui.
 - Otimização (VRP, facility location, arc routing): implementar **heurísticas clássicas em Python puro** (savings de Clarke-Wright, sweep, nearest neighbor, 2-opt/or-opt, Teitz-Bart para p-mediana, greedy para cobertura, matching guloso para CPP) como padrão obrigatório. OR-Tools é aceito como backend opcional de otimização (nunca obrigatório, com import lazy/guarded e fallback automático para a heurística pura em Python). Aceitar soluções boas, não ótimas — documentar isso na UI.
 - Matriz OD: pré-calcular com Dijkstra multi-origem sobre `QgsGraph` e cachear em disco (o custo dominante de tudo).
 
@@ -204,7 +207,7 @@ logis/
 - Cache: `QStandardPaths.CacheLocation` → `.../logis/`. Nunca gravar fora do cache ou do GPKG escolhido pelo usuário.
 - Licença: GPL-3.0 (herdada da lógica do GisBR).
 - Compatibilidade Qt6/QGIS 4: todo acesso a enum do Qt/QGIS deve ser escopado (`Qt.DockWidgetArea.RightDockWidgetArea`, `Qt.CursorShape.*`, `QMessageBox.StandardButton.*`, `QgsProcessing.SourceType.TypeVectorLine`, `QgsProcessingParameterNumber.Type.Double`, `QgsProcessingParameterField.DataType.*`, `QgsFeatureSink.Flag.*`, `QgsVectorLayerDirector.Direction.*`, `QNetworkReply.NetworkError.*`, `QgsWkbTypes.Type.*` / `QgsWkbTypes.GeometryType.*`, `QgsTask.Flag.*`), tipos de campo só se criam via `core.qgis_compat.field_type()` (nunca `QVariant.*` direto). A lista de enums escopados é verificada estaticamente por `test_qt6_compat.py`; enum novo entra na regra **e** no teste.
-- Padrões de segurança e qualidade do código (validados estaticamente por `test_security_scan.py` e `test_qt6_compat.py`):
+- Padrões de segurança e qualidade do código (validados estaticamente por `test_security_scan.py`, `test_qt6_compat.py` e `test_native_rules.py`):
   - Proibido uso de `pickle` (usar JSON para cache e serialização).
   - Proibido `except Exception: pass` ou `except:` com `pass` silencioso.
   - Proibidos `exec()` e `exec_()` (PyQt6/QGIS 4 removeram `exec_()`; proibidos por segurança e para evitar diálogos modais — usar `.show()`).
