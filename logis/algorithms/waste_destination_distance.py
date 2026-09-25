@@ -21,21 +21,20 @@ from qgis.core import (
     QgsProcessingParameterFeatureSource,
     QgsProcessingParameterEnum,
     QgsProcessingParameterFeatureSink,
-    QgsCoordinateTransform,
     QgsCoordinateReferenceSystem,
-    QgsProject,
     QgsField,
     QgsFeature,
-    QgsFeatureSink,
-    QgsWkbTypes
+    QgsFeatureSink
 )
 
 try:
+    from ..core.crs_transform import TransformCheckError, read_points_in_crs
     from ..core.indicators.urban import nearest_depot_cost
     from ..core.network.graph_builder import build_graph
     from ..core.network.od_matrix import compute_od_matrix
     from ..core import qgis_compat
 except ImportError:
+    from core.crs_transform import TransformCheckError, read_points_in_crs
     from core.indicators.urban import nearest_depot_cost
     from core.network.graph_builder import build_graph
     from core.network.od_matrix import compute_od_matrix
@@ -120,41 +119,29 @@ class WasteDestinationDistance(QgsProcessingAlgorithm):
         if sectors_source is None:
             raise QgsProcessingException(self.tr("Camada de setores/origens inválida."))
 
-        # 1) Reprojetar pontos de destino e origens para o CRS métrico (EPSG:5880)
+        # 1) CRS métrico alvo (EPSG:5880)
         target_crs_obj = QgsCoordinateReferenceSystem("EPSG:5880")
-        transform_dest = QgsCoordinateTransform(destinations_source.sourceCrs(), target_crs_obj, QgsProject.instance())
-        transform_sector = QgsCoordinateTransform(sectors_source.sourceCrs(), target_crs_obj, QgsProject.instance())
 
-        # 2) Ler pontos de destino
-        dest_points = []
+        # 2) Ler pontos de destino (já reprojetados e conferidos)
         feedback.pushInfo(self.tr("Lendo pontos de destino (aterros/transbordos/ecopontos)..."))
-        for feature in destinations_source.getFeatures():
-            if feedback.isCanceled():
-                return {}
-            geom = feature.geometry()
-            if geom is None or geom.isEmpty():
-                continue
-            dest_points.append(transform_dest.transform(geom.asPoint()))
+        try:
+            _, dest_points = read_points_in_crs(
+                destinations_source, target_crs_obj, context, self.tr("camada de destinos de resíduos")
+            )
+        except TransformCheckError as exc:
+            raise QgsProcessingException(str(exc))
 
         if not dest_points:
             raise QgsProcessingException(self.tr("Nenhum ponto de destino válido encontrado."))
 
-        # 3) Ler setores/origens de coleta
-        sector_features = []
-        sector_points = []
+        # 3) Ler setores/origens de coleta (ponto ou centroide de polígono, já reprojetados)
         feedback.pushInfo(self.tr("Lendo setores/origens de coleta..."))
-        for feature in sectors_source.getFeatures():
-            if feedback.isCanceled():
-                return {}
-            geom = feature.geometry()
-            if geom is None or geom.isEmpty():
-                continue
-            sector_features.append(feature)
-            if geom.type() == QgsWkbTypes.GeometryType.PointGeometry:
-                pt = geom.asPoint()
-            else:
-                pt = geom.centroid().asPoint()
-            sector_points.append(transform_sector.transform(pt))
+        try:
+            sector_features, sector_points = read_points_in_crs(
+                sectors_source, target_crs_obj, context, self.tr("camada de setores/origens")
+            )
+        except TransformCheckError as exc:
+            raise QgsProcessingException(str(exc))
 
         if not sector_points:
             raise QgsProcessingException(self.tr("Nenhum setor/origem de coleta válido encontrado."))

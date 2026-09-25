@@ -10,15 +10,14 @@ from qgis.core import (
     QgsProcessingParameterFeatureSource,
     QgsProcessingParameterEnum,
     QgsProcessingParameterFeatureSink,
-    QgsCoordinateTransform,
     QgsCoordinateReferenceSystem,
-    QgsProject,
     QgsField,
     QgsFeature,
     QgsFeatureSink
 )
 
 from ..core import qgis_compat
+from ..core.crs_transform import TransformCheckError, read_points_in_crs
 from ..core.network.graph_builder import build_graph
 from ..core.network.od_matrix import compute_od_matrix
 from ..core.indicators.urban import nearest_depot_cost
@@ -102,37 +101,29 @@ class UrbanDeliveryDistance(QgsProcessingAlgorithm):
         if zones_source is None:
             raise QgsProcessingException(self.tr("Camada de zonas inválida."))
 
-        # 1) Reprojetar depósitos e zonas para o CRS métrico alvo (mesmo usado pelo grafo, EPSG:5880)
+        # 1) CRS métrico alvo (mesmo usado pelo grafo, EPSG:5880)
         target_crs_obj = QgsCoordinateReferenceSystem("EPSG:5880")
-        transform_depot = QgsCoordinateTransform(depots_source.sourceCrs(), target_crs_obj, QgsProject.instance())
-        transform_zone = QgsCoordinateTransform(zones_source.sourceCrs(), target_crs_obj, QgsProject.instance())
 
-        # 2) Ler depósitos
-        depot_points = []
+        # 2) Ler depósitos (já reprojetados e conferidos)
         feedback.pushInfo(self.tr("Lendo depósitos..."))
-        for feature in depots_source.getFeatures():
-            if feedback.isCanceled():
-                return {}
-            geom = feature.geometry()
-            if geom is None or geom.isEmpty():
-                continue
-            depot_points.append(transform_depot.transform(geom.asPoint()))
+        try:
+            _, depot_points = read_points_in_crs(
+                depots_source, target_crs_obj, context, self.tr("camada de depósitos")
+            )
+        except TransformCheckError as exc:
+            raise QgsProcessingException(str(exc))
 
         if not depot_points:
             raise QgsProcessingException(self.tr("Nenhum depósito válido encontrado na camada de depósitos."))
 
         # 3) Ler zonas, preservando a feição original para gravar o resultado nela
-        zone_features = []
-        zone_points = []
         feedback.pushInfo(self.tr("Lendo zonas..."))
-        for feature in zones_source.getFeatures():
-            if feedback.isCanceled():
-                return {}
-            geom = feature.geometry()
-            if geom is None or geom.isEmpty():
-                continue
-            zone_features.append(feature)
-            zone_points.append(transform_zone.transform(geom.asPoint()))
+        try:
+            zone_features, zone_points = read_points_in_crs(
+                zones_source, target_crs_obj, context, self.tr("camada de zonas")
+            )
+        except TransformCheckError as exc:
+            raise QgsProcessingException(str(exc))
 
         if not zone_points:
             raise QgsProcessingException(self.tr("Nenhuma zona válida encontrada na camada de zonas."))

@@ -27,11 +27,7 @@ TRANSFORM_PATTERN = re.compile(r"\bQgsCoordinateTransform\(")
 
 # Estado atual (conferido por grep em 2026-09-25): número de ocorrências de
 # QgsCoordinateTransform( ainda toleradas, por arquivo, em logis/algorithms/.
-LEGACY_ALLOWED = {
-    "urban_delivery_distance.py": 2,
-    "urban_gravity_accessibility.py": 2,
-    "waste_destination_distance.py": 2,
-}
+LEGACY_ALLOWED = {}
 
 
 def _algorithms_dir() -> pathlib.Path:

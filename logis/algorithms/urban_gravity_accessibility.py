@@ -11,15 +11,14 @@ from qgis.core import (
     QgsProcessingParameterField,
     QgsProcessingParameterNumber,
     QgsProcessingParameterFeatureSink,
-    QgsCoordinateTransform,
     QgsCoordinateReferenceSystem,
-    QgsProject,
     QgsField,
     QgsFeature,
     QgsFeatureSink
 )
 
 from ..core import qgis_compat
+from ..core.crs_transform import TransformCheckError, read_points_in_crs
 from ..core.network.graph_builder import build_graph
 from ..core.network.od_matrix import compute_od_matrix
 from ..core.indicators.urban import gravity_accessibility
@@ -119,41 +118,35 @@ class UrbanGravityAccessibility(QgsProcessingAlgorithm):
             destinations_source.fields().indexFromName(field_weight) if field_weight else -1
         )
 
-        # 1) Reprojetar origens e destinos para o CRS métrico alvo (mesmo usado pelo grafo)
+        # 1) CRS métrico alvo (mesmo usado pelo grafo)
         target_crs_obj = QgsCoordinateReferenceSystem("EPSG:5880")
-        transform_origin = QgsCoordinateTransform(origins_source.sourceCrs(), target_crs_obj, QgsProject.instance())
-        transform_dest = QgsCoordinateTransform(destinations_source.sourceCrs(), target_crs_obj, QgsProject.instance())
 
         # 2) Ler origens, preservando a feição original para gravar o resultado nela
-        origin_features = []
-        origin_points = []
         feedback.pushInfo(self.tr("Lendo origens..."))
-        for feature in origins_source.getFeatures():
-            if feedback.isCanceled():
-                return {}
-            geom = feature.geometry()
-            if geom is None or geom.isEmpty():
-                continue
-            origin_features.append(feature)
-            origin_points.append(transform_origin.transform(geom.asPoint()))
+        try:
+            origin_features, origin_points = read_points_in_crs(
+                origins_source, target_crs_obj, context, self.tr("camada de origem")
+            )
+        except TransformCheckError as exc:
+            raise QgsProcessingException(str(exc))
 
         if not origin_points:
             raise QgsProcessingException(self.tr("Nenhuma origem válida encontrada na camada de origem."))
 
         # 3) Ler destinos e pesos (peso default 1.0 quando o campo não é informado)
-        dest_points = []
-        dest_weights = []
         feedback.pushInfo(self.tr("Lendo destinos e pesos..."))
-        for feature in destinations_source.getFeatures():
-            if feedback.isCanceled():
-                return {}
-            geom = feature.geometry()
-            if geom is None or geom.isEmpty():
-                continue
+        try:
+            dest_features, dest_points = read_points_in_crs(
+                destinations_source, target_crs_obj, context, self.tr("camada de destinos")
+            )
+        except TransformCheckError as exc:
+            raise QgsProcessingException(str(exc))
+
+        dest_weights = []
+        for feature in dest_features:
             weight = feature.attribute(weight_field_index) if weight_field_index >= 0 else 1.0
             if weight is None:
                 weight = 1.0
-            dest_points.append(transform_dest.transform(geom.asPoint()))
             dest_weights.append(float(weight))
 
         if not dest_points:
