@@ -22,32 +22,23 @@ from qgis.core import (
     QgsProcessingParameterField,
     QgsProcessingParameterNumber,
     QgsProcessingParameterFeatureSink,
-    QgsCoordinateTransform,
     QgsCoordinateReferenceSystem,
-    QgsProject,
     QgsField,
     QgsFeature,
-    QgsFeatureSink,
-    QgsWkbTypes
+    QgsFeatureSink
 )
 try:
     from ..core import qgis_compat
+    from ..core.crs_transform import TransformCheckError, read_points_in_crs
     from ..core.location.facility import solve_p_median
     from ..core.network.graph_builder import build_graph
     from ..core.network.od_matrix import compute_od_matrix
 except ImportError:
     from core import qgis_compat
+    from core.crs_transform import TransformCheckError, read_points_in_crs
     from core.location.facility import solve_p_median
     from core.network.graph_builder import build_graph
     from core.network.od_matrix import compute_od_matrix
-
-
-def _extract_point(geom):
-    """Retorna um QgsPointXY representando a geometria (ponto ou centroide de polígono)."""
-    if geom.type() == QgsWkbTypes.GeometryType.PointGeometry:
-        return geom.asPoint()
-    else:
-        return geom.centroid().asPoint()
 
 
 class FacilityPMedian(QgsProcessingAlgorithm):
@@ -166,24 +157,19 @@ class FacilityPMedian(QgsProcessingAlgorithm):
             else:
                 target_crs = source_crs
 
-        transform_demand = QgsCoordinateTransform(demand_source.sourceCrs(), target_crs, QgsProject.instance())
-
-        # 2) Leitura das demandas, pontos e pesos
+        # 2) Leitura das demandas, pontos (já reprojetados e conferidos) e pesos
         weight_field_idx = demand_source.fields().indexOf(weight_field_name) if weight_field_name else -1
 
-        demand_features = []
-        demand_points = []
-        demand_weights = []
-
         feedback.pushInfo(self.tr("Lendo pontos de demanda..."))
-        for feat in demand_source.getFeatures():
-            if feedback.isCanceled():
-                return {}
-            geom = feat.geometry()
-            if geom is None or geom.isEmpty():
-                continue
-            pt_transformed = transform_demand.transform(_extract_point(geom))
+        try:
+            demand_features, demand_points = read_points_in_crs(
+                demand_source, target_crs, context, self.tr("camada de demanda")
+            )
+        except TransformCheckError as exc:
+            raise QgsProcessingException(str(exc))
 
+        demand_weights = []
+        for feat in demand_features:
             weight = 1.0
             if weight_field_idx != -1:
                 val = feat.attribute(weight_field_idx)
@@ -194,9 +180,6 @@ class FacilityPMedian(QgsProcessingAlgorithm):
                         weight = 1.0
             if weight < 0:
                 weight = 0.0
-
-            demand_features.append(feat)
-            demand_points.append(pt_transformed)
             demand_weights.append(weight)
 
         if not demand_points:
@@ -204,20 +187,13 @@ class FacilityPMedian(QgsProcessingAlgorithm):
 
         # 3) Leitura dos candidatos a instalação
         if candidates_source is not None:
-            transform_cand = QgsCoordinateTransform(candidates_source.sourceCrs(), target_crs, QgsProject.instance())
-            candidate_features = []
-            candidate_points = []
             feedback.pushInfo(self.tr("Lendo instalações candidatas..."))
-            for feat in candidates_source.getFeatures():
-                if feedback.isCanceled():
-                    return {}
-                geom = feat.geometry()
-                if geom is None or geom.isEmpty():
-                    continue
-                pt_transformed = transform_cand.transform(_extract_point(geom))
-
-                candidate_features.append(feat)
-                candidate_points.append(pt_transformed)
+            try:
+                candidate_features, candidate_points = read_points_in_crs(
+                    candidates_source, target_crs, context, self.tr("instalações candidatas")
+                )
+            except TransformCheckError as exc:
+                raise QgsProcessingException(str(exc))
         else:
             candidate_features = demand_features
             candidate_points = demand_points
