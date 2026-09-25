@@ -4,3 +4,6 @@ __pycache__/
 symbology-style.db
 site/
 .venv-docs/
+/vrp_*_edit*.py
+/vrp_*_fix*.py
+/test_*_edit*.py
