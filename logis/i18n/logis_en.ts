@@ -4542,7 +4542,7 @@ Parâmetros:
 
 Saída:
 - Camada de vias com o novo atributo 'collection_sector_id' (ID do setor de coleta).</source>
-        <translation>Partitions segments of a roads layer into k contiguous collection sectors balanced by payload (generated waste or, in the absence of field, segment length).
+        <translation type="obsolete">Partitions segments of a roads layer into k contiguous collection sectors balanced by payload (generated waste or, in the absence of field, segment length).
 
 Uses farthest-first seed heuristic (Gonzalez, 1985), followed by region growing from seeds and local refinement via boundary segment swapping to balance load between sectors while maintaining contiguity. Solution is good, not necessarily optimal.
 
@@ -4565,6 +4565,35 @@ Output:
         <location filename="../algorithms/waste_districting.py" line="170"/>
         <source>camada de vias</source>
         <translation>roads layer</translation>
+    </message>
+    <message>
+        <location filename="../algorithms/waste_districting.py" line="292"/>
+        <source>Particiona os trechos de uma camada de vias em k setores de coleta contíguos e balanceados por carga (resíduos gerados ou, na ausência do campo, comprimento do trecho).
+
+Usa a heurística de sementes farthest-first (Gonzalez, 1985), seguida de crescimento de regiões a partir das sementes e refinamento local por troca de trechos de fronteira para equilibrar a carga entre setores mantendo contiguidade. A solução é boa, não necessariamente ótima.
+
+Parâmetros:
+- Camada de vias: trechos de via (linhas) a setorizar.
+- Campo de carga: campo numérico com a carga de cada trecho (opcional; se omitido, usa o comprimento do trecho como proxy de carga).
+- Número de setores: quantidade desejada de setores de coleta (k &gt;= 2).
+- Tolerância de nó: distância, em metros, usada para considerar dois vértices de extremidade como o mesmo nó da rede. Funciona com qualquer SRC de entrada — a camada é lida já reprojetada para coordenadas métricas quando está em SRC geográfico, e o comprimento de cada trecho é medido de forma elipsoidal, em metros de verdade.
+- Máximo de iterações: limite de trocas locais de trechos de fronteira.
+
+Saída:
+- Camada de vias com o novo atributo 'collection_sector_id' (ID do setor de coleta).</source>
+        <translation>Partitions segments of a roads layer into k contiguous collection sectors balanced by payload (generated waste or, in the absence of field, segment length).
+
+Uses farthest-first seed heuristic (Gonzalez, 1985), followed by region growing from seeds and local refinement via boundary segment swapping to balance load between sectors while maintaining contiguity. Solution is good, not necessarily optimal.
+
+Parameters:
+- Roads layer: road segments (lines) to partition.
+- Payload field: numeric field with payload of each segment (optional; if omitted, uses segment length as payload proxy).
+- Number of sectors: desired number of collection sectors (k &gt;= 2).
+- Node tolerance: distance, in meters, used to consider two endpoint vertices as the same network node. Works with any input CRS — the layer is read already reprojected to metric coordinates when it is in a geographic CRS, and each segment's length is measured ellipsoidally, in true meters.
+- Max iterations: limit of local boundary segment swapping iterations.
+
+Output:
+- Roads layer with new attribute 'collection_sector_id' (collection sector ID).</translation>
     </message>
 </context>
 <context>

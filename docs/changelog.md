@@ -2,6 +2,10 @@
 
 Este documento registra as principais alterações e evoluções do plugin **logis** organizadas por versão.
 
+## 0.6.5 - 2026-09-25
+
+- **Resíduos: comprimentos, cargas e frota calculados em metros de verdade** — com a rede baixada pelo próprio plugin (SIRGAS 2000, em graus) os valores saíam ~100 mil vezes menores.
+
 ## 0.6.4 - 2026-09-25
 
 - **Localização de instalações e indicadores de distância: leitura de SRC conferida** — ponto que não transforma agora dá erro com diagnóstico em vez de sumir ou virar graus.

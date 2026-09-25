@@ -39,11 +39,12 @@ Além disso, cada trecho de via precisa saber a que setor censitário pertence: 
 ainda não tiver esse campo, faça antes um `native:joinbylocation` (ou
 `native:joinattributesbylocation`) entre as vias e os setores censitários.
 
-> **CRS métrico.** Todas as etapas que constroem grafo (setorização, CPP, RPP, CARP)
-> usam a *tolerância de nó em metros* para decidir se dois vértices são o mesmo
-> cruzamento. Trabalhe com as camadas reprojetadas para um CRS métrico (UTM da zona ou
-> EPSG:5880) — em EPSG:4674 a tolerância seria interpretada em graus e a rede se
-> desmontaria em componentes soltos.
+> **Tolerância de nó — funciona em qualquer SRC.** Todas as etapas que constroem grafo
+> (setorização, CPP, RPP, CARP) usam a *tolerância de nó*, sempre em metros, para decidir
+> se dois vértices são o mesmo cruzamento; comprimentos, cargas por comprimento e a chave
+> de nó são calculados em coordenadas métricas de verdade mesmo quando a camada de vias
+> chega em EPSG:4674 (o SRC da rede que o próprio módulo Urbano baixa) — não é preciso
+> reprojetar a camada antes (0.6.5).
 
 ---
 
@@ -310,6 +311,6 @@ Saída: tabela com `sector_id`, `frequency_label`, `required_km`, `covered_km` e
 | O RPP devolve o mesmo resultado do CPP | **Campo de via obrigatória** vazio — sem ele todas as vias são obrigatórias. |
 | Erro do CARP sobre demanda maior que a capacidade | Um trecho isolado gera mais que o caminhão comporta. Não há entrega fracionada: subdivida o trecho ou aumente a capacidade. |
 | Frota absurdamente grande, ou `avg_utilization` muito baixa | Capacidade do veículo em unidade diferente da do campo de demanda (t contra kg), ou velocidade média de coleta irreal. |
-| Rota fragmentada, com setores desconexos | Tolerância de nó incompatível com a malha, ou camada em EPSG:4674 em vez de CRS métrico. |
+| Rota fragmentada, com setores desconexos | Tolerância de nó incompatível com a malha (folga de digitalização entre vértices que deveriam ser o mesmo cruzamento). |
 | A cobertura fica muito abaixo de 100% sem motivo aparente | Campo de deadhead/conector não informado (trechos improdutivos contando como cobertos, e não o contrário), ou campos de setor de setores diferentes nas duas camadas. |
 | O painel de resultados perdeu a rodada anterior | Comportamento normal: cada botão limpa o painel antes de executar. |

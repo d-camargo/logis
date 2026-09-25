@@ -107,7 +107,7 @@ A heurística de setorização territorial opera em três etapas:
 | `INPUT_STREETS` | Camada de vias | `QgsProcessingParameterFeatureSource` (`TypeVectorLine`) | Trechos de via a serem setorizados. | *Obrigatório* |
 | `FIELD_LOAD` | Campo de carga (opcional) | `QgsProcessingParameterField` (`Numeric`) | Campo numérico com a carga do trecho (kg). Se omitido, usa o comprimento do trecho. | `None` (Opcional) |
 | `NUM_SECTORS` | Número de setores de coleta desejado | `QgsProcessingParameterNumber` (`Integer`) | Quantidade desejada $k$ de setores de coleta ($k \ge 2$). | `2` (min: `2`) |
-| `NODE_TOLERANCE` | Tolerância de nó em metros | `QgsProcessingParameterNumber` (`Double`) | Distância limite para considerar vértices como o mesmo nó no grafo (requer CRS métrico). | `0.01` (min: `0.0001`) |
+| `NODE_TOLERANCE` | Tolerância de nó (m) | `QgsProcessingParameterNumber` (`Double`) | Distância limite para considerar vértices como o mesmo nó no grafo, em coordenadas métricas (a camada é lida já reprojetada quando está em SRC geográfico). | `0.01` (min: `0.0001`) |
 | `MAX_ITERATIONS` | Máximo de iterações de rebalanceamento | `QgsProcessingParameterNumber` (`Integer`) | Limite de iterações para trocas de trechos de fronteira. | `50` (min: `1`) |
 | `OUTPUT` | Vias com setor de coleta atribuído | `QgsProcessingParameterFeatureSink` | Camada de saída com o ID do setor atribuído. | *Obrigatório* |
 
@@ -144,7 +144,7 @@ Garante que todas as vias da malha (ou de cada setor de coleta) sejam percorrida
 |---|---|---|---|---|
 | `INPUT_STREETS` | Camada de vias | `QgsProcessingParameterFeatureSource` (`TypeVectorLine`) | Trechos de via a serem percorridos. | *Obrigatório* |
 | `FIELD_COLLECTION_SECTOR` | Campo de setor de coleta (opcional) | `QgsProcessingParameterField` (`Any`) | Se informado, o CPP é resolvido separadamente por setor; se omitido, trata toda a camada como um setor único. | `None` (Opcional) |
-| `NODE_TOLERANCE` | Tolerância de nó em metros | `QgsProcessingParameterNumber` (`Double`) | Distância em metros para agregação de nós da malha (requer CRS métrico). | `0.01` (min: `0.0001`) |
+| `NODE_TOLERANCE` | Tolerância de nó (m) | `QgsProcessingParameterNumber` (`Double`) | Distância em metros para agregação de nós da malha, em coordenadas métricas (a camada é lida já reprojetada quando está em SRC geográfico). | `0.01` (min: `0.0001`) |
 | `OUTPUT` | Vias com rota de coleta (CPP) | `QgsProcessingParameterFeatureSink` | Camada de saída com a sequência da rota e marcação de deadhead. | *Obrigatório* |
 
 ### Saídas e Resultados Gerados
@@ -181,7 +181,7 @@ Etapas do algoritmo:
 | `INPUT_STREETS` | Camada de vias | `QgsProcessingParameterFeatureSource` (`TypeVectorLine`) | Malha viária completa contendo vias de coleta e vias de conexão. | *Obrigatório* |
 | `FIELD_REQUIRED` | Campo de via obrigatória para coleta (opcional) | `QgsProcessingParameterField` (`Any`) | Campo booleano ou numérico (`1`/`True`) indicando coleta obrigatória no trecho. | `None` (Opcional, assume todas como obrigatórias) |
 | `FIELD_COLLECTION_SECTOR` | Campo de setor de coleta (opcional) | `QgsProcessingParameterField` (`Any`) | Se informado, o RPP é resolvido separadamente por setor. | `None` (Opcional) |
-| `NODE_TOLERANCE` | Tolerância de nó em metros | `QgsProcessingParameterNumber` (`Double`) | Distância em metros para união de vértices (requer CRS métrico). | `0.01` (min: `0.0001`) |
+| `NODE_TOLERANCE` | Tolerância de nó (m) | `QgsProcessingParameterNumber` (`Double`) | Distância em metros para união de vértices, em coordenadas métricas (a camada é lida já reprojetada quando está em SRC geográfico). | `0.01` (min: `0.0001`) |
 | `OUTPUT` | Vias com rota de coleta (RPP) | `QgsProcessingParameterFeatureSink` | Camada de saída com a rota RPP gerada. | *Obrigatório* |
 
 ### Saídas e Resultados Gerados
@@ -226,7 +226,7 @@ Utiliza a heurística **Path-Scanning** (Golden et al., 1983):
 | `FIELD_COLLECTION_SECTOR` | Campo de setor de coleta (opcional) | `QgsProcessingParameterField` (`Any`) | Resolve o CARP separadamente por setor. | `None` (Opcional) |
 | `CAPACITY` | Capacidade do veículo | `QgsProcessingParameterNumber` (`Double`) | Capacidade máxima de carga por veículo ($Q_{\text{veículo}}$, em kg ou toneladas). | `10.0` (min: `0.0001`) |
 | `INPUT_DEPOT` | Camada de ponto do depósito/aterro | `QgsProcessingParameterFeatureSource` (`TypeVectorPoint`) | Ponto único representando a garagem/aterro/transbordo. | *Obrigatório* (1 feição) |
-| `NODE_TOLERANCE` | Tolerância de nó em metros | `QgsProcessingParameterNumber` (`Double`) | Tolerância para conexão de nós (requer CRS métrico). | `0.01` (min: `0.0001`) |
+| `NODE_TOLERANCE` | Tolerância de nó (m) | `QgsProcessingParameterNumber` (`Double`) | Tolerância para conexão de nós, em coordenadas métricas (a camada é lida já reprojetada quando está em SRC geográfico). | `0.01` (min: `0.0001`) |
 | `OUTPUT` | Vias com rota de coleta (CARP) | `QgsProcessingParameterFeatureSink` | Camada de saída com as rotas capacitadas. | *Obrigatório* |
 
 ### Saídas e Resultados Gerados

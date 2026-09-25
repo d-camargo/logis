@@ -4077,6 +4077,16 @@ Retorno:
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <location filename="../algorithms/waste_districting.py" line="125"/>
+        <source>Tolerância de nó (m)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../algorithms/waste_districting.py" line="170"/>
+        <source>camada de vias</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <location filename="../algorithms/waste_districting.py" line="292"/>
         <source>Particiona os trechos de uma camada de vias em k setores de coleta contíguos e balanceados por carga (resíduos gerados ou, na ausência do campo, comprimento do trecho).
 
@@ -4086,21 +4096,11 @@ Parâmetros:
 - Camada de vias: trechos de via (linhas) a setorizar.
 - Campo de carga: campo numérico com a carga de cada trecho (opcional; se omitido, usa o comprimento do trecho como proxy de carga).
 - Número de setores: quantidade desejada de setores de coleta (k &gt;= 2).
-- Tolerância de nó: distância, em metros, usada para considerar dois vértices de extremidade como o mesmo nó da rede. Requer que a camada esteja em um CRS métrico.
+- Tolerância de nó: distância, em metros, usada para considerar dois vértices de extremidade como o mesmo nó da rede. Funciona com qualquer SRC de entrada — a camada é lida já reprojetada para coordenadas métricas quando está em SRC geográfico, e o comprimento de cada trecho é medido de forma elipsoidal, em metros de verdade.
 - Máximo de iterações: limite de trocas locais de trechos de fronteira.
 
 Saída:
 - Camada de vias com o novo atributo 'collection_sector_id' (ID do setor de coleta).</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../algorithms/waste_districting.py" line="125"/>
-        <source>Tolerância de nó (m)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../algorithms/waste_districting.py" line="170"/>
-        <source>camada de vias</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
