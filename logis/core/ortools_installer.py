@@ -312,7 +312,8 @@ def _pip_main():
             func = getattr(import_module(module_name), attr, None)
             if callable(func):
                 return func
-        except Exception:
+        except Exception as e:
+            logging.debug(f"[logis] _pip_main ({module_name}.{attr}): {e}")
             continue
     return None
 

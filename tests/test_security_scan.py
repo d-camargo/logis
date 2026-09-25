@@ -58,11 +58,16 @@ class TestSecurityScan(unittest.TestCase):
             self.fail(msg)
 
     def test_no_except_exception_pass(self):
-        """(b) Nenhum arquivo sob logis/ tem except Exception: ou except: seguido de pass."""
+        """(b) Nenhum arquivo sob logis/ tem except Exception: ou except: seguido só de
+        pass ou só de continue (handler mudo, Bandit B112)."""
         root_dir, _, py_files = self._get_logis_py_files()
         broad_except_re = re.compile(
             r"^\s*except(?:\s+Exception(?:\s+as\s+\w+)?|\s*):"
         )
+
+        def _is_mute_token(text, token):
+            return text == token or text.startswith(token + " ") or text.startswith(token + "#")
+
         violations = []
 
         for py_path, rel_path in py_files:
@@ -72,24 +77,32 @@ class TestSecurityScan(unittest.TestCase):
             for line_idx, line in enumerate(lines, start=1):
                 if broad_except_re.search(line):
                     after_colon = line.split(":", 1)[1].strip()
-                    if after_colon == "pass" or after_colon.startswith("pass ") or after_colon.startswith("pass#"):
+                    matched_token = next(
+                        (t for t in ("pass", "continue") if _is_mute_token(after_colon, t)),
+                        None,
+                    )
+                    if matched_token:
                         violations.append(
-                            f"{rel_path}:{line_idx}: 'except Exception: pass' na mesma linha -> {line.strip()}"
+                            f"{rel_path}:{line_idx}: 'except Exception: {matched_token}' na mesma linha -> {line.strip()}"
                         )
                     else:
                         for j in range(line_idx, len(lines)):
                             next_line = lines[j].strip()
                             if not next_line or next_line.startswith("#"):
                                 continue
-                            if next_line == "pass" or next_line.startswith("pass ") or next_line.startswith("pass#"):
+                            matched_token = next(
+                                (t for t in ("pass", "continue") if _is_mute_token(next_line, t)),
+                                None,
+                            )
+                            if matched_token:
                                 violations.append(
-                                    f"{rel_path}:{line_idx}: 'except Exception:' seguido de 'pass' (linha {j+1}) -> {line.strip()}"
+                                    f"{rel_path}:{line_idx}: 'except Exception:' seguido de '{matched_token}' (linha {j+1}) -> {line.strip()}"
                                 )
                             break
 
         if violations:
             msg = (
-                f"Encontrados {len(violations)} blocos de 'except Exception: pass' em logis/:\n"
+                f"Encontrados {len(violations)} blocos de 'except Exception:' com handler mudo em logis/:\n"
                 + "\n".join(violations)
             )
             self.fail(msg)
