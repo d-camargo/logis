@@ -2,6 +2,10 @@
 
 Este documento registra as principais alterações e evoluções do plugin **logis** organizadas por versão.
 
+## 0.6.6 - 2026-09-25
+
+- **OR-Tools: falha ao localizar o pip passa a ficar registrada no log** — antes, se nenhum dos pontos de entrada do pip fosse encontrado, o motivo era descartado em silêncio; também libera a publicação no repositório oficial do QGIS, cujo scanner barra esse padrão.
+
 ## 0.6.5 - 2026-09-25
 
 - **Resíduos: comprimentos, cargas e frota calculados em metros de verdade** — com a rede baixada pelo próprio plugin (SIRGAS 2000, em graus) os valores saíam ~100 mil vezes menores.
