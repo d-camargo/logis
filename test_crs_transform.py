@@ -27,6 +27,8 @@ except ImportError:
 from logis.core.crs_transform import (
     TransformCheckError,
     checked_transform,
+    length_meter,
+    read_lines_in_crs,
     read_points_in_crs,
     transform_bbox,
     transform_points,
@@ -263,6 +265,139 @@ class TestReadPointsInCrs(unittest.TestCase):
 
         self.assertEqual(len(features), 1)
         self.assertEqual(len(points), 1)
+
+
+@unittest.skipUnless(_HAS_QGIS, "QGIS não disponível")
+class TestLengthMeter(unittest.TestCase):
+    """Testes para core/crs_transform.py: length_meter."""
+
+    def test_line_4674_measures_about_1020_meters(self):
+        """Linha de (-46.63,-23.55) a (-46.62,-23.55) em EPSG:4674 mede ~1020 m (±2%)."""
+        context = QgsProcessingContext()
+        crs = QgsCoordinateReferenceSystem("EPSG:4674")
+        geom = QgsGeometry.fromWkt("LINESTRING(-46.63 -23.55, -46.62 -23.55)")
+
+        measure = length_meter(crs, context)
+        length_m = measure(geom)
+
+        self.assertAlmostEqual(length_m, 1020.0, delta=1020.0 * 0.02)
+
+    def test_same_line_in_5880_measures_same_value(self):
+        """A mesma linha, já reprojetada para EPSG:5880, mede o mesmo valor (±1%)."""
+        context = QgsProcessingContext()
+        crs4674 = QgsCoordinateReferenceSystem("EPSG:4674")
+        crs5880 = QgsCoordinateReferenceSystem("EPSG:5880")
+        geom4674 = QgsGeometry.fromWkt("LINESTRING(-46.63 -23.55, -46.62 -23.55)")
+
+        ct = QgsCoordinateTransform(crs4674, crs5880, QgsCoordinateTransformContext())
+        geom5880 = QgsGeometry(geom4674)
+        geom5880.transform(ct)
+
+        length_4674 = length_meter(crs4674, context)(geom4674)
+        length_5880 = length_meter(crs5880, context)(geom5880)
+
+        self.assertAlmostEqual(length_5880, length_4674, delta=length_4674 * 0.01)
+
+    def test_invalid_source_crs_raises_transform_check_error(self):
+        """CRS de origem inválido -> TransformCheckError (não mede no escuro)."""
+        context = QgsProcessingContext()
+        with self.assertRaises(TransformCheckError):
+            length_meter(QgsCoordinateReferenceSystem(), context)
+
+    def test_empty_geometry_measures_zero(self):
+        """Geometria vazia/None -> 0.0, sem erro."""
+        context = QgsProcessingContext()
+        crs = QgsCoordinateReferenceSystem("EPSG:4674")
+        measure = length_meter(crs, context)
+
+        self.assertEqual(measure(QgsGeometry()), 0.0)
+        self.assertEqual(measure(None), 0.0)
+
+
+@unittest.skipUnless(_HAS_QGIS, "QGIS não disponível")
+class TestReadLinesInCrs(unittest.TestCase):
+    """Testes para core/crs_transform.py: read_lines_in_crs."""
+
+    def _line_layer(self, crs, wkts):
+        layer = QgsVectorLayer(f"LineString?crs={crs}", "test", "memory")
+        pr = layer.dataProvider()
+        feats = []
+        for wkt in wkts:
+            f = QgsFeature()
+            f.setGeometry(QgsGeometry.fromWkt(wkt))
+            feats.append(f)
+        pr.addFeatures(feats)
+        layer.updateExtents()
+        return layer
+
+    def test_line_4674_to_5880_preserves_order(self):
+        """Camada de linha em 4674 -> geometria em 5880 com x na casa de 5,75 M, ordem preservada."""
+        layer = self._line_layer(
+            "EPSG:4674",
+            [
+                "LINESTRING(-46.63 -23.55, -46.62 -23.55)",
+                "LINESTRING(-43.20 -22.90, -43.19 -22.90)",
+            ],
+        )
+        context = QgsProcessingContext()
+        dst = QgsCoordinateReferenceSystem("EPSG:5880")
+
+        features, geometries = read_lines_in_crs(layer, dst, context, "camada de teste")
+
+        self.assertEqual(len(features), 2)
+        self.assertEqual(len(geometries), 2)
+
+        first_vertices = geometries[0].asPolyline()
+        self.assertAlmostEqual(first_vertices[0].x(), 5752164.0, delta=2000.0)
+        # Rio está a leste de São Paulo: x maior, ordem preservada (posição 0 = São Paulo).
+        second_vertices = geometries[1].asPolyline()
+        self.assertGreater(second_vertices[0].x(), first_vertices[0].x())
+
+    def test_line_with_vertex_500_500_raises_transform_check_error_citing_id(self):
+        """Linha com vértice (500, 500) não transforma (geometria vazia) -> TransformCheckError citando o id."""
+        layer = self._line_layer("EPSG:4674", ["LINESTRING(500 500, 500.01 500.01)"])
+        context = QgsProcessingContext()
+        dst = QgsCoordinateReferenceSystem("EPSG:5880")
+
+        feat = next(layer.getFeatures())
+        with self.assertRaises(TransformCheckError) as ctx:
+            read_lines_in_crs(layer, dst, context, "camada de teste")
+
+        msg = str(ctx.exception)
+        self.assertIn(f"id {feat.id()}", msg)
+        self.assertIn("EPSG:4674", msg)
+        self.assertIn("EPSG:5880", msg)
+
+    def test_same_crs_skips_reprojection(self):
+        """SRC de origem igual ao destino -> geometria original devolvida, sem 2ª passada."""
+        layer = self._line_layer("EPSG:3857", ["LINESTRING(0 0, 10 0)"])
+        context = QgsProcessingContext()
+        dst = QgsCoordinateReferenceSystem("EPSG:3857")
+
+        features, geometries = read_lines_in_crs(layer, dst, context, "camada de teste")
+
+        self.assertEqual(len(geometries), 1)
+        vertices = geometries[0].asPolyline()
+        self.assertAlmostEqual(vertices[0].x(), 0.0)
+        self.assertAlmostEqual(vertices[1].x(), 10.0)
+
+    def test_feature_without_geometry_is_ignored_without_error(self):
+        """Feição sem geometria é ignorada nas duas passadas, sem erro."""
+        layer = QgsVectorLayer("LineString?crs=EPSG:4674", "test", "memory")
+        pr = layer.dataProvider()
+        f_no_geom = QgsFeature()
+        f_with_geom = QgsFeature()
+        f_with_geom.setGeometry(QgsGeometry.fromWkt("LINESTRING(-46.63 -23.55, -46.62 -23.55)"))
+        pr.addFeatures([f_no_geom, f_with_geom])
+        layer.updateExtents()
+
+        context = QgsProcessingContext()
+        dst = QgsCoordinateReferenceSystem("EPSG:5880")
+
+        features, geometries = read_lines_in_crs(layer, dst, context, "camada de teste")
+
+        self.assertEqual(len(features), 1)
+        self.assertEqual(len(geometries), 1)
 
 
 if __name__ == "__main__":

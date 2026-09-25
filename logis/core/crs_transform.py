@@ -22,6 +22,7 @@ from qgis.core import (
     QgsCoordinateTransform,
     QgsCoordinateTransformContext,
     QgsCsException,
+    QgsDistanceArea,
     QgsFeatureRequest,
     QgsPointXY,
     QgsRectangle,
@@ -301,6 +302,53 @@ def _extract_point_from_geom(geom: Any) -> QgsPointXY:
     return geom.centroid().asPoint()
 
 
+def _line_vertices(geom: Any) -> List[Any]:
+    """Return the vertex list (QgsPointXY) of a (multi)line geometry, first part if multipart."""
+    if geom.isMultipart():
+        parts = geom.asMultiPolyline()
+        return parts[0] if parts else []
+    return geom.asPolyline()
+
+
+def _read_original_geometries(source: Any) -> Tuple[List[Any], List[Any]]:
+    """
+    First pass of the two-pass read shared by ``read_points_in_crs`` and
+    ``read_lines_in_crs``: reads every feature of ``source`` untouched, skipping those
+    without geometry (or with empty geometry) in both passes without error.
+
+    :return: Tuple ``(features, geometries)`` aligned by position, in source order.
+    """
+    features: List[Any] = []
+    geometries: List[Any] = []
+    for feat in source.getFeatures():
+        geom = feat.geometry()
+        if geom is None or geom.isEmpty():
+            continue
+        features.append(feat)
+        geometries.append(geom)
+    return features, geometries
+
+
+def _same_crs(src_crs: Any, dst_crs: Any) -> bool:
+    """True when both CRS are valid and identical (by object equality or matching authid)."""
+    src_valid = bool(hasattr(src_crs, "isValid") and src_crs.isValid())
+    dst_valid = bool(hasattr(dst_crs, "isValid") and dst_crs.isValid())
+    return bool(
+        src_valid and dst_valid
+        and (src_crs == dst_crs or (src_crs.authid() and src_crs.authid() == dst_crs.authid()))
+    )
+
+
+def _reprojected_geometries_by_id(source: Any, dst_crs: Any, context: Any) -> dict:
+    """
+    Second pass of the two-pass read shared by ``read_points_in_crs`` and
+    ``read_lines_in_crs``: reads ``source`` again with
+    ``QgsFeatureRequest().setDestinationCrs(dst_crs, ...)``, keyed by ``feat.id()``.
+    """
+    request = QgsFeatureRequest().setDestinationCrs(dst_crs, context.transformContext())
+    return {feat.id(): feat.geometry() for feat in source.getFeatures(request)}
+
+
 def read_points_in_crs(
     source: Any,
     dst_crs: Any,
@@ -334,17 +382,10 @@ def read_points_in_crs(
     dst = QgsCoordinateReferenceSystem(dst_crs) if isinstance(dst_crs, str) else dst_crs
     src_crs = source.sourceCrs()
 
-    features: List[Any] = []
-    original_points: List[Any] = []
-    for feat in source.getFeatures():
-        geom = feat.geometry()
-        if geom is None or geom.isEmpty():
-            continue
-        features.append(feat)
-        original_points.append(_extract_point_from_geom(geom))
-
+    features, original_geoms = _read_original_geometries(source)
     if not features:
         return [], []
+    original_points = [_extract_point_from_geom(geom) for geom in original_geoms]
 
     src_valid = bool(hasattr(src_crs, "isValid") and src_crs.isValid())
     dst_valid = bool(hasattr(dst, "isValid") and dst.isValid())
@@ -352,15 +393,10 @@ def read_points_in_crs(
     src_authid = src_crs.authid() if src_valid and src_crs.authid() else str(src_crs)
     dst_authid = dst.authid() if dst_valid and dst.authid() else str(dst_crs)
 
-    same_crs = bool(
-        src_valid and dst_valid
-        and (src_crs == dst or (src_crs.authid() and src_crs.authid() == dst.authid()))
-    )
-    if same_crs:
+    if _same_crs(src_crs, dst):
         return features, original_points
 
-    request = QgsFeatureRequest().setDestinationCrs(dst, context.transformContext())
-    reprojected_by_id = {feat.id(): feat.geometry() for feat in source.getFeatures(request)}
+    reprojected_by_id = _reprojected_geometries_by_id(source, dst, context)
 
     points: List[Any] = []
     for feat in features:
@@ -406,3 +442,165 @@ def read_points_in_crs(
         )
 
     return features, points
+
+
+def read_lines_in_crs(
+    source: Any,
+    dst_crs: Any,
+    context: Any,
+    label: str,
+) -> Tuple[List[Any], List[Any]]:
+    """
+    Read line geometries from a QGIS Processing feature source, reprojected to ``dst_crs``,
+    for building a metric-coordinate node graph (``round(x / tolerance)`` node keys), sharing
+    the two-pass read of ``read_points_in_crs`` and detecting the same silent no-op of
+    ``QgsFeatureRequest().setDestinationCrs()``: a feature whose transform fails comes back
+    with an empty geometry instead of raising an exception.
+
+    The source is read twice: once untouched, to keep the original features (with their
+    original, non-empty geometry) that go to the output sink exactly as before; and once
+    with the destination CRS request, to get the reprojected line geometry, from which the
+    caller extracts vertices for node keys. Both passes are matched by ``feat.id()``, and the
+    returned lists follow the order of the first (untouched) pass.
+
+    As with ``read_points_in_crs``, when ``source``'s CRS already matches ``dst_crs`` the
+    second pass is skipped and the original geometry is reused as-is: it is the caller's
+    responsibility to pick ``dst_crs`` as the source's own CRS when that CRS is already
+    projected (metric units), and EPSG:5880 (or another metric CRS) only when it is
+    geographic — the same pattern already used by ``facility_p_median``/``urban_delivery_distance``
+    to compute ``target_crs`` before calling ``read_points_in_crs``. This is what keeps node
+    keys unchanged for layers already in a metric CRS (the behaviour every ``waste_*``
+    algorithm had before this helper existed), and what lets a caller reading two sources
+    (e.g. streets and a depot point) request the very same ``dst_crs`` for both so they land
+    in one common coordinate frame.
+
+    :param source: QgsProcessingFeatureSource (or QgsVectorLayer) to read from.
+    :param dst_crs: Destination CRS (QgsCoordinateReferenceSystem or authid string).
+    :param context: QgsProcessingContext; its ``transformContext()`` feeds the request.
+    :param label: Human-readable identifier of the source, used in diagnostics.
+    :return: Tuple ``(features, geometries)`` with the original features (their geometry
+             unchanged, to send to the output sink) and their geometry in ``dst_crs`` (the
+             original geometry itself when the source is already in ``dst_crs``), aligned by
+             position. Features without geometry are skipped in both passes without error.
+    :raises TransformCheckError: If a feature's geometry does not survive reprojection (comes
+             back empty), or if the resulting vertices are implausible or did not move for
+             ``dst_crs``.
+    """
+    dst = QgsCoordinateReferenceSystem(dst_crs) if isinstance(dst_crs, str) else dst_crs
+    src_crs = source.sourceCrs()
+
+    features, original_geoms = _read_original_geometries(source)
+    if not features:
+        return [], []
+
+    src_valid = bool(hasattr(src_crs, "isValid") and src_crs.isValid())
+    dst_valid = bool(hasattr(dst, "isValid") and dst.isValid())
+
+    src_authid = src_crs.authid() if src_valid and src_crs.authid() else str(src_crs)
+    dst_authid = dst.authid() if dst_valid and dst.authid() else str(dst_crs)
+
+    if _same_crs(src_crs, dst):
+        return features, original_geoms
+
+    reprojected_by_id = _reprojected_geometries_by_id(source, dst, context)
+
+    geometries: List[Any] = []
+    for feat in features:
+        geom = reprojected_by_id.get(feat.id())
+        if geom is None or geom.isEmpty():
+            raise TransformCheckError(
+                f"Failed to reproject feature id {feat.id()} of '{label}' from {src_authid} "
+                f"to {dst_authid}: the transformed geometry came back empty (silent no-op of "
+                f"QgsFeatureRequest().setDestinationCrs())."
+            )
+        geometries.append(geom)
+
+    all_vertices = [pt for geom in geometries for pt in _line_vertices(geom)]
+    if not plausible_coords(dst_authid, all_vertices):
+        qgis_ver = _qgis_version()
+        proj_ver = _proj_version()
+        offenders = [
+            f"id {feat.id()}"
+            for feat, geom in zip(features, geometries)
+            if not plausible_coords(dst_authid, _line_vertices(geom))
+        ]
+        raise TransformCheckError(
+            f"Reprojected line vertices of '{label}' from {src_authid} to {dst_authid} are "
+            f"implausible for the destination CRS.\n"
+            f"QGIS version: {qgis_ver}, PROJ version: {proj_ver}.\n"
+            f"Offending feature(s): {', '.join(offenders)}"
+        )
+
+    orig_vertices0 = _line_vertices(original_geoms[0])
+    new_vertices0 = _line_vertices(geometries[0])
+    is_both_geo = bool(
+        hasattr(src_crs, "isGeographic")
+        and hasattr(dst, "isGeographic")
+        and src_crs.isGeographic()
+        and dst.isGeographic()
+    )
+    if (
+        orig_vertices0
+        and new_vertices0
+        and not is_both_geo
+        and not point_moved(orig_vertices0[0], new_vertices0[0])
+    ):
+        qgis_ver = _qgis_version()
+        proj_ver = _proj_version()
+        raise TransformCheckError(
+            f"Failed to verify coordinate transformation of '{label}' from {src_authid} to "
+            f"{dst_authid}: probe feature id {features[0].id()} vertex "
+            f"({orig_vertices0[0].x():.4f}, {orig_vertices0[0].y():.4f}) did not move after "
+            f"reprojection to ({new_vertices0[0].x():.4f}, {new_vertices0[0].y():.4f}).\n"
+            f"QGIS version: {qgis_ver}, PROJ version: {proj_ver}."
+        )
+
+    return features, geometries
+
+
+def length_meter(source_crs: Any, context: Any):
+    """
+    Build a callable that measures the true ellipsoidal length (in meters) of a geometry,
+    on the geometry's own (original, unreprojected) coordinates — the ``QgsDistanceArea``
+    pattern already used by ``urban_network_density``/``urban_cargo_restriction``
+    (``setSourceCrs`` + ``setEllipsoid(crs.ellipsoidAcronym())``).
+
+    It exists because every ``waste_*`` algorithm treated ``geometry.length()`` (planar, in
+    the layer's map units) as meters: for a layer in a geographic CRS (e.g. the network this
+    plugin's own OSM pipeline downloads, in EPSG:4674/degrees), that made lengths, loads and
+    fleet sizing come out roughly 1e5 times too small, and turned a node tolerance meant to
+    be "in meters" into roughly a kilometer or more in degrees.
+
+    Measured empirically (2026-09-25, QGIS 3.34/PROJ 9.x): once ``setEllipsoid()`` is applied,
+    ``QgsDistanceArea.measureLength()`` already returns the value in meters —
+    ``lengthUnits()`` reports ``Qgis.DistanceUnit.Meters`` regardless of whether the source
+    CRS's own map units are degrees or meters (a line from (-46.63, -23.55) to
+    (-46.62, -23.55) in EPSG:4674 measures ~1021.02 m, and the same line reprojected to
+    EPSG:5880 measures ~1021.02 m too, matching to the millimeter). So no explicit
+    ``convertLengthMeasurement(..., Qgis.DistanceUnit.Meters)`` call is needed here, mirroring
+    ``urban_network_density.py``/``urban_cargo_restriction.py``, which also consume
+    ``measureLength()`` directly as meters.
+
+    :param source_crs: CRS of the geometry that will be measured (QgsCoordinateReferenceSystem
+                        or authid string) — normally the source layer's own CRS, unchanged.
+    :param context: QgsProcessingContext; its ``transformContext()`` feeds ``QgsDistanceArea``.
+    :return: A callable ``(geom) -> float`` returning the geometry's length in meters (``0.0``
+             for ``None``/empty geometry).
+    :raises TransformCheckError: If ``source_crs`` is invalid (never measure blind).
+    """
+    src = QgsCoordinateReferenceSystem(source_crs) if isinstance(source_crs, str) else source_crs
+    if not (hasattr(src, "isValid") and src.isValid()):
+        raise TransformCheckError(
+            f"Cannot measure length: source CRS {source_crs!r} is invalid."
+        )
+
+    da = QgsDistanceArea()
+    da.setSourceCrs(src, context.transformContext())
+    da.setEllipsoid(src.ellipsoidAcronym())
+
+    def _measure(geom: Any) -> float:
+        if geom is None or geom.isEmpty():
+            return 0.0
+        return da.measureLength(geom)
+
+    return _measure
