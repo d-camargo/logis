@@ -16,6 +16,7 @@ Algoritmo de processamento para roteirização por arcos com subconjunto de vias
 """
 
 from qgis.core import (
+    QgsCoordinateReferenceSystem,
     QgsProcessing,
     QgsProcessingAlgorithm,
     QgsProcessingException,
@@ -29,6 +30,7 @@ from qgis.core import (
 )
 
 try:
+    from ..core.crs_transform import TransformCheckError, length_meter, read_lines_in_crs
     from ..core.routing.arc_routing import (
         find_odd_degree_nodes,
         match_odd_degree_nodes,
@@ -37,6 +39,7 @@ try:
     )
     from ..core import qgis_compat
 except ImportError:
+    from core.crs_transform import TransformCheckError, length_meter, read_lines_in_crs
     from core.routing.arc_routing import (
         find_odd_degree_nodes,
         match_odd_degree_nodes,
@@ -169,19 +172,27 @@ class WasteRppRoute(QgsProcessingAlgorithm):
 
         feedback.pushInfo(self.tr("Lendo trechos de via e agrupando por setor..."))
 
+        streets_crs = streets_source.sourceCrs()
+        target_crs = (
+            QgsCoordinateReferenceSystem("EPSG:5880") if streets_crs.isGeographic() else streets_crs
+        )
+        try:
+            features, proj_geoms = read_lines_in_crs(
+                streets_source, target_crs, context, self.tr("camada de vias")
+            )
+            length_fn = length_meter(streets_crs, context)
+        except TransformCheckError as exc:
+            raise QgsProcessingException(str(exc))
+
         sector_edges_map = {}
         feature_map = {}
         skipped_fids = []
 
-        for feature in streets_source.getFeatures():
+        for feature, geometry in zip(features, proj_geoms):
             if feedback.isCanceled():
                 return {}
 
             feature_map[feature.id()] = feature
-            geometry = feature.geometry()
-            if geometry is None or geometry.isEmpty():
-                skipped_fids.append(feature.id())
-                continue
 
             start_pt, end_pt = _edge_endpoints(geometry)
             if start_pt is None:
@@ -216,7 +227,7 @@ class WasteRppRoute(QgsProcessingAlgorithm):
                 "id": feature.id(),
                 "from_node": from_node,
                 "to_node": to_node,
-                "length": geometry.length(),
+                "length": length_fn(feature.geometry()),
                 "required": is_req
             })
 

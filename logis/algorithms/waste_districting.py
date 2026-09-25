@@ -15,6 +15,7 @@ Algoritmo de processamento para setorização (districting) da coleta de resídu
 """
 
 from qgis.core import (
+    QgsCoordinateReferenceSystem,
     QgsProcessing,
     QgsProcessingAlgorithm,
     QgsProcessingException,
@@ -28,8 +29,10 @@ from qgis.core import (
 )
 try:
     from ..core import qgis_compat
+    from ..core.crs_transform import TransformCheckError, length_meter, read_lines_in_crs
 except ImportError:
     from core import qgis_compat
+    from core.crs_transform import TransformCheckError, length_meter, read_lines_in_crs
 
 try:
     from ..core.routing.districting import (
@@ -158,16 +161,24 @@ class WasteDistricting(QgsProcessingAlgorithm):
 
         # 1) Montar a lista de trechos (edges) a partir da geometria das vias
         feedback.pushInfo(self.tr("Lendo trechos de via e construindo adjacência..."))
+
+        streets_crs = streets_source.sourceCrs()
+        target_crs = (
+            QgsCoordinateReferenceSystem("EPSG:5880") if streets_crs.isGeographic() else streets_crs
+        )
+        try:
+            features, proj_geoms = read_lines_in_crs(
+                streets_source, target_crs, context, self.tr("camada de vias")
+            )
+            length_fn = length_meter(streets_crs, context)
+        except TransformCheckError as exc:
+            raise QgsProcessingException(str(exc))
+
         edges = []
         skipped_fids = []
-        for feature in streets_source.getFeatures():
+        for feature, geometry in zip(features, proj_geoms):
             if feedback.isCanceled():
                 return {}
-
-            geometry = feature.geometry()
-            if geometry is None or geometry.isEmpty():
-                skipped_fids.append(feature.id())
-                continue
 
             start_pt, end_pt = _edge_endpoints(geometry)
             if start_pt is None:
@@ -177,17 +188,18 @@ class WasteDistricting(QgsProcessingAlgorithm):
             from_node = (round(start_pt.x() / tolerance), round(start_pt.y() / tolerance))
             to_node = (round(end_pt.x() / tolerance), round(end_pt.y() / tolerance))
 
+            length_m = length_fn(feature.geometry())
             if load_field_idx != -1:
                 raw_value = feature.attribute(load_field_idx)
-                load = float(raw_value) if raw_value is not None else geometry.length()
+                load = float(raw_value) if raw_value is not None else length_m
             else:
-                load = geometry.length()
+                load = length_m
 
             edges.append({
                 "id": feature.id(),
                 "from_node": from_node,
                 "to_node": to_node,
-                "length": geometry.length(),
+                "length": length_m,
                 "load": load
             })
 

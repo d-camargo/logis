@@ -16,6 +16,7 @@ Algoritmo de processamento para roteirização por arcos capacitada
 """
 
 from qgis.core import (
+    QgsCoordinateReferenceSystem,
     QgsProcessing,
     QgsProcessingAlgorithm,
     QgsProcessingException,
@@ -29,9 +30,11 @@ from qgis.core import (
 )
 
 try:
+    from ..core.crs_transform import TransformCheckError, length_meter, read_lines_in_crs, read_points_in_crs
     from ..core.routing.arc_routing import solve_carp_path_scanning
     from ..core import qgis_compat
 except ImportError:
+    from core.crs_transform import TransformCheckError, length_meter, read_lines_in_crs, read_points_in_crs
     from core.routing.arc_routing import solve_carp_path_scanning
     from core import qgis_compat
 
@@ -48,12 +51,6 @@ def _edge_endpoints(geometry):
         return None, None
 
     return vertices[0], vertices[-1]
-
-
-def _extract_point(geom):
-    """Retorna o ponto (x, y) de uma geometria de ponto."""
-    pt = geom.asPoint()
-    return pt.x(), pt.y()
 
 
 def _is_truthy(val):
@@ -198,20 +195,28 @@ class WasteCarpRoute(QgsProcessingAlgorithm):
 
         feedback.pushInfo(self.tr("Lendo trechos de via..."))
 
+        streets_crs = streets_source.sourceCrs()
+        target_crs = (
+            QgsCoordinateReferenceSystem("EPSG:5880") if streets_crs.isGeographic() else streets_crs
+        )
+        try:
+            features, proj_geoms = read_lines_in_crs(
+                streets_source, target_crs, context, self.tr("camada de vias")
+            )
+            length_fn = length_meter(streets_crs, context)
+        except TransformCheckError as exc:
+            raise QgsProcessingException(str(exc))
+
         sector_edges_map = {}
         feature_map = {}
         node_coords = {}
         skipped_fids = []
 
-        for feature in streets_source.getFeatures():
+        for feature, geometry in zip(features, proj_geoms):
             if feedback.isCanceled():
                 return {}
 
             feature_map[feature.id()] = feature
-            geometry = feature.geometry()
-            if geometry is None or geometry.isEmpty():
-                skipped_fids.append(feature.id())
-                continue
 
             start_pt, end_pt = _edge_endpoints(geometry)
             if start_pt is None:
@@ -264,7 +269,7 @@ class WasteCarpRoute(QgsProcessingAlgorithm):
                 "id": feature.id(),
                 "from_node": from_node,
                 "to_node": to_node,
-                "length": geometry.length(),
+                "length": length_fn(feature.geometry()),
                 "load": demand_val,
                 "required": is_req
             })
@@ -281,24 +286,26 @@ class WasteCarpRoute(QgsProcessingAlgorithm):
                 self.tr("Nenhum trecho de via válido encontrado na camada de entrada.")
             )
 
-        # Determina o ponto do depósito (exatamente 1 feição, camada obrigatória)
+        # Determina o ponto do depósito (exatamente 1 feição, camada obrigatória), no mesmo
+        # SRC de cálculo dos nós das ruas (target_crs), para que a distância euclidiana até o
+        # nó mais próximo faça sentido mesmo quando depósito e ruas chegam em SRCs diferentes.
         if depot_source is None:
             raise QgsProcessingException(self.tr("Camada de depósito inválida."))
 
-        depot_points = []
-        for feat in depot_source.getFeatures():
-            geom = feat.geometry()
-            if geom and not geom.isEmpty():
-                pt = _extract_point(geom)
-                if pt is not None:
-                    depot_points.append(pt)
+        try:
+            _, depot_points = read_points_in_crs(
+                depot_source, target_crs, context, self.tr("camada de depósito")
+            )
+        except TransformCheckError as exc:
+            raise QgsProcessingException(str(exc))
+
         if len(depot_points) != 1:
             raise QgsProcessingException(
                 self.tr("A camada de ponto do depósito deve conter exatamente 1 feição (encontradas {count}).").format(
                     count=len(depot_points)
                 )
             )
-        depot_coords = depot_points[0]
+        depot_coords = (depot_points[0].x(), depot_points[0].y())
 
         out_fields = streets_source.fields()
         out_fields.append(QgsField("route_id", qgis_compat.field_type("int")))
