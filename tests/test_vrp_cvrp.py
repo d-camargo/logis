@@ -29,7 +29,7 @@ except ImportError:
 
 class TestVrpCvrpAlgorithm(unittest.TestCase):
     def setUp(self):
-        self.base_dir = os.path.dirname(__file__)
+        self.base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         self.alg_path = os.path.join(self.base_dir, "logis", "algorithms", "vrp_cvrp.py")
 
         with open(self.alg_path, "r", encoding="utf-8") as f:

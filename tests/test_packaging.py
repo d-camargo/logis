@@ -20,7 +20,7 @@ class TestPackaging(unittest.TestCase):
     """Guarda de empacotamento e histórico de versões do logis."""
 
     def setUp(self):
-        self.root_dir = pathlib.Path(__file__).parent
+        self.root_dir = pathlib.Path(__file__).resolve().parent.parent
         self.ci_config_path = self.root_dir / ".qgis-plugin-ci"
         self.metadata_path = self.root_dir / "logis" / "metadata.txt"
 

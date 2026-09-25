@@ -1,10 +1,6 @@
 # -*- coding: utf-8 -*-
 import unittest
 from unittest.mock import patch
-import sys
-import os
-
-sys.path.insert(0, os.path.abspath(os.path.dirname(os.path.dirname(__file__))))
 
 try:
     from qgis.PyQt.QtWidgets import QApplication

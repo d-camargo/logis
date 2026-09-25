@@ -397,7 +397,7 @@ class TestTSP(unittest.TestCase):
 
 class TestVrpTspAlgorithm(unittest.TestCase):
     def setUp(self):
-        self.base_dir = os.path.dirname(__file__)
+        self.base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         self.alg_path = os.path.join(self.base_dir, "logis", "algorithms", "vrp_tsp.py")
         self.provider_path = os.path.join(self.base_dir, "logis", "provider.py")
 

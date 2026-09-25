@@ -73,7 +73,7 @@ class TestQt6Compat(unittest.TestCase):
     ]
 
     def test_no_qt6_incompatibilities(self):
-        root_dir = pathlib.Path(__file__).parent
+        root_dir = pathlib.Path(__file__).resolve().parent.parent
         logis_dir = root_dir / "logis"
         self.assertTrue(
             logis_dir.exists(), f"Diretório {logis_dir} não encontrado."

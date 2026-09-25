@@ -11,7 +11,7 @@ class TestDependenciesDialog(unittest.TestCase):
     """Teste estático de layout e segurança do diálogo de dependências do plugin logis."""
 
     def setUp(self):
-        self.root_dir = pathlib.Path(__file__).parent
+        self.root_dir = pathlib.Path(__file__).resolve().parent.parent
         self.dialog_path = self.root_dir / "logis/gui/dependencies_dialog.py"
         self.installer_path = self.root_dir / "logis/core/ortools_installer.py"
 

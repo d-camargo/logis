@@ -2,11 +2,6 @@
 import inspect
 import unittest
 from unittest.mock import MagicMock, patch
-import sys
-import os
-
-# Insert the parent directory of logis to sys.path to enable absolute imports of logis package
-sys.path.insert(0, os.path.abspath(os.path.dirname(os.path.dirname(__file__))))
 
 # Mock QGIS/PyQt classes
 from qgis.PyQt.QtWidgets import QMainWindow, QApplication

@@ -23,7 +23,7 @@ class TestTaskRunnerSource(unittest.TestCase):
     """Teste estático do AlgTaskRunner sem depender da inicialização do QGIS."""
 
     def setUp(self):
-        self.source_path = pathlib.Path(__file__).parent / 'logis' / 'gui' / 'task_runner.py'
+        self.source_path = pathlib.Path(__file__).resolve().parent.parent / 'logis' / 'gui' / 'task_runner.py'
         self.assertTrue(self.source_path.exists(), "O arquivo task_runner.py não existe.")
         self.source_code = self.source_path.read_text(encoding='utf-8')
 

@@ -41,7 +41,7 @@ LENGTH_AREA_PATTERN = re.compile(r"\b(geom|geometry|\w+\.geometry\(\))\.(length|
 
 
 def _algorithms_dir() -> pathlib.Path:
-    return pathlib.Path(__file__).parent / "logis" / "algorithms"
+    return pathlib.Path(__file__).resolve().parent.parent / "logis" / "algorithms"
 
 
 def _count_occurrences_by_file():

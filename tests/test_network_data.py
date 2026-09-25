@@ -233,7 +233,7 @@ class TestLoadOsmNetworkAlgorithm:
     def test_load_osm_network_estatico(self):
         from pathlib import Path
 
-        algorithm_path = Path(__file__).parent / "logis" / "algorithms" / "data_osm_network.py"
+        algorithm_path = Path(__file__).resolve().parent.parent / "logis" / "algorithms" / "data_osm_network.py"
         assert algorithm_path.exists(), "O arquivo logis/algorithms/data_osm_network.py deve existir"
 
         content = algorithm_path.read_text(encoding="utf-8")
@@ -256,7 +256,7 @@ class TestLoadSnvNetworkAlgorithm:
     def test_load_snv_network_estatico(self):
         from pathlib import Path
 
-        algorithm_path = Path(__file__).parent / "logis" / "algorithms" / "data_snv_network.py"
+        algorithm_path = Path(__file__).resolve().parent.parent / "logis" / "algorithms" / "data_snv_network.py"
         assert algorithm_path.exists(), "O arquivo logis/algorithms/data_snv_network.py deve existir"
 
         content = algorithm_path.read_text(encoding="utf-8")
@@ -279,7 +279,7 @@ class TestProviderRegistration:
     def test_data_algorithms_imported_and_registered(self):
         from pathlib import Path
 
-        provider_path = Path(__file__).parent / "logis" / "provider.py"
+        provider_path = Path(__file__).resolve().parent.parent / "logis" / "provider.py"
         assert provider_path.exists(), "O arquivo logis/provider.py deve existir"
 
         content = provider_path.read_text(encoding="utf-8")

@@ -25,7 +25,7 @@ class TestDockLayout(unittest.TestCase):
     ]
 
     def test_docks_have_scroll_area(self):
-        root_dir = pathlib.Path(__file__).parent
+        root_dir = pathlib.Path(__file__).resolve().parent.parent
 
         for rel_file in self.DOCK_FILES:
             file_path = root_dir / rel_file
@@ -42,7 +42,7 @@ class TestDockLayout(unittest.TestCase):
                 )
 
     def test_waste_dock_has_four_tabs(self):
-        content = (pathlib.Path(__file__).parent / "logis/gui/waste_dock.py").read_text(
+        content = (pathlib.Path(__file__).resolve().parent.parent / "logis/gui/waste_dock.py").read_text(
             encoding="utf-8"
         )
 
@@ -56,7 +56,7 @@ class TestDockLayout(unittest.TestCase):
         )
 
     def test_waste_dock_results_panel_outside_tabs(self):
-        content = (pathlib.Path(__file__).parent / "logis/gui/waste_dock.py").read_text(
+        content = (pathlib.Path(__file__).resolve().parent.parent / "logis/gui/waste_dock.py").read_text(
             encoding="utf-8"
         )
 
@@ -67,7 +67,7 @@ class TestDockLayout(unittest.TestCase):
         )
 
     def test_urban_dock_has_three_tabs(self):
-        content = (pathlib.Path(__file__).parent / "logis/gui/urban_dock.py").read_text(
+        content = (pathlib.Path(__file__).resolve().parent.parent / "logis/gui/urban_dock.py").read_text(
             encoding="utf-8"
         )
 
@@ -81,7 +81,7 @@ class TestDockLayout(unittest.TestCase):
         )
 
     def test_urban_dock_results_panel_outside_tabs(self):
-        content = (pathlib.Path(__file__).parent / "logis/gui/urban_dock.py").read_text(
+        content = (pathlib.Path(__file__).resolve().parent.parent / "logis/gui/urban_dock.py").read_text(
             encoding="utf-8"
         )
 
@@ -92,7 +92,7 @@ class TestDockLayout(unittest.TestCase):
         )
 
     def test_urban_dock_tabs_end_with_stretch(self):
-        content = (pathlib.Path(__file__).parent / "logis/gui/urban_dock.py").read_text(
+        content = (pathlib.Path(__file__).resolve().parent.parent / "logis/gui/urban_dock.py").read_text(
             encoding="utf-8"
         )
 
@@ -103,7 +103,7 @@ class TestDockLayout(unittest.TestCase):
         )
 
     def test_routing_dock_has_two_tabs(self):
-        content = (pathlib.Path(__file__).parent / "logis/gui/routing_dock.py").read_text(
+        content = (pathlib.Path(__file__).resolve().parent.parent / "logis/gui/routing_dock.py").read_text(
             encoding="utf-8"
         )
 
@@ -117,7 +117,7 @@ class TestDockLayout(unittest.TestCase):
         )
 
     def test_routing_dock_results_panel_outside_tabs(self):
-        content = (pathlib.Path(__file__).parent / "logis/gui/routing_dock.py").read_text(
+        content = (pathlib.Path(__file__).resolve().parent.parent / "logis/gui/routing_dock.py").read_text(
             encoding="utf-8"
         )
 
@@ -138,7 +138,7 @@ class TestDockLayout(unittest.TestCase):
         )
 
     def test_routing_dock_controls(self):
-        content = (pathlib.Path(__file__).parent / "logis/gui/routing_dock.py").read_text(
+        content = (pathlib.Path(__file__).resolve().parent.parent / "logis/gui/routing_dock.py").read_text(
             encoding="utf-8"
         )
 
@@ -166,7 +166,7 @@ class TestDockLayout(unittest.TestCase):
         self.assertIn("'BACKEND': self.cmb_cvrp_backend.currentIndex()", content)
 
     def test_routing_dock_tsp_distance_mode(self):
-        content = (pathlib.Path(__file__).parent / "logis/gui/routing_dock.py").read_text(
+        content = (pathlib.Path(__file__).resolve().parent.parent / "logis/gui/routing_dock.py").read_text(
             encoding="utf-8"
         )
 
@@ -180,7 +180,7 @@ class TestDockLayout(unittest.TestCase):
         self.assertIn("network_layer if use_network else None", content)
 
     def test_routing_dock_tsp_backend(self):
-        content = (pathlib.Path(__file__).parent / "logis/gui/routing_dock.py").read_text(
+        content = (pathlib.Path(__file__).resolve().parent.parent / "logis/gui/routing_dock.py").read_text(
             encoding="utf-8"
         )
 
@@ -194,7 +194,7 @@ class TestDockLayout(unittest.TestCase):
         self.assertIn("'BACKEND': self.cmb_tsp_backend.currentIndex()", content)
 
     def test_routing_dock_cvrp_backend(self):
-        content = (pathlib.Path(__file__).parent / "logis/gui/routing_dock.py").read_text(
+        content = (pathlib.Path(__file__).resolve().parent.parent / "logis/gui/routing_dock.py").read_text(
             encoding="utf-8"
         )
 
@@ -212,7 +212,7 @@ class TestDockLayout(unittest.TestCase):
         self.assertIn("Aviso: O OR-Tools está desativado por ter derrubado a sessão anterior.", run_cvrp_code)
 
     def test_routing_dock_network_selector_is_unique(self):
-        content = (pathlib.Path(__file__).parent / "logis/gui/routing_dock.py").read_text(
+        content = (pathlib.Path(__file__).resolve().parent.parent / "logis/gui/routing_dock.py").read_text(
             encoding="utf-8"
         )
 
@@ -222,7 +222,7 @@ class TestDockLayout(unittest.TestCase):
         )
 
     def test_routing_dock_local_search_description(self):
-        content = (pathlib.Path(__file__).parent / "logis/gui/routing_dock.py").read_text(
+        content = (pathlib.Path(__file__).resolve().parent.parent / "logis/gui/routing_dock.py").read_text(
             encoding="utf-8"
         )
         desc_text = "Refina a rota inicial invertendo trechos (2-opt) e reposicionando paradas (Or-opt). Reduz a distância total e aumenta o tempo de cálculo."
@@ -255,7 +255,7 @@ class TestDockLayout(unittest.TestCase):
         )
 
     def test_network_dock_has_two_tabs(self):
-        content = (pathlib.Path(__file__).parent / "logis/gui/network_dock.py").read_text(
+        content = (pathlib.Path(__file__).resolve().parent.parent / "logis/gui/network_dock.py").read_text(
             encoding="utf-8"
         )
 
@@ -269,7 +269,7 @@ class TestDockLayout(unittest.TestCase):
         )
 
     def test_network_dock_results_panel_outside_tabs(self):
-        content = (pathlib.Path(__file__).parent / "logis/gui/network_dock.py").read_text(
+        content = (pathlib.Path(__file__).resolve().parent.parent / "logis/gui/network_dock.py").read_text(
             encoding="utf-8"
         )
 
@@ -280,7 +280,7 @@ class TestDockLayout(unittest.TestCase):
         )
 
     def test_network_dock_controls(self):
-        content = (pathlib.Path(__file__).parent / "logis/gui/network_dock.py").read_text(
+        content = (pathlib.Path(__file__).resolve().parent.parent / "logis/gui/network_dock.py").read_text(
             encoding="utf-8"
         )
 
@@ -314,7 +314,7 @@ class TestDockLayout(unittest.TestCase):
         self.assertNotIn("subprocess", content)
 
     def test_routing_dock_tsp_background_task(self):
-        content = (pathlib.Path(__file__).parent / "logis/gui/routing_dock.py").read_text(
+        content = (pathlib.Path(__file__).resolve().parent.parent / "logis/gui/routing_dock.py").read_text(
             encoding="utf-8"
         )
 
@@ -335,7 +335,7 @@ class TestDockLayout(unittest.TestCase):
         self.assertIn("last_error", on_tsp_finished_code)
 
     def test_routing_dock_cvrp_background_task(self):
-        content = (pathlib.Path(__file__).parent / "logis/gui/routing_dock.py").read_text(
+        content = (pathlib.Path(__file__).resolve().parent.parent / "logis/gui/routing_dock.py").read_text(
             encoding="utf-8"
         )
 
@@ -356,7 +356,7 @@ class TestDockLayout(unittest.TestCase):
         self.assertIn("last_error", on_cvrp_finished_code)
 
     def test_routing_dock_start_error_handling(self):
-        content = (pathlib.Path(__file__).parent / "logis/gui/routing_dock.py").read_text(
+        content = (pathlib.Path(__file__).resolve().parent.parent / "logis/gui/routing_dock.py").read_text(
             encoding="utf-8"
         )
 
@@ -385,7 +385,7 @@ class TestDockLayout(unittest.TestCase):
         )
 
     def test_routing_dock_persist_outputs(self):
-        content = (pathlib.Path(__file__).parent / "logis/gui/routing_dock.py").read_text(
+        content = (pathlib.Path(__file__).resolve().parent.parent / "logis/gui/routing_dock.py").read_text(
             encoding="utf-8"
         )
 
@@ -408,7 +408,7 @@ class TestDockLayout(unittest.TestCase):
         self.assertIn("self._persist_outputs(\"CVRP\",", on_cvrp_finished_code)
 
     def test_routing_dock_tsp_report_time_and_unit(self):
-        content = (pathlib.Path(__file__).parent / "logis/gui/routing_dock.py").read_text(
+        content = (pathlib.Path(__file__).resolve().parent.parent / "logis/gui/routing_dock.py").read_text(
             encoding="utf-8"
         )
 
@@ -420,7 +420,7 @@ class TestDockLayout(unittest.TestCase):
         )
 
     def test_routing_dock_cvrp_report_time_and_unit(self):
-        content = (pathlib.Path(__file__).parent / "logis/gui/routing_dock.py").read_text(
+        content = (pathlib.Path(__file__).resolve().parent.parent / "logis/gui/routing_dock.py").read_text(
             encoding="utf-8"
         )
         on_cvrp_finished_code = content.split("def _on_cvrp_finished")[1].split("def ")[0]
