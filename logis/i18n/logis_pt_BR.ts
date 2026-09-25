@@ -4,17 +4,17 @@
 <context>
     <name>@default</name>
     <message>
-        <location filename="../algorithms/vrp_tsp.py" line="117"/>
+        <location filename="../algorithms/vrp_tsp.py" line="116"/>
         <source>SRC da camada de {label} não foi definido; coordenadas dentro do Brasil — assumindo EPSG:4674 (SIRGAS 2000).</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_tsp.py" line="123"/>
+        <location filename="../algorithms/vrp_tsp.py" line="122"/>
         <source>A camada de {label} está sem SRC válido (declarado: {crs}) e suas coordenadas não caem no Brasil. Defina o SRC da camada em Propriedades › Fonte e rode novamente.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_tsp.py" line="130"/>
+        <location filename="../algorithms/vrp_tsp.py" line="129"/>
         <source>A camada de {label} declara o SRC {crs}, mas as coordenadas estão em graus. Defina o SRC correto da camada em Propriedades › Fonte.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -30,117 +30,117 @@
 <context>
     <name>FacilityLSCP</name>
     <message>
-        <location filename="../algorithms/facility_lscp.py" line="84"/>
+        <location filename="../algorithms/facility_lscp.py" line="75"/>
         <source>Camada de demanda (Pontos/Polígonos)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/facility_lscp.py" line="91"/>
+        <location filename="../algorithms/facility_lscp.py" line="82"/>
         <source>Campo de peso da demanda (opcional, default=1.0)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/facility_lscp.py" line="100"/>
+        <location filename="../algorithms/facility_lscp.py" line="91"/>
         <source>Camada de instalações candidatas (Pontos/Polígonos) (opcional)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/facility_lscp.py" line="108"/>
+        <location filename="../algorithms/facility_lscp.py" line="99"/>
         <source>Camada de rede viária (Linhas) (opcional)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/facility_lscp.py" line="116"/>
+        <location filename="../algorithms/facility_lscp.py" line="107"/>
         <source>Distância/Tempo máximo de cobertura (max_distance)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/facility_lscp.py" line="125"/>
+        <location filename="../algorithms/facility_lscp.py" line="116"/>
         <source>Instalações selecionadas</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/facility_lscp.py" line="131"/>
+        <location filename="../algorithms/facility_lscp.py" line="122"/>
         <source>Atribuição e cobertura de demandas</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/facility_lscp.py" line="146"/>
+        <location filename="../algorithms/facility_lscp.py" line="137"/>
         <source>Camada de demanda inválida.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/facility_lscp.py" line="149"/>
+        <location filename="../algorithms/facility_lscp.py" line="140"/>
         <source>A distância máxima deve ser estritamente maior que zero.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/facility_lscp.py" line="170"/>
+        <location filename="../algorithms/facility_lscp.py" line="155"/>
         <source>Lendo pontos de demanda...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/facility_lscp.py" line="195"/>
+        <location filename="../algorithms/facility_lscp.py" line="178"/>
         <source>Nenhum ponto de demanda válido encontrado.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/facility_lscp.py" line="202"/>
+        <location filename="../algorithms/facility_lscp.py" line="182"/>
         <source>Lendo instalações candidatas...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/facility_lscp.py" line="218"/>
+        <location filename="../algorithms/facility_lscp.py" line="194"/>
         <source>Nenhuma instalação candidata válida encontrada.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/facility_lscp.py" line="225"/>
+        <location filename="../algorithms/facility_lscp.py" line="201"/>
         <source>Construindo o grafo e calculando a matriz OD na rede...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/facility_lscp.py" line="230"/>
+        <location filename="../algorithms/facility_lscp.py" line="206"/>
         <source>Erro ao construir o grafo: {}</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/facility_lscp.py" line="236"/>
+        <location filename="../algorithms/facility_lscp.py" line="212"/>
         <source>O grafo construído possui menos de 2 vértices.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/facility_lscp.py" line="253"/>
+        <location filename="../algorithms/facility_lscp.py" line="229"/>
         <source>Erro ao calcular a matriz OD: {}</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/facility_lscp.py" line="255"/>
+        <location filename="../algorithms/facility_lscp.py" line="231"/>
         <source>Calculando matriz de distâncias euclidianas...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/facility_lscp.py" line="264"/>
+        <location filename="../algorithms/facility_lscp.py" line="240"/>
         <source>Executando a otimização LSCP (Toregas et al.)...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/facility_lscp.py" line="274"/>
+        <location filename="../algorithms/facility_lscp.py" line="250"/>
         <source>LSCP concluído. Instalações: {sel} | Totalmente Coberto: {cov} | Não cobertos: {unc}</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/facility_lscp.py" line="375"/>
+        <location filename="../algorithms/facility_lscp.py" line="351"/>
         <source>Localização de Cobertura de Conjuntos (LSCP)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/facility_lscp.py" line="378"/>
+        <location filename="../algorithms/facility_lscp.py" line="354"/>
         <source>Localização de Instalações</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/facility_lscp.py" line="384"/>
+        <location filename="../algorithms/facility_lscp.py" line="360"/>
         <source>Resolve o problema de localização de cobertura de conjuntos (LSCP) utilizando a heurística gulosa de Toregas et al. (1971).
 
 Seleciona o menor número possível de instalações para cobrir todos os pontos de demanda dentro da distância/tempo máximo especificado (max_distance).
@@ -157,131 +157,141 @@ Saídas:
 - Atribuição e cobertura de demandas: camada de demanda com o status de cobertura (is_covered) e a instalação atribuída.</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <location filename="../algorithms/facility_lscp.py" line="157"/>
+        <source>camada de demanda</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../algorithms/facility_lscp.py" line="184"/>
+        <source>instalações candidatas</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>FacilityMCLP</name>
     <message>
-        <location filename="../algorithms/facility_mclp.py" line="85"/>
+        <location filename="../algorithms/facility_mclp.py" line="76"/>
         <source>Camada de demanda (Pontos/Polígonos)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/facility_mclp.py" line="92"/>
+        <location filename="../algorithms/facility_mclp.py" line="83"/>
         <source>Campo de peso da demanda (opcional, default=1.0)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/facility_mclp.py" line="101"/>
+        <location filename="../algorithms/facility_mclp.py" line="92"/>
         <source>Camada de instalações candidatas (Pontos/Polígonos) (opcional)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/facility_mclp.py" line="109"/>
+        <location filename="../algorithms/facility_mclp.py" line="100"/>
         <source>Camada de rede viária (Linhas) (opcional)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/facility_mclp.py" line="117"/>
+        <location filename="../algorithms/facility_mclp.py" line="108"/>
         <source>Número máximo de instalações (p)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/facility_mclp.py" line="126"/>
+        <location filename="../algorithms/facility_mclp.py" line="117"/>
         <source>Distância/Tempo máximo de cobertura (max_distance)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/facility_mclp.py" line="135"/>
+        <location filename="../algorithms/facility_mclp.py" line="126"/>
         <source>Instalações selecionadas</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/facility_mclp.py" line="141"/>
+        <location filename="../algorithms/facility_mclp.py" line="132"/>
         <source>Atribuição e cobertura de demandas</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/facility_mclp.py" line="157"/>
+        <location filename="../algorithms/facility_mclp.py" line="148"/>
         <source>Camada de demanda inválida.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/facility_mclp.py" line="160"/>
+        <location filename="../algorithms/facility_mclp.py" line="151"/>
         <source>A distância máxima deve ser estritamente maior que zero.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/facility_mclp.py" line="181"/>
+        <location filename="../algorithms/facility_mclp.py" line="166"/>
         <source>Lendo pontos de demanda...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/facility_mclp.py" line="206"/>
+        <location filename="../algorithms/facility_mclp.py" line="189"/>
         <source>Nenhum ponto de demanda válido encontrado.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/facility_mclp.py" line="213"/>
+        <location filename="../algorithms/facility_mclp.py" line="193"/>
         <source>Lendo instalações candidatas...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/facility_mclp.py" line="229"/>
+        <location filename="../algorithms/facility_mclp.py" line="205"/>
         <source>Nenhuma instalação candidata válida encontrada.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/facility_mclp.py" line="232"/>
+        <location filename="../algorithms/facility_mclp.py" line="208"/>
         <source>O número de instalações p ({p}) excede o número de candidatos ({cand}).</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/facility_mclp.py" line="243"/>
+        <location filename="../algorithms/facility_mclp.py" line="219"/>
         <source>Construindo o grafo e calculando a matriz OD na rede...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/facility_mclp.py" line="248"/>
+        <location filename="../algorithms/facility_mclp.py" line="224"/>
         <source>Erro ao construir o grafo: {}</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/facility_mclp.py" line="254"/>
+        <location filename="../algorithms/facility_mclp.py" line="230"/>
         <source>O grafo construído possui menos de 2 vértices.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/facility_mclp.py" line="271"/>
+        <location filename="../algorithms/facility_mclp.py" line="247"/>
         <source>Erro ao calcular a matriz OD: {}</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/facility_mclp.py" line="273"/>
+        <location filename="../algorithms/facility_mclp.py" line="249"/>
         <source>Calculando matriz de distâncias euclidianas...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/facility_mclp.py" line="282"/>
+        <location filename="../algorithms/facility_mclp.py" line="258"/>
         <source>Executando a otimização MCLP (Church &amp; ReVelle)...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/facility_mclp.py" line="293"/>
+        <location filename="../algorithms/facility_mclp.py" line="269"/>
         <source>MCLP concluído. Instalações: {sel} | Demanda Coberta: {cov:.2f}/{tot:.2f} ({ratio:.1%})</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/facility_mclp.py" line="385"/>
+        <location filename="../algorithms/facility_mclp.py" line="361"/>
         <source>Localização de Cobertura Máxima (MCLP)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/facility_mclp.py" line="388"/>
+        <location filename="../algorithms/facility_mclp.py" line="364"/>
         <source>Localização de Instalações</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/facility_mclp.py" line="394"/>
+        <location filename="../algorithms/facility_mclp.py" line="370"/>
         <source>Resolve o problema de localização de cobertura máxima (MCLP) utilizando a heurística gulosa de Church &amp; ReVelle (1974).
 
 Seleciona até p instalações candidatas que maximizem o peso da demanda atendida dentro da distância/tempo máximo especificado (max_distance).
@@ -299,126 +309,136 @@ Saídas:
 - Atribuição e cobertura de demandas: camada de demanda com o status de cobertura (is_covered) e a instalação atribuída.</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <location filename="../algorithms/facility_mclp.py" line="168"/>
+        <source>camada de demanda</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../algorithms/facility_mclp.py" line="195"/>
+        <source>instalações candidatas</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>FacilityPMedian</name>
     <message>
-        <location filename="../algorithms/facility_p_median.py" line="85"/>
+        <location filename="../algorithms/facility_p_median.py" line="76"/>
         <source>Camada de demanda (Pontos/Polígonos)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/facility_p_median.py" line="92"/>
+        <location filename="../algorithms/facility_p_median.py" line="83"/>
         <source>Campo de peso da demanda (opcional, default=1.0)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/facility_p_median.py" line="101"/>
+        <location filename="../algorithms/facility_p_median.py" line="92"/>
         <source>Camada de instalações candidatas (Pontos/Polígonos) (opcional)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/facility_p_median.py" line="109"/>
+        <location filename="../algorithms/facility_p_median.py" line="100"/>
         <source>Camada de rede viária (Linhas) (opcional)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/facility_p_median.py" line="117"/>
+        <location filename="../algorithms/facility_p_median.py" line="108"/>
         <source>Número de instalações (p)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/facility_p_median.py" line="126"/>
+        <location filename="../algorithms/facility_p_median.py" line="117"/>
         <source>Número máximo de iterações do Teitz-Bart</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/facility_p_median.py" line="135"/>
+        <location filename="../algorithms/facility_p_median.py" line="126"/>
         <source>Instalações selecionadas</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/facility_p_median.py" line="141"/>
+        <location filename="../algorithms/facility_p_median.py" line="132"/>
         <source>Atribuição de demandas</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/facility_p_median.py" line="157"/>
+        <location filename="../algorithms/facility_p_median.py" line="148"/>
         <source>Camada de demanda inválida.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/facility_p_median.py" line="178"/>
+        <location filename="../algorithms/facility_p_median.py" line="163"/>
         <source>Lendo pontos de demanda...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/facility_p_median.py" line="203"/>
+        <location filename="../algorithms/facility_p_median.py" line="186"/>
         <source>Nenhum ponto de demanda válido encontrado.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/facility_p_median.py" line="210"/>
+        <location filename="../algorithms/facility_p_median.py" line="190"/>
         <source>Lendo instalações candidatas...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/facility_p_median.py" line="226"/>
+        <location filename="../algorithms/facility_p_median.py" line="202"/>
         <source>Nenhuma instalação candidata válida encontrada.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/facility_p_median.py" line="229"/>
+        <location filename="../algorithms/facility_p_median.py" line="205"/>
         <source>O número de instalações p ({p}) excede o número de candidatos ({cand}).</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/facility_p_median.py" line="240"/>
+        <location filename="../algorithms/facility_p_median.py" line="216"/>
         <source>Construindo o grafo e calculando a matriz OD na rede...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/facility_p_median.py" line="245"/>
+        <location filename="../algorithms/facility_p_median.py" line="221"/>
         <source>Erro ao construir o grafo: {}</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/facility_p_median.py" line="251"/>
+        <location filename="../algorithms/facility_p_median.py" line="227"/>
         <source>O grafo construído possui menos de 2 vértices.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/facility_p_median.py" line="268"/>
+        <location filename="../algorithms/facility_p_median.py" line="244"/>
         <source>Erro ao calcular a matriz OD: {}</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/facility_p_median.py" line="270"/>
+        <location filename="../algorithms/facility_p_median.py" line="246"/>
         <source>Calculando matriz de distâncias euclidianas...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/facility_p_median.py" line="279"/>
+        <location filename="../algorithms/facility_p_median.py" line="255"/>
         <source>Executando a otimização p-Mediana (Teitz-Bart)...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/facility_p_median.py" line="290"/>
+        <location filename="../algorithms/facility_p_median.py" line="266"/>
         <source>Localização concluída. Instalações selecionadas: {sel} | Custo Total: {cost:.2f}</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/facility_p_median.py" line="372"/>
+        <location filename="../algorithms/facility_p_median.py" line="348"/>
         <source>Localização p-Mediana (Teitz-Bart)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/facility_p_median.py" line="375"/>
+        <location filename="../algorithms/facility_p_median.py" line="351"/>
         <source>Localização de Instalações</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/facility_p_median.py" line="381"/>
+        <location filename="../algorithms/facility_p_median.py" line="357"/>
         <source>Resolve o problema de localização p-mediana selecionando p instalações candidatas que minimizem a soma total das distâncias/custos ponderadas da demanda até a instalação mais próxima.
 
 Parâmetros:
@@ -432,6 +452,16 @@ Parâmetros:
 Saídas:
 - Instalações selecionadas: camada de candidatos escolhidos com totais de demanda e custo.
 - Atribuição de demandas: camada de demanda com o ID da instalação atribuída e o custo de atendimento.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../algorithms/facility_p_median.py" line="165"/>
+        <source>camada de demanda</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../algorithms/facility_p_median.py" line="192"/>
+        <source>instalações candidatas</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -1647,132 +1677,132 @@ Retorno:
 <context>
     <name>UrbanDeliveryDistance</name>
     <message>
-        <location filename="../algorithms/urban_delivery_distance.py" line="56"/>
+        <location filename="../algorithms/urban_delivery_distance.py" line="55"/>
         <source>Camada de rede viária (Linhas)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/urban_delivery_distance.py" line="63"/>
+        <location filename="../algorithms/urban_delivery_distance.py" line="62"/>
         <source>Camada de depósitos candidatos (Pontos)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/urban_delivery_distance.py" line="70"/>
+        <location filename="../algorithms/urban_delivery_distance.py" line="69"/>
         <source>Camada de zonas/centroides (Pontos)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/urban_delivery_distance.py" line="77"/>
+        <location filename="../algorithms/urban_delivery_distance.py" line="76"/>
         <source>Critério de custo</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/urban_delivery_distance.py" line="77"/>
+        <location filename="../algorithms/urban_delivery_distance.py" line="76"/>
         <source>Distância</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/urban_delivery_distance.py" line="77"/>
+        <location filename="../algorithms/urban_delivery_distance.py" line="76"/>
         <source>Tempo de viagem</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/urban_delivery_distance.py" line="85"/>
+        <location filename="../algorithms/urban_delivery_distance.py" line="84"/>
         <source>Zonas com custo de entrega</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/urban_delivery_distance.py" line="99"/>
+        <location filename="../algorithms/urban_delivery_distance.py" line="98"/>
         <source>Camada de rede viária inválida.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/urban_delivery_distance.py" line="101"/>
+        <location filename="../algorithms/urban_delivery_distance.py" line="100"/>
         <source>Camada de depósitos inválida.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/urban_delivery_distance.py" line="103"/>
+        <location filename="../algorithms/urban_delivery_distance.py" line="102"/>
         <source>Camada de zonas inválida.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/urban_delivery_distance.py" line="112"/>
+        <location filename="../algorithms/urban_delivery_distance.py" line="108"/>
         <source>Lendo depósitos...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/urban_delivery_distance.py" line="122"/>
+        <location filename="../algorithms/urban_delivery_distance.py" line="117"/>
         <source>Nenhum depósito válido encontrado na camada de depósitos.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/urban_delivery_distance.py" line="127"/>
+        <location filename="../algorithms/urban_delivery_distance.py" line="120"/>
         <source>Lendo zonas...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/urban_delivery_distance.py" line="138"/>
+        <location filename="../algorithms/urban_delivery_distance.py" line="129"/>
         <source>Nenhuma zona válida encontrada na camada de zonas.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/urban_delivery_distance.py" line="141"/>
+        <location filename="../algorithms/urban_delivery_distance.py" line="132"/>
         <source>Construindo o grafo a partir da rede viária...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/urban_delivery_distance.py" line="146"/>
+        <location filename="../algorithms/urban_delivery_distance.py" line="137"/>
         <source>Erro ao construir o grafo: {}</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/urban_delivery_distance.py" line="152"/>
+        <location filename="../algorithms/urban_delivery_distance.py" line="143"/>
         <source>O grafo construído possui menos de 2 vértices. Não é possível calcular as distâncias.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/urban_delivery_distance.py" line="163"/>
+        <location filename="../algorithms/urban_delivery_distance.py" line="154"/>
         <source>Não foi possível amarrar um ou mais depósitos à rede viária.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/urban_delivery_distance.py" line="165"/>
+        <location filename="../algorithms/urban_delivery_distance.py" line="156"/>
         <source>Não foi possível amarrar uma ou mais zonas à rede viária.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/urban_delivery_distance.py" line="168"/>
+        <location filename="../algorithms/urban_delivery_distance.py" line="159"/>
         <source>Calculando matriz de distâncias/tempos de viagem depósito-zona...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/urban_delivery_distance.py" line="176"/>
+        <location filename="../algorithms/urban_delivery_distance.py" line="167"/>
         <source>Erro ao calcular a matriz OD: {}</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/urban_delivery_distance.py" line="193"/>
+        <location filename="../algorithms/urban_delivery_distance.py" line="184"/>
         <source>Não foi possível criar a camada de saída.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/urban_delivery_distance.py" line="201"/>
+        <location filename="../algorithms/urban_delivery_distance.py" line="192"/>
         <source>Custo de entrega ao depósito mais próximo calculado para {count} zona(s).</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/urban_delivery_distance.py" line="212"/>
+        <location filename="../algorithms/urban_delivery_distance.py" line="203"/>
         <source>Distância de Entrega Urbana</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/urban_delivery_distance.py" line="215"/>
+        <location filename="../algorithms/urban_delivery_distance.py" line="206"/>
         <source>Indicadores Urbanos</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/urban_delivery_distance.py" line="221"/>
+        <location filename="../algorithms/urban_delivery_distance.py" line="212"/>
         <source>Calcula a distância ou tempo de entrega ao depósito mais próximo para cada zona de demanda (centroide de setor) a partir de uma camada de depósitos candidatos, usando caminhos mínimos na rede viária.
 
 Parâmetros:
@@ -1783,6 +1813,16 @@ Parâmetros:
 
 Retorno:
 - Cópia da camada de zonas com a coluna 'dist_entrega' (contendo a menor distância ou tempo de viagem até o depósito mais próximo).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../algorithms/urban_delivery_distance.py" line="110"/>
+        <source>camada de depósitos</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../algorithms/urban_delivery_distance.py" line="122"/>
+        <source>camada de zonas</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -2398,127 +2438,127 @@ Retorno:
 <context>
     <name>UrbanGravityAccessibility</name>
     <message>
-        <location filename="../algorithms/urban_gravity_accessibility.py" line="58"/>
+        <location filename="../algorithms/urban_gravity_accessibility.py" line="57"/>
         <source>Camada de rede viária (Linhas)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/urban_gravity_accessibility.py" line="65"/>
+        <location filename="../algorithms/urban_gravity_accessibility.py" line="64"/>
         <source>Camada de origem (pontos/centroides)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/urban_gravity_accessibility.py" line="72"/>
+        <location filename="../algorithms/urban_gravity_accessibility.py" line="71"/>
         <source>Camada de destinos (POIs)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/urban_gravity_accessibility.py" line="79"/>
+        <location filename="../algorithms/urban_gravity_accessibility.py" line="78"/>
         <source>Campo de peso/atratividade do destino (opcional, default 1 para todos)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/urban_gravity_accessibility.py" line="88"/>
+        <location filename="../algorithms/urban_gravity_accessibility.py" line="87"/>
         <source>Parâmetro de decaimento por distância (beta)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/urban_gravity_accessibility.py" line="97"/>
+        <location filename="../algorithms/urban_gravity_accessibility.py" line="96"/>
         <source>Origem com acessibilidade gravitacional</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/urban_gravity_accessibility.py" line="112"/>
+        <location filename="../algorithms/urban_gravity_accessibility.py" line="111"/>
         <source>Camada de rede viária inválida.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/urban_gravity_accessibility.py" line="114"/>
+        <location filename="../algorithms/urban_gravity_accessibility.py" line="113"/>
         <source>Camada de origem inválida.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/urban_gravity_accessibility.py" line="116"/>
+        <location filename="../algorithms/urban_gravity_accessibility.py" line="115"/>
         <source>Camada de destinos inválida.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/urban_gravity_accessibility.py" line="130"/>
+        <location filename="../algorithms/urban_gravity_accessibility.py" line="125"/>
         <source>Lendo origens...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/urban_gravity_accessibility.py" line="141"/>
+        <location filename="../algorithms/urban_gravity_accessibility.py" line="134"/>
         <source>Nenhuma origem válida encontrada na camada de origem.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/urban_gravity_accessibility.py" line="146"/>
+        <location filename="../algorithms/urban_gravity_accessibility.py" line="137"/>
         <source>Lendo destinos e pesos...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/urban_gravity_accessibility.py" line="160"/>
+        <location filename="../algorithms/urban_gravity_accessibility.py" line="153"/>
         <source>Nenhum destino válido encontrado na camada de destinos.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/urban_gravity_accessibility.py" line="163"/>
+        <location filename="../algorithms/urban_gravity_accessibility.py" line="156"/>
         <source>Construindo o grafo a partir da rede viária...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/urban_gravity_accessibility.py" line="168"/>
+        <location filename="../algorithms/urban_gravity_accessibility.py" line="161"/>
         <source>Erro ao construir o grafo: {}</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/urban_gravity_accessibility.py" line="174"/>
+        <location filename="../algorithms/urban_gravity_accessibility.py" line="167"/>
         <source>O grafo construído possui menos de 2 vértices. Não é possível calcular a acessibilidade.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/urban_gravity_accessibility.py" line="185"/>
+        <location filename="../algorithms/urban_gravity_accessibility.py" line="178"/>
         <source>Não foi possível amarrar uma ou mais origens à rede viária.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/urban_gravity_accessibility.py" line="187"/>
+        <location filename="../algorithms/urban_gravity_accessibility.py" line="180"/>
         <source>Não foi possível amarrar um ou mais destinos à rede viária.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/urban_gravity_accessibility.py" line="190"/>
+        <location filename="../algorithms/urban_gravity_accessibility.py" line="183"/>
         <source>Calculando matriz de distâncias origem-destino...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/urban_gravity_accessibility.py" line="197"/>
+        <location filename="../algorithms/urban_gravity_accessibility.py" line="190"/>
         <source>Erro ao calcular a matriz OD: {}</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/urban_gravity_accessibility.py" line="214"/>
+        <location filename="../algorithms/urban_gravity_accessibility.py" line="207"/>
         <source>Não foi possível criar a camada de saída.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/urban_gravity_accessibility.py" line="222"/>
+        <location filename="../algorithms/urban_gravity_accessibility.py" line="215"/>
         <source>Acessibilidade gravitacional calculada para {count} origem(ns).</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/urban_gravity_accessibility.py" line="233"/>
+        <location filename="../algorithms/urban_gravity_accessibility.py" line="226"/>
         <source>Acessibilidade Gravitacional Urbana</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/urban_gravity_accessibility.py" line="236"/>
+        <location filename="../algorithms/urban_gravity_accessibility.py" line="229"/>
         <source>Indicadores Urbanos</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/urban_gravity_accessibility.py" line="242"/>
+        <location filename="../algorithms/urban_gravity_accessibility.py" line="235"/>
         <source>Calcula a acessibilidade gravitacional de cada origem (ex.: centroides de setor) a uma camada de destinos ponderados (ex.: POIs, comércio, empregos), usando caminhos mínimos sobre a rede viária urbana.
 
 Parâmetros:
@@ -2530,6 +2570,16 @@ Parâmetros:
 
 Retorno:
 - Cópia da camada de origem com o campo 'acess_gravit' (índice de acessibilidade gravitacional).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../algorithms/urban_gravity_accessibility.py" line="127"/>
+        <source>camada de origem</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../algorithms/urban_gravity_accessibility.py" line="139"/>
+        <source>camada de destinos</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -2817,187 +2867,187 @@ Retorno:
 <context>
     <name>VrpCvrp</name>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="175"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="174"/>
         <source>Camada de depósito (Pontos/Polígonos)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="182"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="181"/>
         <source>Camada de demanda / clientes (Pontos/Polígonos)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="189"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="188"/>
         <source>Campo de peso/demanda (opcional, default=1.0)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="198"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="197"/>
         <source>Capacidade do veículo</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="207"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="206"/>
         <source>Camada de rede viária (Linhas) (opcional)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="215"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="214"/>
         <source>Aplicar busca local (2-opt e Or-opt)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="234"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="233"/>
         <source>Rotas geradas</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="240"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="239"/>
         <source>Paradas por rota (opcional)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="265"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="264"/>
         <source>Camada de depósito inválida.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="267"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="266"/>
         <source>Camada de demanda inválida.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="269"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="268"/>
         <source>A capacidade do veículo deve ser estritamente maior que zero.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="280"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="279"/>
         <source>Nenhum ponto de depósito válido encontrado.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="287"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="286"/>
         <source>Lendo pontos de demanda...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="318"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="317"/>
         <source>A demanda do nó excede a capacidade máxima do veículo ({weight} &gt; {cap}).</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="331"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="330"/>
         <source>Nenhum ponto de demanda válido encontrado.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="414"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="442"/>
         <source>Construindo o grafo e calculando a matriz OD na rede...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="456"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="476"/>
         <source>Erro ao construir o grafo: {}</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="463"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="483"/>
         <source>O grafo construído possui menos de 2 vértices.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="482"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="502"/>
         <source>Erro ao calcular a matriz OD: {}</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="487"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="507"/>
         <source>Calculando matriz de distâncias euclidianas...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="696"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="716"/>
         <source>Roteirização de Veículos Capacitados (CVRP)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="699"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="719"/>
         <source>Roteirização</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="222"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="221"/>
         <source>Backend de otimização</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="222"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="221"/>
         <source>Automático (OR-Tools quando disponível)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="222"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="221"/>
         <source>Python puro (heurística)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="222"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="221"/>
         <source>OR-Tools</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="286"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="285"/>
         <source>Lendo pontos de demanda…</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="448"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="468"/>
         <source>Janela de análise: {}</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="452"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="472"/>
         <source>Construindo o grafo…</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="470"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="490"/>
         <source>Calculando a matriz OD…</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="486"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="506"/>
         <source>Calculando matriz de distâncias euclidianas…</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="502"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="522"/>
         <source>Otimizando (OR-Tools)…</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="504"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="524"/>
         <source>Otimizando (heurística Python)…</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="512"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="532"/>
         <source>Executando a otimização CVRP...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="530"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="550"/>
         <source>Roteirização concluída. Rotas geradas: {count} | Backend: {backend} | Distância Total: {dist:.2f}</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="537"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="557"/>
         <source>Gravando as saídas…</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="705"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="725"/>
         <source>Resolve o Problema de Roteirização de Veículos Capacitados (CVRP) a partir de uma camada de depósito e uma camada de pontos de demanda (clientes).
 
 Constroi rotas que iniciam e terminam no depósito, respeitando a capacidade máxima do veículo, utilizando a heurística de economias de Clarke &amp; Wright (1964) e refinamento opcional por busca local 2-opt (Lin, 1965) e Or-opt (Or, 1976).
@@ -3017,57 +3067,57 @@ Saídas:
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="334"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="333"/>
         <source>depósito</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="335"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="334"/>
         <source>demanda</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="343"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="342"/>
         <source>SRC da rede: {}</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="399"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="427"/>
         <source>SRC de depósito: {} → {}</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="400"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="428"/>
         <source>SRC de demanda: {} → {}</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="427"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="455"/>
         <source>Janela de análise calculada a partir dos pontos é inválida: {}</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="442"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="462"/>
         <source>Os pontos ({}) não caem na área da rede viária (rede em {}) — confira o SRC das camadas.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="390"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="420"/>
         <source>Transformação {src} → {dst} ok (prova ({x1:.4f}, {y1:.4f}) → ({x2:.4f}, {y2:.4f}))</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="370"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="407"/>
         <source>Transformação para EPSG:5880 falhou ({exc}) — adotando fallback para {utm_auth}</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="382"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="405"/>
         <source>Transformação para UTM ({utm}) falhou: {exc}</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="396"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="404"/>
         <source>Transformação de coordenadas falhou: {exc}</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3075,187 +3125,187 @@ Saídas:
 <context>
     <name>VrpTsp</name>
     <message>
-        <location filename="../algorithms/vrp_tsp.py" line="177"/>
+        <location filename="../algorithms/vrp_tsp.py" line="176"/>
         <source>Camada do ponto inicial</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_tsp.py" line="184"/>
+        <location filename="../algorithms/vrp_tsp.py" line="183"/>
         <source>Camada de pontos a visitar</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_tsp.py" line="191"/>
+        <location filename="../algorithms/vrp_tsp.py" line="190"/>
         <source>Camada do ponto final (opcional; vazia = a rota fecha no ponto inicial)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_tsp.py" line="199"/>
+        <location filename="../algorithms/vrp_tsp.py" line="198"/>
         <source>Camada de rede viária (Linhas) (opcional)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_tsp.py" line="207"/>
+        <location filename="../algorithms/vrp_tsp.py" line="206"/>
         <source>Aplicar busca local (2-opt e Or-opt)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_tsp.py" line="226"/>
+        <location filename="../algorithms/vrp_tsp.py" line="225"/>
         <source>Ordem de visita</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_tsp.py" line="232"/>
+        <location filename="../algorithms/vrp_tsp.py" line="231"/>
         <source>Rota (trechos)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_tsp.py" line="256"/>
+        <location filename="../algorithms/vrp_tsp.py" line="255"/>
         <source>Camada do ponto inicial inválida.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_tsp.py" line="258"/>
+        <location filename="../algorithms/vrp_tsp.py" line="257"/>
         <source>Camada de pontos a visitar inválida.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_tsp.py" line="269"/>
+        <location filename="../algorithms/vrp_tsp.py" line="268"/>
         <source>Nenhum ponto inicial válido encontrado.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_tsp.py" line="275"/>
+        <location filename="../algorithms/vrp_tsp.py" line="274"/>
         <source>Lendo pontos a visitar...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_tsp.py" line="293"/>
+        <location filename="../algorithms/vrp_tsp.py" line="292"/>
         <source>A camada de pontos a visitar está vazia.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_tsp.py" line="305"/>
+        <location filename="../algorithms/vrp_tsp.py" line="304"/>
         <source>Nenhum ponto final válido encontrado na camada fornecida.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_tsp.py" line="440"/>
+        <location filename="../algorithms/vrp_tsp.py" line="435"/>
         <source>Construindo o grafo e calculando a matriz OD na rede...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_tsp.py" line="482"/>
+        <location filename="../algorithms/vrp_tsp.py" line="469"/>
         <source>Erro ao construir o grafo: {}</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_tsp.py" line="490"/>
+        <location filename="../algorithms/vrp_tsp.py" line="477"/>
         <source>O grafo construído possui menos de 2 vértices.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_tsp.py" line="515"/>
+        <location filename="../algorithms/vrp_tsp.py" line="502"/>
         <source>Erro ao calcular a matriz OD: {}</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_tsp.py" line="534"/>
+        <location filename="../algorithms/vrp_tsp.py" line="521"/>
         <source>Calculando matriz de distâncias euclidianas...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_tsp.py" line="559"/>
+        <location filename="../algorithms/vrp_tsp.py" line="546"/>
         <source>Executando a otimização TSP...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_tsp.py" line="801"/>
+        <location filename="../algorithms/vrp_tsp.py" line="788"/>
         <source>Caixeiro Viajante (TSP)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_tsp.py" line="804"/>
+        <location filename="../algorithms/vrp_tsp.py" line="791"/>
         <source>Roteirização</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_tsp.py" line="214"/>
+        <location filename="../algorithms/vrp_tsp.py" line="213"/>
         <source>Backend de otimização</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_tsp.py" line="214"/>
+        <location filename="../algorithms/vrp_tsp.py" line="213"/>
         <source>Automático (OR-Tools quando disponível)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_tsp.py" line="214"/>
+        <location filename="../algorithms/vrp_tsp.py" line="213"/>
         <source>Python puro (heurística)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_tsp.py" line="214"/>
+        <location filename="../algorithms/vrp_tsp.py" line="213"/>
         <source>OR-Tools</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_tsp.py" line="274"/>
+        <location filename="../algorithms/vrp_tsp.py" line="273"/>
         <source>Lendo pontos a visitar…</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_tsp.py" line="474"/>
+        <location filename="../algorithms/vrp_tsp.py" line="461"/>
         <source>Janela de análise: {}</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_tsp.py" line="478"/>
+        <location filename="../algorithms/vrp_tsp.py" line="465"/>
         <source>Construindo o grafo…</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_tsp.py" line="495"/>
+        <location filename="../algorithms/vrp_tsp.py" line="482"/>
         <source>Não foi possível amarrar um ou mais pontos à rede viária. Verifique se os pontos estão próximos da malha e no mesmo território dela.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_tsp.py" line="503"/>
+        <location filename="../algorithms/vrp_tsp.py" line="490"/>
         <source>Calculando a matriz OD…</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_tsp.py" line="525"/>
+        <location filename="../algorithms/vrp_tsp.py" line="512"/>
         <source>A rede viária possui {} par(es) de pontos sem caminho entre si. Verifique se a rede está desconectada.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_tsp.py" line="533"/>
+        <location filename="../algorithms/vrp_tsp.py" line="520"/>
         <source>Calculando matriz de distâncias euclidianas…</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_tsp.py" line="549"/>
+        <location filename="../algorithms/vrp_tsp.py" line="536"/>
         <source>Otimizando (OR-Tools)…</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_tsp.py" line="551"/>
+        <location filename="../algorithms/vrp_tsp.py" line="538"/>
         <source>Otimizando (heurística Python)…</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_tsp.py" line="575"/>
+        <location filename="../algorithms/vrp_tsp.py" line="562"/>
         <source>Otimização TSP concluída. Pontos: {count} | Modo: {dist_mode} | Backend: {backend} | Distância Total: {dist:.2f}</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_tsp.py" line="582"/>
+        <location filename="../algorithms/vrp_tsp.py" line="569"/>
         <source>Gravando as saídas…</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_tsp.py" line="810"/>
+        <location filename="../algorithms/vrp_tsp.py" line="797"/>
         <source>Resolve o Problema do Caixeiro Viajante (TSP) a partir de um ponto inicial, uma camada de pontos a visitar e, opcionalmente, um ponto final ou rede viária.
 
 Determina a sequência de visita de menor distância total utilizando as heurísticas do Vizinho Mais Próximo (Flood, 1956) com refinamento opcional por busca local 2-opt (Lin, 1965) e Or-opt (Or, 1976), ou o solver de programação por restrições do Google OR-Tools.
@@ -3274,67 +3324,67 @@ Saídas:
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_tsp.py" line="308"/>
+        <location filename="../algorithms/vrp_tsp.py" line="307"/>
         <source>ponto inicial</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_tsp.py" line="309"/>
+        <location filename="../algorithms/vrp_tsp.py" line="308"/>
         <source>pontos a visitar</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_tsp.py" line="312"/>
+        <location filename="../algorithms/vrp_tsp.py" line="311"/>
         <source>ponto final</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_tsp.py" line="320"/>
+        <location filename="../algorithms/vrp_tsp.py" line="319"/>
         <source>SRC da rede: {}</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_tsp.py" line="413"/>
+        <location filename="../algorithms/vrp_tsp.py" line="409"/>
         <source>SRC de ponto inicial: {} → {}</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_tsp.py" line="414"/>
+        <location filename="../algorithms/vrp_tsp.py" line="410"/>
         <source>SRC de pontos a visitar: {} → {}</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_tsp.py" line="416"/>
+        <location filename="../algorithms/vrp_tsp.py" line="412"/>
         <source>SRC de ponto final: {} → {}</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_tsp.py" line="453"/>
+        <location filename="../algorithms/vrp_tsp.py" line="448"/>
         <source>Janela de análise calculada a partir dos pontos é inválida: {}</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_tsp.py" line="468"/>
+        <location filename="../algorithms/vrp_tsp.py" line="455"/>
         <source>Os pontos ({}) não caem na área da rede viária (rede em {}) — confira o SRC das camadas.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_tsp.py" line="401"/>
+        <location filename="../algorithms/vrp_tsp.py" line="402"/>
         <source>Transformação {src} → {dst} ok (prova ({x1:.4f}, {y1:.4f}) → ({x2:.4f}, {y2:.4f}))</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_tsp.py" line="380"/>
+        <location filename="../algorithms/vrp_tsp.py" line="387"/>
         <source>Transformação para EPSG:5880 falhou ({exc}) — adotando fallback para {utm_auth}</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_tsp.py" line="392"/>
+        <location filename="../algorithms/vrp_tsp.py" line="385"/>
         <source>Transformação para UTM ({utm}) falhou: {exc}</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_tsp.py" line="408"/>
+        <location filename="../algorithms/vrp_tsp.py" line="384"/>
         <source>Transformação de coordenadas falhou: {exc}</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3775,132 +3825,132 @@ Retorno:
 <context>
     <name>WasteDestinationDistance</name>
     <message>
-        <location filename="../algorithms/waste_destination_distance.py" line="74"/>
+        <location filename="../algorithms/waste_destination_distance.py" line="73"/>
         <source>Camada de rede viária (Linhas)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_destination_distance.py" line="81"/>
+        <location filename="../algorithms/waste_destination_distance.py" line="80"/>
         <source>Camada de destinos de resíduos - aterro/transbordo/ecoponto (Pontos)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_destination_distance.py" line="88"/>
+        <location filename="../algorithms/waste_destination_distance.py" line="87"/>
         <source>Camada de setores/origens de coleta (Pontos ou Polígonos)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_destination_distance.py" line="95"/>
+        <location filename="../algorithms/waste_destination_distance.py" line="94"/>
         <source>Critério de custo</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_destination_distance.py" line="95"/>
+        <location filename="../algorithms/waste_destination_distance.py" line="94"/>
         <source>Distância</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_destination_distance.py" line="95"/>
+        <location filename="../algorithms/waste_destination_distance.py" line="94"/>
         <source>Tempo de viagem</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_destination_distance.py" line="103"/>
+        <location filename="../algorithms/waste_destination_distance.py" line="102"/>
         <source>Setores de coleta com distância ao destino</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_destination_distance.py" line="117"/>
+        <location filename="../algorithms/waste_destination_distance.py" line="116"/>
         <source>Camada de rede viária inválida.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_destination_distance.py" line="119"/>
+        <location filename="../algorithms/waste_destination_distance.py" line="118"/>
         <source>Camada de destinos de resíduos inválida.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_destination_distance.py" line="121"/>
+        <location filename="../algorithms/waste_destination_distance.py" line="120"/>
         <source>Camada de setores/origens inválida.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_destination_distance.py" line="130"/>
+        <location filename="../algorithms/waste_destination_distance.py" line="126"/>
         <source>Lendo pontos de destino (aterros/transbordos/ecopontos)...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_destination_distance.py" line="140"/>
+        <location filename="../algorithms/waste_destination_distance.py" line="135"/>
         <source>Nenhum ponto de destino válido encontrado.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_destination_distance.py" line="145"/>
+        <location filename="../algorithms/waste_destination_distance.py" line="138"/>
         <source>Lendo setores/origens de coleta...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_destination_distance.py" line="160"/>
+        <location filename="../algorithms/waste_destination_distance.py" line="147"/>
         <source>Nenhum setor/origem de coleta válido encontrado.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_destination_distance.py" line="163"/>
+        <location filename="../algorithms/waste_destination_distance.py" line="150"/>
         <source>Construindo o grafo a partir da rede viária...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_destination_distance.py" line="168"/>
+        <location filename="../algorithms/waste_destination_distance.py" line="155"/>
         <source>Erro ao construir o grafo: {}</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_destination_distance.py" line="174"/>
+        <location filename="../algorithms/waste_destination_distance.py" line="161"/>
         <source>O grafo construído possui menos de 2 vértices. Não é possível calcular as distâncias.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_destination_distance.py" line="185"/>
+        <location filename="../algorithms/waste_destination_distance.py" line="172"/>
         <source>Não foi possível amarrar um ou mais pontos de destino à rede viária.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_destination_distance.py" line="187"/>
+        <location filename="../algorithms/waste_destination_distance.py" line="174"/>
         <source>Não foi possível amarrar um ou mais setores/origens à rede viária.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_destination_distance.py" line="190"/>
+        <location filename="../algorithms/waste_destination_distance.py" line="177"/>
         <source>Calculando matriz de distâncias/tempos de viagem destino-setor...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_destination_distance.py" line="198"/>
+        <location filename="../algorithms/waste_destination_distance.py" line="185"/>
         <source>Erro ao calcular a matriz OD: {}</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_destination_distance.py" line="215"/>
+        <location filename="../algorithms/waste_destination_distance.py" line="202"/>
         <source>Não foi possível criar a camada de saída.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_destination_distance.py" line="223"/>
+        <location filename="../algorithms/waste_destination_distance.py" line="210"/>
         <source>Distância ao destino de resíduos mais próximo calculada para {count} setor(es).</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_destination_distance.py" line="234"/>
+        <location filename="../algorithms/waste_destination_distance.py" line="221"/>
         <source>Distância ao Destino de Resíduos</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_destination_distance.py" line="237"/>
+        <location filename="../algorithms/waste_destination_distance.py" line="224"/>
         <source>Logística Especializada — Coleta de Lixo</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_destination_distance.py" line="243"/>
+        <location filename="../algorithms/waste_destination_distance.py" line="230"/>
         <source>Calcula a distância ou tempo de viagem ao ponto de destino de resíduos mais próximo (aterro sanitário, estação de transbordo, ecoponto) para cada setor ou centroide de coleta, utilizando caminhos mínimos na rede viária.
 
 Parâmetros:
@@ -3911,6 +3961,16 @@ Parâmetros:
 
 Retorno:
 - Cópia da camada de origens com a coluna 'dist_destino' (menor distância em km ou tempo em min até o destino mais próximo).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../algorithms/waste_destination_distance.py" line="128"/>
+        <source>camada de destinos de resíduos</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../algorithms/waste_destination_distance.py" line="140"/>
+        <source>camada de setores/origens</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

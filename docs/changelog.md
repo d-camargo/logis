@@ -2,6 +2,10 @@
 
 Este documento registra as principais alterações e evoluções do plugin **logis** organizadas por versão.
 
+## 0.6.4 - 2026-09-25
+
+- **Localização de instalações e indicadores de distância: leitura de SRC conferida** — ponto que não transforma agora dá erro com diagnóstico em vez de sumir ou virar graus.
+
 ## 0.6.3 - 2026-09-25
 
 - **TSP e CVRP: transformação de SRC que não fazia nada** — no Windows/QGIS 4 os pontos continuavam em graus e o modo Rede falhava com "Forward transform … of bounding box failed"; agora toda transformação é conferida, com fallback para UTM SIRGAS da zona e diagnóstico (SRC, ponto de prova, versões do QGIS e do PROJ) no log.
