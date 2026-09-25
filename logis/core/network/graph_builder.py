@@ -160,7 +160,7 @@ def build_graph(
         # Always reproject to memory layer to ensure metric calculation and avoid altering original layer
         reproj_params = {
             "INPUT": layer,
-            "TARGET_CRS": crs_obj.authid(),
+            "TARGET_CRS": crs_obj,
             "OUTPUT": "memory:"
         }
         reproj_res = processing.run("native:reprojectlayer", reproj_params)
