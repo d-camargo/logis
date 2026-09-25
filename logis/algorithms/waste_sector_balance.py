@@ -30,9 +30,11 @@ from qgis.core import (
 )
 
 try:
+    from ..core.crs_transform import TransformCheckError, length_meter
     from ..core.indicators.waste import compute_route_balance
     from ..core import qgis_compat
 except ImportError:
+    from core.crs_transform import TransformCheckError, length_meter
     from core.indicators.waste import compute_route_balance
     from core import qgis_compat
 
@@ -188,6 +190,11 @@ class WasteSectorBalance(QgsProcessingAlgorithm):
 
         feedback.pushInfo(self.tr("Agrupando feições e calculando cargas e distâncias de rotas por setor..."))
 
+        try:
+            length_fn = length_meter(routes_source.sourceCrs(), context)
+        except TransformCheckError as exc:
+            raise QgsProcessingException(str(exc))
+
         # sector_val -> { route_key -> {'load_vals': [], 'dist_vals': [], 'geom_len_m': 0.0} }
         sector_grouped = {}
 
@@ -208,7 +215,7 @@ class WasteSectorBalance(QgsProcessingAlgorithm):
                 route_key = feat_counter
 
             geom = feature.geometry()
-            length_m = geom.length() if (geom and not geom.isEmpty()) else 0.0
+            length_m = length_fn(geom)
 
             sec_dict = sector_grouped.setdefault(sec_val, {})
             r_data = sec_dict.setdefault(route_key, {'load_vals': [], 'dist_vals': [], 'geom_len_m': 0.0})

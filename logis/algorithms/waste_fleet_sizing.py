@@ -30,9 +30,11 @@ from qgis.core import (
 )
 
 try:
+    from ..core.crs_transform import TransformCheckError, length_meter
     from ..core.indicators.waste import estimate_fleet_size
     from ..core import qgis_compat
 except ImportError:
+    from core.crs_transform import TransformCheckError, length_meter
     from core.indicators.waste import estimate_fleet_size
     from core import qgis_compat
 
@@ -156,6 +158,11 @@ class WasteFleetSizing(QgsProcessingAlgorithm):
 
         feedback.pushInfo(self.tr("Lendo rotas e somando distâncias por setor..."))
 
+        try:
+            length_fn = length_meter(routes_source.sourceCrs(), context)
+        except TransformCheckError as exc:
+            raise QgsProcessingException(str(exc))
+
         # sector_key -> { route_key -> distância acumulada (m) }
         sector_routes_m = {}
 
@@ -170,7 +177,7 @@ class WasteFleetSizing(QgsProcessingAlgorithm):
             route_val = feature.attribute(route_id_idx)
 
             geom = feature.geometry()
-            length_m = geom.length() if (geom and not geom.isEmpty()) else 0.0
+            length_m = length_fn(geom)
 
             routes_m = sector_routes_m.setdefault(sec_val, {})
             routes_m[route_val] = routes_m.get(route_val, 0.0) + length_m

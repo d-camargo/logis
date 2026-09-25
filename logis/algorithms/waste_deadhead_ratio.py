@@ -29,9 +29,11 @@ from qgis.core import (
 )
 
 try:
+    from ..core.crs_transform import TransformCheckError, length_meter
     from ..core.indicators.waste import compute_deadhead_ratio
     from ..core import qgis_compat
 except ImportError:
+    from core.crs_transform import TransformCheckError, length_meter
     from core.indicators.waste import compute_deadhead_ratio
     from core import qgis_compat
 
@@ -115,6 +117,11 @@ class WasteDeadheadRatio(QgsProcessingAlgorithm):
 
         feedback.pushInfo(self.tr("Lendo feições da camada e calculando comprimentos..."))
 
+        try:
+            length_fn = length_meter(routes_source.sourceCrs(), context)
+        except TransformCheckError as exc:
+            raise QgsProcessingException(str(exc))
+
         lengths_km = []
         deadhead_flags = []
         route_ids = []
@@ -124,7 +131,7 @@ class WasteDeadheadRatio(QgsProcessingAlgorithm):
                 return {}
 
             geom = feature.geometry()
-            length_m = geom.length() if (geom and not geom.isEmpty()) else 0.0
+            length_m = length_fn(geom)
             length_km = length_m / 1000.0
 
             is_dh = bool(feature.attribute(deadhead_idx)) if feature.attribute(deadhead_idx) is not None else False

@@ -17,6 +17,7 @@ from qgis.core import (
 )
 
 from ..core import qgis_compat
+from ..core.crs_transform import TransformCheckError, length_meter
 from ..core.indicators.waste import sector_waste_generation, allocate_generation_by_street_length
 
 
@@ -179,6 +180,11 @@ class WasteGenerationEstimate(QgsProcessingAlgorithm):
             streets_by_sector.setdefault(str(sector_key), []).append(feature)
 
         # 3) Calcular a geração por setor e ratear por comprimento de trecho
+        try:
+            length_fn = length_meter(streets_source.sourceCrs(), context)
+        except TransformCheckError as exc:
+            raise QgsProcessingException(str(exc))
+
         waste_by_fid = {}
         for sector_key, street_features in streets_by_sector.items():
             if sector_key not in population_by_sector:
@@ -190,7 +196,7 @@ class WasteGenerationEstimate(QgsProcessingAlgorithm):
             total_generation_kg = sector_waste_generation(
                 population_by_sector[sector_key], per_capita_kg_day=per_capita, coverage_fraction=coverage_fraction
             )
-            lengths = [feature.geometry().length() for feature in street_features]
+            lengths = [length_fn(feature.geometry()) for feature in street_features]
             allocations = allocate_generation_by_street_length(total_generation_kg, lengths)
 
             for feature, waste_kg in zip(street_features, allocations):

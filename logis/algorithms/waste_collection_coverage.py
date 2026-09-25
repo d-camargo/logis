@@ -30,9 +30,11 @@ from qgis.core import (
 )
 
 try:
+    from ..core.crs_transform import TransformCheckError, length_meter
     from ..core.indicators.waste import compute_collection_coverage
     from ..core import qgis_compat
 except ImportError:
+    from core.crs_transform import TransformCheckError, length_meter
     from core.indicators.waste import compute_collection_coverage
     from core import qgis_compat
 
@@ -153,12 +155,18 @@ class WasteCollectionCoverage(QgsProcessingAlgorithm):
 
         feedback.pushInfo(self.tr("Calculando extensão exigida por setor..."))
 
+        try:
+            req_length_fn = length_meter(req_source.sourceCrs(), context)
+            cov_length_fn = length_meter(cov_source.sourceCrs(), context)
+        except TransformCheckError as exc:
+            raise QgsProcessingException(str(exc))
+
         required_by_sector = {}
         for feature in req_source.getFeatures():
             if feedback.isCanceled():
                 return {}
             geom = feature.geometry()
-            length_m = geom.length() if (geom and not geom.isEmpty()) else 0.0
+            length_m = req_length_fn(geom)
             length_km = length_m / 1000.0
 
             sid = None
@@ -188,7 +196,7 @@ class WasteCollectionCoverage(QgsProcessingAlgorithm):
                 continue
 
             geom = feature.geometry()
-            length_m = geom.length() if (geom and not geom.isEmpty()) else 0.0
+            length_m = cov_length_fn(geom)
             length_km = length_m / 1000.0
 
             sid = None
