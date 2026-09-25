@@ -2,7 +2,7 @@
 
 Complemento (plugin) do QGIS para apoiar projetos de logística no Brasil.
 
-**Versão:** 0.1.11 (`experimental`)  
+**Versão:** consulte [`logis/metadata.txt`](logis/metadata.txt); histórico completo no [changelog](docs/changelog.md).  
 **Licença:** GPL-3.0  
 **Idioma:** **Português** | [English](#english)
 
@@ -39,48 +39,53 @@ O plugin adota a filosofia de **zero dependências externas obrigatórias**:
   - `OR-Tools`: Backend opcional para otimização avançada, com importação *lazy* e fallback automático para as heurísticas em Python puro.
 - **Referencial Espacial:** Todos os dados são processados e entregues em SIRGAS 2000 / EPSG:4674, utilizando CRS métrico (UTM) apenas para computações intermediárias de distância e tempo.
 
-### Algoritmos de Processamento (25 registrados)
+### Algoritmos de Processamento (28 registrados)
 
-O plugin atua como um **Processing Provider** (`logis`), expondo os seguintes algoritmos na Caixa de Ferramentas do QGIS:
+O plugin atua como um **Processing Provider** (`logis`), expondo os seguintes algoritmos na Caixa de Ferramentas do QGIS, agrupados exatamente como aparecem lá (grupo/`displayName()` de cada algoritmo em `logis/provider.py`):
 
-#### Módulo Urbano
-- `logis:urban_network_density` — Densidade viária urbana.
-- `logis:urban_network_connectivity` — Conectividade de rede viária urbana (índices α, β, γ).
-- `logis:urban_mean_circuity` — Circuidade média da malha viária urbana.
-- `logis:urban_cargo_restriction` — Índice de restrição de circulação de veículos de carga.
-- `logis:urban_demand_density` — Densidade de demanda urbana por área/setor.
-- `logis:urban_gravity_accessibility` — Acessibilidade gravitacional a pontos de interesse/atratores.
-- `logis:urban_edge_betweenness` — Centralidade de intermediação de arestas (*edge betweenness*) por amostragem.
-- `logis:urban_delivery_distance` — Distância e custo médio de entrega ao depósito mais próximo.
+#### Dados
+- `logis:load_osm_network` — Baixar rede viária urbana (OSM, município): baixa e processa a rede viária urbana de um município a partir do OpenStreetMap.
+- `logis:load_snv_network` — Baixar rede viária federal (SNV/DNIT, UF): baixa e processa a rede viária federal de uma UF a partir dos dados do SNV/DNIT.
 
-#### Módulo Regional
-- `logis:regional_network_density` — Densidade de rede rodoviária regional por estado/região.
-- `logis:regional_pavement_percentage` — Percentual de pavimentação da malha rodoviária.
-- `logis:regional_critical_links` — Identificação de arcos e conexões críticas na rede regional (*cut links*).
+#### Indicadores Urbanos
+- `logis:urban_network_density` — Densidade de Rede Viária Urbana.
+- `logis:urban_network_connectivity` — Conectividade de Rede Viária Urbana (índices α, β, γ).
+- `logis:urban_mean_circuity` — Circuidade Média de Rede Viária Urbana.
+- `logis:urban_cargo_restriction` — Índice de Restrição de Circulação de Carga.
+- `logis:urban_demand_density` — Densidade de Demanda Urbana por área/setor.
+- `logis:urban_gravity_accessibility` — Acessibilidade Gravitacional Urbana a pontos de interesse/atratores.
+- `logis:urban_edge_betweenness` — Centralidade de Intermediação de Arestas (Betweenness) por amostragem.
+- `logis:urban_delivery_distance` — Distância de Entrega Urbana e custo médio ao depósito mais próximo.
 
-#### Módulo de Localização de Instalações
+#### Indicadores Regionais
+- `logis:regional_network_density` — Densidade da Malha Rodoviária Regional por estado/região.
+- `logis:regional_pavement_percentage` — Percentual de Pavimentação e Duplicação da malha rodoviária.
+- `logis:regional_critical_links` — Pontes/Arcos Críticos da Malha Regional (*cut links*).
+
+#### Localização de Instalações
 - `logis:facility_p_median` — Localização p-Mediana (Teitz-Bart): minimiza o custo/distância total ponderado de deslocamento da demanda às instalações.
 - `logis:facility_mclp` — Localização de Cobertura Máxima (MCLP): maximiza a demanda coberta dentro do raio limite com k instalações.
 - `logis:facility_lscp` — Localização de Cobertura de Conjuntos (LSCP): minimiza o número de instalações para cobrir 100% da demanda.
 
-#### Módulo de Roteirização
+#### Roteirização
 - `logis:vrp_tsp` — Caixeiro Viajante (TSP): sequenciamento otimizado de visitas a pontos por um único veículo.
 - `logis:vrp_cvrp` — Roteirização de Veículos Capacitados (CVRP): rotas otimizadas com restrição de capacidade a partir de um depósito.
 
-#### Módulo Especializado — Coleta de Lixo
+#### Logística Especializada — Coleta de Lixo
 - `logis:waste_generation_estimate` — Estimativa de Geração de Resíduos Sólidos: estima a geração diária e semanal por trecho de via.
-- `logis:waste_districting` — Setorização (Districting): particiona a rede viária em setores de coleta contíguos e balanceados por carga (sementes farthest-first + crescimento de regiões + troca de trechos de fronteira).
+- `logis:waste_districting` — Setorização de Coleta de Resíduos (Districting): particiona a rede viária em setores de coleta contíguos e balanceados por carga (sementes farthest-first + crescimento de regiões + troca de trechos de fronteira).
 - `logis:waste_cpp_route` — Roteirização por Arcos (CPP): percurso euleriano de menor custo percorrendo todas as vias da rede (Chinese Postman Problem).
 - `logis:waste_rpp_route` — Roteirização por Arcos (RPP): percurso otimizado cobrindo apenas o subconjunto de vias com coleta ativa (Rural Postman Problem).
 - `logis:waste_carp_route` — Roteirização por Arcos Capacitada (CARP): rotas de veículos capacitados para coleta por arcos (Capacitated Arc Routing Problem).
 - `logis:waste_fleet_sizing` — Dimensionamento de Frota de Coleta: calcula o número de caminhões coletores segundo volume de resíduos, turnos e capacidade nominal.
-- `logis:waste_deadhead_ratio` — Razão de Deadhead: extensão produtiva (coleta) vs. improdutiva (deadhead/conector) e a razão deadhead_km / productive_km, por rota e no total.
-- `logis:waste_sector_balance` — Equilíbrio entre Setores: métricas de variância, amplitude e desvio de carga e extensão entre setores.
+- `logis:waste_deadhead_ratio` — Razão de Deadhead por Rota: extensão produtiva (coleta) vs. improdutiva (deadhead/conector) e a razão deadhead_km / productive_km, por rota e no total.
+- `logis:waste_sector_balance` — Equilíbrio entre Setores/Rotas de Coleta: métricas de variância, amplitude e desvio de carga e extensão entre setores.
 - `logis:waste_destination_distance` — Distância ao Destino de Resíduos: distância e tempo de deslocamento ao aterro sanitário ou ponto de destino mais próximo.
 - `logis:waste_collection_coverage` — Cobertura da Coleta de Resíduos por Setor: extensão de via exigida vs. coberta e percentual de atendimento por setor.
 
 ### Interface com Usuário (GUI)
 
+- **Painel de Rede Viária** (`gui/network_dock.py`): Interface dock em duas abas — Município (OSM) e Estado (SNV/DNIT) —, baixa arcos e nós direto para o projeto, com barra de progresso do download.
 - **Painel de Logística Urbana** (`gui/urban_dock.py`): Interface dock interativa em três abas — Rede, Demanda e Carga —, com o seletor de rede viária e o painel de resultados compartilhados fora das abas. A restrição de circulação de carga tem botão e campo de expressão próprios na aba Carga, executada de forma independente do pacote de indicadores de rede. A centralidade de intermediação (aba Rede) aceita uma semente opcional de amostragem, para tornar o resultado reproduzível entre execuções.
 - **Painel de Logística Regional** (`gui/regional_dock.py`): Interface dock dedicada a análises de redes rodoviárias estaduais e nacionais.
 - **Painel de Roteirização** (`gui/routing_dock.py`): Interface dock em duas abas — TSP e CVRP —, com seletor de rede viária compartilhado e painel de resultados único no rodapé.
@@ -92,27 +97,31 @@ O plugin atua como um **Processing Provider** (`logis`), expondo os seguintes al
 
 ```
 logis/
-├── __init__.py               # Ponto de entrada do plugin
-├── logis_plugin.py           # Registrador de GUI e Provider
-├── provider.py               # Processing Provider "logis" (25 algoritmos)
-├── metadata.txt              # Metadados do plugin QGIS (versão 0.1.11)
-├── Makefile                  # Comandos de deploy e testes de sintaxe
-├── core/                     # Núcleo de lógica técnica
-│   ├── network/              # Pipelines OSM/SNV, construtor de grafos e matriz OD
-│   ├── connectors/           # Conectores Overpass OSM e WFS
-│   ├── indicators/           # Indicadores urbanos, regionais e de coleta de lixo (waste.py)
-│   ├── routing/              # VRP, arc routing e setorização
-│   ├── location/             # Facility location (p-mediana, MCLP, LSCP)
-│   ├── downloader.py         # Downloader com cache e suporte a mirrors
-│   ├── sources.py            # Fontes de dados declarativas (nacionais/estaduais)
-│   ├── qgis_compat.py        # Compatibilidade PyQGIS
-│   ├── data_backend.py       # Tratamento de backends de dados
-│   └── optim_backend.py      # Gerenciamento de otimizadores (OR-Tools / Python puro)
-├── algorithms/               # Algoritmos expostos no Processing (8 urbanos + 3 regionais + 3 de localização + 1 de roteirização + 10 de coleta de lixo)
-├── gui/                      # Painéis dock e diálogos de interface
-├── i18n/                     # Traduções PT-BR/EN
-├── tools/                    # Scripts de teste e manutenção
-└── docs/                     # Documentação e especificações
+├── logis/                    # Código-fonte do plugin QGIS
+│   ├── __init__.py           # Ponto de entrada do plugin
+│   ├── logis_plugin.py       # Registrador de GUI e Provider
+│   ├── provider.py           # Processing Provider "logis" (28 algoritmos)
+│   ├── metadata.txt          # Metadados do plugin QGIS (versão atual)
+│   ├── core/                 # Núcleo de lógica técnica
+│   │   ├── network/          # Pipelines OSM/SNV, construtor de grafos e matriz OD
+│   │   ├── connectors/       # Conectores Overpass OSM e WFS
+│   │   ├── indicators/       # Indicadores urbanos, regionais e de coleta de lixo (waste.py)
+│   │   ├── routing/          # VRP, arc routing e setorização
+│   │   ├── location/         # Facility location (p-mediana, MCLP, LSCP)
+│   │   ├── downloader.py     # Downloader com cache e suporte a mirrors
+│   │   ├── sources.py        # Fontes de dados declarativas (nacionais/estaduais)
+│   │   ├── qgis_compat.py    # Compatibilidade PyQGIS
+│   │   ├── data_backend.py   # Tratamento de backends de dados
+│   │   └── optim_backend.py  # Gerenciamento de otimizadores (OR-Tools / Python puro)
+│   ├── algorithms/           # Algoritmos expostos no Processing (2 de dados + 8 urbanos + 3 regionais + 3 de localização + 2 de roteirização + 10 de coleta de lixo)
+│   ├── gui/                  # Painéis dock e diálogos de interface
+│   └── i18n/                 # Traduções PT-BR/EN
+├── tests/                    # Suíte de testes automatizados (pytest)
+├── tools/                    # Scripts de teste headless e manutenção
+├── docs/                     # Documentação e especificações (MkDocs)
+├── dist/                     # Pacotes zip gerados para distribuição
+├── Makefile                  # Comandos de deploy, testes e empacotamento
+└── mkdocs.yml                # Configuração do site de documentação
 ```
 
 ### Requisitos e Instalação (Desenvolvimento)
@@ -127,8 +136,11 @@ logis/
 - **Execução dos Testes:**
   ```bash
   make test          # Validação rápida de sintaxe em todos os arquivos .py
+  QT_QPA_PLATFORM=offscreen python3 -m pytest -q   # Suíte completa em tests/
   ```
+- **Empacotamento:** `make package` gera o pacote de distribuição em `dist/logis-<versão>.zip` via `qgis-plugin-ci`.
 - **Verificação de Compatibilidade QGIS 4 / Qt6:** Execute `python3 tools/qgis4_compat_check.py` (ou cole o conteúdo no Console Python do QGIS) para validar versões e a presença de símbolos legados/escopados.
+- **Documentação:** https://logis.dcamargo.com.br (endereço declarado em `homepage=` no `logis/metadata.txt`).
 
 ### Uso no Console Python do QGIS
 
@@ -181,48 +193,53 @@ The plugin adopts a **zero mandatory external dependencies** philosophy:
   - `OR-Tools`: Optional backend for advanced optimization, with *lazy* import and automatic fallback to pure Python heuristics.
 - **Spatial Reference System:** All data is processed and delivered in SIRGAS 2000 / EPSG:4674, using a metric CRS (UTM) only for intermediate distance and time calculations.
 
-### Processing Algorithms (25 registered)
+### Processing Algorithms (28 registered)
 
-The plugin acts as a **Processing Provider** (`logis`), exposing the following algorithms in the QGIS Processing Toolbox:
+The plugin acts as a **Processing Provider** (`logis`), exposing the following algorithms in the QGIS Processing Toolbox, grouped exactly as they appear there (group/`displayName()` of each algorithm in `logis/provider.py`):
 
-#### Urban Module
-- `logis:urban_network_density` — Urban road network density.
-- `logis:urban_network_connectivity` — Urban road network connectivity (α, β, γ indices).
-- `logis:urban_mean_circuity` — Average circuity of the urban road network.
-- `logis:urban_cargo_restriction` — Freight vehicle circulation restriction index.
-- `logis:urban_demand_density` — Urban demand density by area/zone.
-- `logis:urban_gravity_accessibility` — Gravitational accessibility to points of interest/attractors.
-- `logis:urban_edge_betweenness` — Edge betweenness centrality by sampling.
-- `logis:urban_delivery_distance` — Average delivery distance and cost to the nearest depot.
+#### Data
+- `logis:load_osm_network` — Download urban road network (OSM, municipality): downloads and processes a municipality's urban road network from OpenStreetMap.
+- `logis:load_snv_network` — Download federal road network (SNV/DNIT, state): downloads and processes a state's federal road network from SNV/DNIT data.
 
-#### Regional Module
-- `logis:regional_network_density` — Regional road network density by state/region.
-- `logis:regional_pavement_percentage` — Pavement percentage of the road network.
-- `logis:regional_critical_links` — Identification of critical arcs and connections in the regional network (*cut links*).
+#### Urban Indicators
+- `logis:urban_network_density` — Urban Road Network Density.
+- `logis:urban_network_connectivity` — Urban Road Network Connectivity (α, β, γ indices).
+- `logis:urban_mean_circuity` — Average Circuity of Urban Road Network.
+- `logis:urban_cargo_restriction` — Freight Traffic Restriction Index.
+- `logis:urban_demand_density` — Urban Demand Density by area/zone.
+- `logis:urban_gravity_accessibility` — Urban Gravitational Accessibility to points of interest/attractors.
+- `logis:urban_edge_betweenness` — Edge Betweenness Centrality by sampling.
+- `logis:urban_delivery_distance` — Urban Delivery Distance and average cost to the nearest depot.
 
-#### Facility Location Module
+#### Regional Indicators
+- `logis:regional_network_density` — Regional Highway Network Density by state/region.
+- `logis:regional_pavement_percentage` — Paving and Dual-Carriageway Percentage of the road network.
+- `logis:regional_critical_links` — Critical Bridges/Links of Regional Network (*cut links*).
+
+#### Facility Location
 - `logis:facility_p_median` — p-Median Location (Teitz-Bart): minimizes total weighted travel cost/distance from demand to facilities.
 - `logis:facility_mclp` — Maximum Coverage Location (MCLP): maximizes covered demand within threshold radius with k facilities.
 - `logis:facility_lscp` — Set Covering Location (LSCP): minimizes the number of facilities to cover 100% of demand.
 
-#### Routing Module
-- `logis:vrp_tsp` — Traveling Salesman Problem (TSP): optimized route to visit a list of points.
+#### Routing
+- `logis:vrp_tsp` — Traveling Salesperson (TSP): optimized route to visit a list of points.
 - `logis:vrp_cvrp` — Capacitated Vehicle Routing (CVRP): optimized routes with capacity constraints from a depot.
 
-#### Specialized Module — Waste Collection
-- `logis:waste_generation_estimate` — Solid Waste Generation Estimate: estimates daily and weekly generation per road segment.
-- `logis:waste_districting` — Districting: partitions the road network into contiguous, load-balanced collection sectors (farthest-first seeds + region growing + boundary edge swapping).
+#### Specialized Logistics — Waste Collection
+- `logis:waste_generation_estimate` — Solid Waste Generation Estimation: estimates daily and weekly generation per road segment.
+- `logis:waste_districting` — Waste Collection Districting: partitions the road network into contiguous, load-balanced collection sectors (farthest-first seeds + region growing + boundary edge swapping).
 - `logis:waste_cpp_route` — Arc Routing (CPP): minimum cost Eulerian tour traversing all network roads (Chinese Postman Problem).
 - `logis:waste_rpp_route` — Arc Routing (RPP): optimized tour covering only the subset of roads with active collection (Rural Postman Problem).
 - `logis:waste_carp_route` — Capacitated Arc Routing (CARP): capacity-constrained vehicle routes for arc collection (Capacitated Arc Routing Problem).
 - `logis:waste_fleet_sizing` — Collection Fleet Sizing: calculates the number of collection trucks based on waste volume, shifts, and nominal capacity.
-- `logis:waste_deadhead_ratio` — Deadhead Ratio: productive (collection) vs. unproductive (deadhead/connector) distance and the deadhead_km / productive_km ratio, per route and overall.
-- `logis:waste_sector_balance` — Sector Balance: variance, amplitude, and deviation metrics for load and length across sectors.
-- `logis:waste_destination_distance` — Waste Destination Distance: distance and travel time to the nearest landfill or destination point.
+- `logis:waste_deadhead_ratio` — Deadhead Ratio by Route: productive (collection) vs. unproductive (deadhead/connector) distance and the deadhead_km / productive_km ratio, per route and overall.
+- `logis:waste_sector_balance` — Balance between Collection Sectors/Routes: variance, amplitude, and deviation metrics for load and length across sectors.
+- `logis:waste_destination_distance` — Distance to Waste Destination: distance and travel time to the nearest landfill or destination point.
 - `logis:waste_collection_coverage` — Waste Collection Coverage by Sector: required vs. covered road length and service percentage per sector.
 
 ### User Interface (GUI)
 
+- **Road Network Panel** (`gui/network_dock.py`): Dock interface with two tabs — Municipality (OSM) and State (SNV/DNIT) —, downloads links and nodes directly into the project, with a download progress bar.
 - **Urban Logistics Panel** (`gui/urban_dock.py`): Interactive dock interface with three tabs — Network, Demand, and Cargo —, with the road network selector and the results panel shared outside the tabs. Freight vehicle circulation restriction has its own button and expression field in the Cargo tab, run independently of the network indicators batch. Betweenness centrality (Network tab) accepts an optional sampling seed to make the result reproducible across runs.
 - **Regional Logistics Panel** (`gui/regional_dock.py`): Dedicated dock interface for state and national road network analyses.
 - **Routing Panel** (`gui/routing_dock.py`): Dock interface with two tabs — TSP and CVRP —, with shared road network selector and single results panel at the footer.
@@ -234,27 +251,31 @@ The plugin acts as a **Processing Provider** (`logis`), exposing the following a
 
 ```
 logis/
-├── __init__.py               # Plugin entry point
-├── logis_plugin.py           # GUI and Provider registrar
-├── provider.py               # Processing Provider "logis" (25 algorithms)
-├── metadata.txt              # QGIS plugin metadata (version 0.1.11)
-├── Makefile                  # Deployment and syntax testing commands
-├── core/                     # Technical logic core
-│   ├── network/              # OSM/SNV pipelines, graph builder, and OD matrix
-│   ├── connectors/           # Overpass OSM and WFS connectors
-│   ├── indicators/           # Urban, regional, and waste collection indicators (waste.py)
-│   ├── routing/              # VRP, arc routing, and districting
-│   ├── location/             # Facility location (p-median, MCLP, LSCP)
-│   ├── downloader.py         # Downloader with caching and mirror support
-│   ├── sources.py            # Declarative data sources (national/state)
-│   ├── qgis_compat.py        # PyQGIS compatibility
-│   ├── data_backend.py       # Data backend handling
-│   └── optim_backend.py      # Optimizer management (OR-Tools / Pure Python)
-├── algorithms/               # Algorithms exposed in Processing (8 urban + 3 regional + 3 location + 1 routing + 10 waste collection)
-├── gui/                      # Dock panels and interface dialogs
-├── i18n/                     # PT-BR/EN translations
-├── tools/                    # Test scripts and maintenance tools
-└── docs/                     # Documentation and specifications
+├── logis/                    # Plugin source code
+│   ├── __init__.py           # Plugin entry point
+│   ├── logis_plugin.py       # GUI and Provider registrar
+│   ├── provider.py           # Processing Provider "logis" (28 algorithms)
+│   ├── metadata.txt          # QGIS plugin metadata (current version)
+│   ├── core/                 # Technical logic core
+│   │   ├── network/          # OSM/SNV pipelines, graph builder, and OD matrix
+│   │   ├── connectors/       # Overpass OSM and WFS connectors
+│   │   ├── indicators/       # Urban, regional, and waste collection indicators (waste.py)
+│   │   ├── routing/          # VRP, arc routing, and districting
+│   │   ├── location/         # Facility location (p-median, MCLP, LSCP)
+│   │   ├── downloader.py     # Downloader with caching and mirror support
+│   │   ├── sources.py        # Declarative data sources (national/state)
+│   │   ├── qgis_compat.py    # PyQGIS compatibility
+│   │   ├── data_backend.py   # Data backend handling
+│   │   └── optim_backend.py  # Optimizer management (OR-Tools / Pure Python)
+│   ├── algorithms/           # Algorithms exposed in Processing (2 data + 8 urban + 3 regional + 3 location + 2 routing + 10 waste collection)
+│   ├── gui/                  # Dock panels and interface dialogs
+│   └── i18n/                 # PT-BR/EN translations
+├── tests/                    # Automated test suite (pytest)
+├── tools/                    # Headless test scripts and maintenance tools
+├── docs/                     # Documentation and specifications (MkDocs)
+├── dist/                     # Distribution zip packages
+├── Makefile                  # Deployment, testing, and packaging commands
+└── mkdocs.yml                # Documentation site configuration
 ```
 
 ### Requirements and Installation (Development)
@@ -269,8 +290,11 @@ logis/
 - **Running Tests:**
   ```bash
   make test          # Quick syntax validation across all .py files
+  QT_QPA_PLATFORM=offscreen python3 -m pytest -q   # Full suite in tests/
   ```
+- **Packaging:** `make package` builds the distribution package at `dist/logis-<version>.zip` via `qgis-plugin-ci`.
 - **QGIS 4 / Qt6 Compatibility Check:** Run `python3 tools/qgis4_compat_check.py` (or paste its content into the QGIS Python Console) to inspect Qt6/QGIS 4 version details and legacy/scoped symbols.
+- **Documentation:** https://logis.dcamargo.com.br (address declared in `homepage=` in `logis/metadata.txt`).
 
 ### Usage in QGIS Python Console
 
