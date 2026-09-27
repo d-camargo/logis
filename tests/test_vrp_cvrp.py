@@ -383,5 +383,138 @@ class TestVrpCvrpRealQgisRegression(unittest.TestCase):
         self.assertIn("adotando fallback para EPSG:31983", all_logs)
 
 
+    def test_multi_depot_cvrp(self):
+        from logis.algorithms.vrp_cvrp import VrpCvrp
+
+        depot_layer = QgsVectorLayer("Point?crs=EPSG:4326", "depot", "memory")
+        dp_depot = depot_layer.dataProvider()
+        dp_depot.addAttributes([QgsField("did", QVariant.String)])
+        depot_layer.updateFields()
+        f_depot1 = QgsFeature(depot_layer.fields())
+        f_depot1.setGeometry(QgsGeometry.fromPointXY(QgsPointXY(-46.63, -23.55)))
+        f_depot1.setAttribute("did", "A")
+        f_depot2 = QgsFeature(depot_layer.fields())
+        f_depot2.setGeometry(QgsGeometry.fromPointXY(QgsPointXY(-46.61, -23.53)))
+        f_depot2.setAttribute("did", "B")
+        dp_depot.addFeatures([f_depot1, f_depot2])
+        depot_layer.updateExtents()
+
+        demand_layer = QgsVectorLayer("Point?crs=EPSG:4326", "demand", "memory")
+        dp_demand = demand_layer.dataProvider()
+        dp_demand.addAttributes([QgsField("ddid", QVariant.String)])
+        demand_layer.updateFields()
+        f_pt1 = QgsFeature(demand_layer.fields())
+        f_pt1.setGeometry(QgsGeometry.fromPointXY(QgsPointXY(-46.631, -23.551)))
+        f_pt1.setAttribute("ddid", "A")
+        f_pt2 = QgsFeature(demand_layer.fields())
+        f_pt2.setGeometry(QgsGeometry.fromPointXY(QgsPointXY(-46.611, -23.531)))
+        f_pt2.setAttribute("ddid", "B")
+        dp_demand.addFeatures([f_pt1, f_pt2])
+        demand_layer.updateExtents()
+
+        alg = VrpCvrp()
+        alg.initAlgorithm()
+        context = QgsProcessingContext()
+        context.setProject(QgsProject.instance())
+
+        fb = LogFeedback()
+        params_iv = {
+            "INPUT_DEPOT": depot_layer,
+            "INPUT_DEMAND": demand_layer,
+            "FIELD_DEMAND_DEPOT": "ddid",
+            "BACKEND": 1,
+            "OUTPUT_ROUTES": "memory:",
+            "OUTPUT_STOPS": "memory:",
+        }
+        with self.assertRaises(QgsProcessingException) as exc:
+            alg.processAlgorithm(params_iv, context, fb)
+        self.assertIn("não pode ser preenchido sem", str(exc.exception))
+
+        f_pt_err = QgsFeature(demand_layer.fields())
+        f_pt_err.setGeometry(QgsGeometry.fromPointXY(QgsPointXY(-46.631, -23.551)))
+        f_pt_err.setAttribute("ddid", "C")
+        dp_demand.addFeatures([f_pt_err])
+
+        fb = LogFeedback()
+        params_iii = {
+            "INPUT_DEPOT": depot_layer,
+            "INPUT_DEMAND": demand_layer,
+            "FIELD_DEPOT_ID": "did",
+            "FIELD_DEMAND_DEPOT": "ddid",
+            "BACKEND": 1,
+            "OUTPUT_ROUTES": "memory:",
+            "OUTPUT_STOPS": "memory:",
+        }
+        with self.assertRaises(QgsProcessingException) as exc:
+            alg.processAlgorithm(params_iii, context, fb)
+        self.assertIn("não existe na camada de depósitos", str(exc.exception))
+
+        # recreate demand layer for i and ii to be safe
+        demand_layer = QgsVectorLayer("Point?crs=EPSG:4326", "demand", "memory")
+        dp_demand = demand_layer.dataProvider()
+        dp_demand.addAttributes([QgsField("ddid", QVariant.String)])
+        demand_layer.updateFields()
+        f_pt1 = QgsFeature(demand_layer.fields())
+        f_pt1.setGeometry(QgsGeometry.fromPointXY(QgsPointXY(-46.631, -23.551)))
+        f_pt1.setAttribute("ddid", "A")
+        f_pt2 = QgsFeature(demand_layer.fields())
+        f_pt2.setGeometry(QgsGeometry.fromPointXY(QgsPointXY(-46.611, -23.531)))
+        f_pt2.setAttribute("ddid", "B")
+        dp_demand.addFeatures([f_pt1, f_pt2])
+        demand_layer.updateExtents()
+
+        fb = LogFeedback()
+        params_i = {
+            "INPUT_DEPOT": depot_layer,
+            "INPUT_DEMAND": demand_layer,
+            "FIELD_DEPOT_ID": "did",
+            "FIELD_DEMAND_DEPOT": "ddid",
+            "BACKEND": 1,
+            "OUTPUT_ROUTES": "memory:",
+            "OUTPUT_STOPS": "memory:",
+        }
+        res_i = alg.processAlgorithm(params_i, context, fb)
+
+        def _resolve_output(ctx, val, name):
+            if isinstance(val, str):
+                lay = ctx.getMapLayer(val)
+                if lay is not None and lay.isValid():
+                    return lay
+                return QgsVectorLayer(val, name, "ogr")
+            return val
+
+        out_routes = _resolve_output(context, res_i["OUTPUT_ROUTES"], "r")
+        out_stops = _resolve_output(context, res_i["OUTPUT_STOPS"], "s")
+
+        route_depots = [f.attribute("depot_id") for f in out_routes.getFeatures()]
+        self.assertCountEqual(route_depots, ["A", "B"])
+        for f in out_routes.getFeatures():
+            geom = f.geometry()
+            pts = geom.asPolyline()
+            did = f.attribute("depot_id")
+            if did == "A":
+                d1 = (pts[0].x() - (-46.63))**2 + (pts[0].y() - (-23.55))**2
+                self.assertTrue(d1 < 1e-4)
+            else:
+                d1 = (pts[0].x() - (-46.61))**2 + (pts[0].y() - (-23.53))**2
+                self.assertTrue(d1 < 1e-4)
+
+        stop_depots = [f.attribute("depot_id") for f in out_stops.getFeatures()]
+        self.assertCountEqual(stop_depots, ["A", "B"])
+
+        fb = LogFeedback()
+        params_ii = {
+            "INPUT_DEPOT": depot_layer,
+            "INPUT_DEMAND": demand_layer,
+            "BACKEND": 1,
+            "OUTPUT_ROUTES": "memory:",
+            "OUTPUT_STOPS": "memory:",
+        }
+        res_ii = alg.processAlgorithm(params_ii, context, fb)
+        out_routes_ii = _resolve_output(context, res_ii["OUTPUT_ROUTES"], "r2")
+        route_depots_ii = [f.attribute("depot_id") for f in out_routes_ii.getFeatures()]
+        self.assertCountEqual(route_depots_ii, ["1", "2"])
+
+
 if __name__ == "__main__":
     unittest.main()

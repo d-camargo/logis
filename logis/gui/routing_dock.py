@@ -413,7 +413,7 @@ class RoutingDock(QgsDockWidget):
         layout = self._new_tab(self.tr("CVRP"))
 
         cvrp_desc = QLabel(
-            self.tr("Resolve a roteirização de uma frota com capacidade a partir de um depósito.")
+            self.tr("Resolve a roteirização de uma frota com capacidade a partir de um ou mais depósitos.")
         )
         cvrp_desc.setStyleSheet("color: #666; font-size: 11px;")
         cvrp_desc.setWordWrap(True)
@@ -427,16 +427,34 @@ class RoutingDock(QgsDockWidget):
         layout.addWidget(cvrp_net_desc)
 
         # Seletor de Camada de Depósito (Pontos)
-        layout.addWidget(QLabel(self.tr("Camada de depósito (Pontos):")))
+        layout.addWidget(QLabel(self.tr("Camada de depósitos (Pontos) — origem/destino das rotas:")))
         self.cmb_depot = QgsMapLayerComboBox()
         self.cmb_depot.setFilters(QgsMapLayerProxyModel.Filter.PointLayer)
         layout.addWidget(self.cmb_depot)
+
+        # Seletor de Campo ID do Depósito (opcional)
+        layout.addWidget(QLabel(self.tr("Campo ID do depósito (opcional):")))
+        self.cmb_depot_id_field = QgsFieldComboBox()
+        if hasattr(self.cmb_depot_id_field, 'setAllowEmptyFieldName'):
+            self.cmb_depot_id_field.setAllowEmptyFieldName(True)
+        self.cmb_depot_id_field.setLayer(self.cmb_depot.currentLayer())
+        self.cmb_depot.layerChanged.connect(self.cmb_depot_id_field.setLayer)
+        layout.addWidget(self.cmb_depot_id_field)
 
         # Seletor de Camada de Demanda / Clientes (Pontos)
         layout.addWidget(QLabel(self.tr("Camada de demanda / clientes (Pontos):")))
         self.cmb_demand = QgsMapLayerComboBox()
         self.cmb_demand.setFilters(QgsMapLayerProxyModel.Filter.PointLayer)
         layout.addWidget(self.cmb_demand)
+
+        # Seletor de Campo do Depósito de cada ponto (opcional)
+        layout.addWidget(QLabel(self.tr("Campo do depósito de cada ponto (opcional — vazio: depósito mais próximo):")))
+        self.cmb_demand_depot_field = QgsFieldComboBox()
+        if hasattr(self.cmb_demand_depot_field, 'setAllowEmptyFieldName'):
+            self.cmb_demand_depot_field.setAllowEmptyFieldName(True)
+        self.cmb_demand_depot_field.setLayer(self.cmb_demand.currentLayer())
+        self.cmb_demand.layerChanged.connect(self.cmb_demand_depot_field.setLayer)
+        layout.addWidget(self.cmb_demand_depot_field)
 
         # Seletor de Campo de Peso/Demanda (opcional)
         layout.addWidget(QLabel(self.tr("Campo de peso/demanda (opcional, default = 1,0):")))
@@ -894,7 +912,9 @@ class RoutingDock(QgsDockWidget):
         self.txt_results.clear()
 
         depot_layer = self.cmb_depot.currentLayer()
+        depot_id_field = self.cmb_depot_id_field.currentField()
         demand_layer = self.cmb_demand.currentLayer()
+        demand_depot_field = self.cmb_demand_depot_field.currentField()
         demand_field = self.cmb_demand_field.currentField()
         capacity = self.spin_capacity.value()
         network_layer = self.cmb_network.currentLayer()
@@ -933,8 +953,10 @@ class RoutingDock(QgsDockWidget):
 
         params = {
             'INPUT_DEPOT': depot_layer,
+            'FIELD_DEPOT_ID': depot_id_field or '',
             'INPUT_DEMAND': demand_layer,
             'FIELD_DEMAND': demand_field or '',
+            'FIELD_DEMAND_DEPOT': demand_depot_field or '',
             'CAPACITY': capacity,
             'INPUT_NETWORK': network_layer if network_layer else None,
             'IMPROVE': improve,
@@ -1017,15 +1039,17 @@ class RoutingDock(QgsDockWidget):
                     s_count = self._attr(feat, fields, 'stop_count', 0)
                     r_load = float(self._attr(feat, fields, 'route_load', 0.0))
                     r_dist = float(self._attr(feat, fields, 'route_dist', 0.0))
+                    d_id = self._attr(feat, fields, 'depot_id', '')
 
                     total_routes += 1
                     total_stops += s_count
                     total_load += r_load
                     total_dist += r_dist
 
+                    depot_suffix = f" | {self.tr('depósito {id}').format(id=d_id)}" if d_id else ""
                     line_str = self.tr("Rota {id}: {n} paradas | carga {load:.2f} | distância {dist:.2f}&nbsp;m").format(
                         id=r_id, n=s_count, load=r_load, dist=r_dist
-                    )
+                    ) + depot_suffix
                     route_lines.append(line_str)
 
             self.txt_results.append(

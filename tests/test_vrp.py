@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import math
 import unittest
 from unittest.mock import patch
 from logis.core.routing.vrp import (
@@ -8,6 +9,7 @@ from logis.core.routing.vrp import (
     or_opt,
     solve_cvrp,
     solve_cvrp_ortools,
+    solve_multi_depot_cvrp,
 )
 from logis.core.optim_backend import has_ortools
 
@@ -374,6 +376,184 @@ class TestVRP(unittest.TestCase):
             )
         self.assertEqual(len(routes), 2)
         self.assertTrue(len(fb.progresses) > 0)
+
+
+class TestMultiDepotCVRP(unittest.TestCase):
+    def setUp(self):
+        # 2 depósitos (0 e 1) em pontas opostas e 6 clientes:
+        # Clientes 2, 3, 4 perto do depósito 0
+        # Clientes 5, 6, 7 perto do depósito 1
+        self.coords = [
+            (0.0, 0.0),    # 0: Depósito 0
+            (100.0, 0.0),  # 1: Depósito 1
+            (1.0, 0.0),    # 2: Cliente A1 (dist D0=1, D1=99)
+            (2.0, 0.0),    # 3: Cliente A2 (dist D0=2, D1=98)
+            (3.0, 0.0),    # 4: Cliente A3 (dist D0=3, D1=97)
+            (97.0, 0.0),   # 5: Cliente B1 (dist D0=97, D1=3)
+            (98.0, 0.0),   # 6: Cliente B2 (dist D0=98, D1=2)
+            (99.0, 0.0),   # 7: Cliente B3 (dist D0=99, D1=1)
+        ]
+        self.matrix = [
+            [math.hypot(c1[0] - c2[0], c1[1] - c2[1]) for c2 in self.coords]
+            for c1 in self.coords
+        ]
+        self.demands = [0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+        self.capacity = 10.0
+        self.depots = [0, 1]
+
+    def test_case_i_two_depots_nearest_assignment(self):
+        # (i) dois depósitos em pontas opostas e 6 clientes, 3 perto de cada um, sem
+        # assignment -> cada cliente cai no depósito mais próximo e toda rota começa e termina nele
+        routes, total_dist, loads, route_depots = solve_multi_depot_cvrp(
+            self.matrix, self.demands, self.capacity, depots=self.depots, assignment=None
+        )
+        self.assertTrue(len(routes) >= 2)
+        visited = [c for r in routes for c in r]
+        self.assertEqual(sorted(visited), [2, 3, 4, 5, 6, 7])
+
+        for route, depot in zip(routes, route_depots):
+            self.assertGreater(len(route), 0)
+            if depot == 0:
+                for c in route:
+                    self.assertIn(c, {2, 3, 4})
+            elif depot == 1:
+                for c in route:
+                    self.assertIn(c, {5, 6, 7})
+            else:
+                self.fail(f"Depósito inesperado: {depot}")
+
+        computed_total = sum(
+            compute_route_distance(r, self.matrix, depot=d)
+            for r, d in zip(routes, route_depots)
+        )
+        self.assertAlmostEqual(total_dist, computed_total)
+
+    def test_case_ii_explicit_assignment_distant_depot(self):
+        # (ii) o mesmo caso com assignment mandando um cliente para o depósito distante
+        # -> ele sai numa rota daquele depósito
+        assignment = {2: 1}  # Cliente 2 (perto do D0) forçado para o D1
+        routes, total_dist, loads, route_depots = solve_multi_depot_cvrp(
+            self.matrix, self.demands, self.capacity, depots=self.depots, assignment=assignment
+        )
+        visited = [c for r in routes for c in r]
+        self.assertEqual(sorted(visited), [2, 3, 4, 5, 6, 7])
+
+        client_2_depot = None
+        for route, depot in zip(routes, route_depots):
+            if 2 in route:
+                client_2_depot = depot
+                break
+        self.assertEqual(client_2_depot, 1)
+
+        # Depósito 0 atende apenas 3 e 4
+        for route, depot in zip(routes, route_depots):
+            if depot == 0:
+                for c in route:
+                    self.assertIn(c, {3, 4})
+            elif depot == 1:
+                for c in route:
+                    self.assertIn(c, {2, 5, 6, 7})
+
+    def test_case_iii_single_depot_identical_to_solve_cvrp(self):
+        # (iii) um só depósito -> rotas e distância idênticas às de solve_cvrp
+        distance_matrix = [
+            [0.0, 10.0, 10.0, 20.0],
+            [10.0, 0.0, 5.0, 25.0],
+            [10.0, 5.0, 0.0, 25.0],
+            [20.0, 25.0, 25.0, 0.0],
+        ]
+        demands = [0.0, 5.0, 5.0, 8.0]
+        capacity = 10.0
+
+        routes_multi, dist_multi, loads_multi, depots_multi = solve_multi_depot_cvrp(
+            distance_matrix, demands, capacity, depots=[0]
+        )
+        routes_single, dist_single, loads_single = solve_cvrp(
+            distance_matrix, demands, capacity, depot=0
+        )
+
+        self.assertEqual(routes_multi, routes_single)
+        self.assertAlmostEqual(dist_multi, dist_single)
+        self.assertEqual(loads_multi, loads_single)
+        self.assertEqual(depots_multi, [0] * len(routes_single))
+
+    def test_case_iv_depot_without_clients_no_empty_route(self):
+        # (iv) depósito sem cliente -> nenhuma rota vazia para ele
+        # Manda todos os 6 clientes para o depósito 0
+        assignment = {c: 0 for c in [2, 3, 4, 5, 6, 7]}
+        routes, total_dist, loads, route_depots = solve_multi_depot_cvrp(
+            self.matrix, self.demands, self.capacity, depots=self.depots, assignment=assignment
+        )
+        for r in routes:
+            self.assertGreater(len(r), 0)
+        self.assertNotIn(1, route_depots)
+        self.assertTrue(all(d == 0 for d in route_depots))
+        self.assertEqual(len(routes), len(route_depots))
+
+    def test_case_v_unreachable_client_raises_value_error(self):
+        # (v) cliente sem depósito alcançável -> ValueError
+        matrix_unreach = [row[:] for row in self.matrix]
+        matrix_unreach[0][7] = 1e18
+        matrix_unreach[1][7] = 1e18
+
+        with self.assertRaises(ValueError) as ctx:
+            solve_multi_depot_cvrp(
+                matrix_unreach, self.demands, self.capacity, depots=self.depots
+            )
+        self.assertIn("7", str(ctx.exception))
+
+    def test_case_vi_capacity_respected_in_all_routes(self):
+        # (vi) capacidade respeitada em todas as rotas
+        cap = 2.0  # com demanda 1.0 cada, no máximo 2 clientes por rota
+        routes, total_dist, loads, route_depots = solve_multi_depot_cvrp(
+            self.matrix, self.demands, cap, depots=self.depots
+        )
+        self.assertTrue(len(routes) >= 4)
+        for route, load, depot in zip(routes, loads, route_depots):
+            self.assertGreater(len(route), 0)
+            self.assertLessEqual(load, cap)
+            self.assertEqual(load, sum(self.demands[c] for c in route))
+
+    def test_validation_errors(self):
+        # Depósitos vazios
+        with self.assertRaises(ValueError):
+            solve_multi_depot_cvrp(self.matrix, self.demands, self.capacity, depots=[])
+
+        # Depósito inválido fora de alcance
+        with self.assertRaises(ValueError):
+            solve_multi_depot_cvrp(self.matrix, self.demands, self.capacity, depots=[99])
+
+        # Depósitos duplicados
+        with self.assertRaises(ValueError):
+            solve_multi_depot_cvrp(self.matrix, self.demands, self.capacity, depots=[0, 0])
+
+        # Demanda excede capacidade
+        bad_demands = [0.0, 0.0, 15.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+        with self.assertRaises(ValueError):
+            solve_multi_depot_cvrp(self.matrix, bad_demands, 10.0, depots=[0, 1])
+
+        # Cliente inexistente no assignment
+        with self.assertRaises(ValueError):
+            solve_multi_depot_cvrp(self.matrix, self.demands, self.capacity, depots=[0, 1], assignment={99: 0})
+
+        # Cliente é depósito no assignment
+        with self.assertRaises(ValueError):
+            solve_multi_depot_cvrp(self.matrix, self.demands, self.capacity, depots=[0, 1], assignment={0: 1})
+
+        # Depósito alvo não está em depots
+        with self.assertRaises(ValueError):
+            solve_multi_depot_cvrp(self.matrix, self.demands, self.capacity, depots=[0, 1], assignment={2: 5})
+
+    def test_no_customers_returns_empty(self):
+        matrix_depots_only = [[0.0, 10.0], [10.0, 0.0]]
+        demands_depots_only = [0.0, 0.0]
+        routes, dist, loads, depots = solve_multi_depot_cvrp(
+            matrix_depots_only, demands_depots_only, 10.0, depots=[0, 1]
+        )
+        self.assertEqual(routes, [])
+        self.assertAlmostEqual(dist, 0.0)
+        self.assertEqual(loads, [])
+        self.assertEqual(depots, [])
 
 
 if __name__ == "__main__":

@@ -200,8 +200,9 @@ sugere ponto inicial mal localizado em relação à nuvem de paradas — gancho 
 A aba **TSP** sequencia as visitas de **um único veículo**, sem capacidade: toda parada
 entra no mesmo percurso, custe o que custar em carga. A aba **CVRP** parte de uma
 **frota de veículos idênticos**, cada um com uma capacidade máxima, e reparte os
-clientes em **várias rotas** — cada rota sai do depósito, atende um subconjunto de
-clientes cuja soma de demandas cabe no veículo, e volta ao depósito.
+clientes em **várias rotas** — a partir de um ou mais depósitos (CDs, garagens,
+transbordos). Cada rota sai de um depósito, atende um subconjunto de clientes cuja
+soma de demandas cabe no veículo, e volta a esse mesmo depósito.
 
 O número de rotas **não é um parâmetro**: ele é resultado do cálculo, e depende da carga
 total, da capacidade informada e da distribuição geográfica dos clientes.
@@ -215,8 +216,10 @@ use a aba CVRP.
 
 | Insumo | Obrigatório? | Papel |
 |---|---|---|
-| **Camada de depósito (Pontos)** | Sim | Ponto de partida e de chegada de **todas** as rotas. O algoritmo usa a **primeira feição válida** da camada; o ideal é uma camada com uma única feição (CD, garagem, transbordo). |
+| **Camada de depósitos (Pontos) — origem/destino das rotas** | Sim | Ponto(s) de partida e de chegada das rotas. Pode conter uma única feição (depósito central) ou múltiplos depósitos (CDs, garagens, transbordos). |
+| **Campo ID do depósito (opcional)** | Não | Campo que identifica cada depósito (ex.: `id`, `codigo`). Se omitido, o algoritmo utiliza o `feat.id()` de cada feição. Obrigatório caso o campo de depósito da demanda seja informado. |
 | **Camada de demanda / clientes (Pontos)** | Sim | Cada feição é um cliente atendido exatamente uma vez, por uma única rota. Os atributos originais são preservados na saída. |
+| **Campo do depósito de cada ponto (opcional — vazio: depósito mais próximo)** | Não | Campo na camada de demanda que indica para qual depósito aquele cliente é destinado (ex.: `1` ou `2`). Deixado vazio ou nulo, o cliente é atribuído automaticamente pela **regra do depósito mais próximo**. |
 | **Campo de peso/demanda (opcional, default = 1,0)** | Não | Campo numérico com a carga de cada cliente. Deixado vazio — ou nulo/não numérico na feição —, a demanda vale **1,0**, e a capacidade passa a contar **paradas por rota**. Valor negativo é tratado como zero. |
 | **Capacidade do veículo** | Sim | Carga máxima de um veículo em uma rota; vem preenchida com **100,0** e precisa ser maior que zero. Tem que estar na **mesma unidade** do campo de peso. |
 | **Camada de rede viária (Linhas)** | Não | O seletor do **topo do painel**, compartilhado com a aba TSP: com rede, as distâncias são reais (Dijkstra sobre `QgsGraph`, matriz OD); sem rede, são **euclidianas**. Vale aqui a mesma nota de CRS de cálculo da [seção 1](#1-preparar-as-camadas-de-entrada). |
@@ -227,20 +230,24 @@ use a aba CVRP.
 1. **Camada de rede viária (Linhas - opcional)** — no topo do painel, antes de abrir a
    aba; vale para as duas abas.
 2. Abra a aba **CVRP**.
-3. **Camada de depósito (Pontos)** — obrigatória.
-4. **Camada de demanda / clientes (Pontos)** — obrigatória.
-5. **Campo de peso/demanda (opcional, default = 1,0)** — o seletor aceita campo vazio, e
+3. **Camada de depósitos (Pontos)** — obrigatória; selecione a camada com os depósitos.
+4. **Campo ID do depósito (opcional)** — selecione o campo identificador de cada depósito,
+   ou deixe vazio para usar o ID sequencial da feição.
+5. **Camada de demanda / clientes (Pontos)** — obrigatória; selecione os clientes.
+6. **Campo do depósito de cada ponto (opcional)** — selecione o campo que indica o
+   depósito de cada cliente, ou deixe vazio para que cada um vá para o depósito mais próximo.
+7. **Campo de peso/demanda (opcional, default = 1,0)** — o seletor aceita campo vazio, e
    a lista de campos acompanha a camada de demanda escolhida no passo anterior.
-6. **Capacidade do veículo** — na mesma unidade do campo de peso.
-7. **Aplicar busca local (2-opt e Or-opt)** — marcada por padrão.
-8. **Backend de otimização** — combo com três opções:
+8. **Capacidade do veículo** — na mesma unidade do campo de peso.
+9. **Aplicar busca local (2-opt e Or-opt)** — marcada por padrão.
+10. **Backend de otimização** — combo com três opções:
    - **Automático (OR-Tools quando disponível)** — o padrão; usa OR-Tools se
      instalado, senão heurística Python pura.
    - **Python puro (heurística)** — força a heurística nativa, sem importar o
      OR-Tools em momento nenhum (modo seguro quando o carregamento da biblioteca
      derruba o QGIS).
    - **OR-Tools** — força OR-Tools; cai no fallback Python se não disponível.
-9. Botão **Executar Roteirização (CVRP)**.
+11. Botão **Executar Roteirização (CVRP)**.
 
 Depósito e demanda são obrigatórios: sem eles, o painel abre um aviso e não executa. Como
 no TSP, o cálculo corre **em segundo plano**, com barra de progresso e botão **Cancelar**.
@@ -248,6 +255,42 @@ As duas camadas de saída (**Rotas geradas** e **Paradas por rota**) são gravad
 **GeoPackage da camada de referência** quando houver um, ou criadas como **camadas
 temporárias** quando não houver — ver a
 [seção 8](#8-execução-em-segundo-plano-e-destino-das-saídas).
+
+### Exemplo de uso com dois depósitos (Multi-Depot CVRP)
+
+Suponha uma operação logística com **dois depósitos** (por exemplo, `1` e `2` no campo `id`
+da camada de depósitos) atendendo uma rede de clientes:
+
+1. **Camada de depósitos:** Contém 2 pontos com o campo `id` preenchido como `1` e `2`.
+2. **Camada de demanda:** Contém os clientes com o campo `destino` indicando `1` ou `2`.
+   Se alguns clientes estiverem com o campo vazio ou `NULL`, eles serão associados
+   automaticamente ao **depósito mais próximo** (menor custo de rede viária ou euclidiana).
+3. **Preenchimento no painel:**
+   - *Camada de depósitos*: camada dos 2 depósitos.
+   - *Campo ID do depósito*: `id`.
+   - *Camada de demanda / clientes*: camada de clientes.
+   - *Campo do depósito de cada ponto*: `destino`.
+4. **Agrupa primeiro, roteiriza depois:** O algoritmo particiona as demandas por depósito
+   e executa a roteirização do CVRP para cada grupo separadamente. Clientes do depósito 1
+   só entram em rotas que partem e voltam ao depósito 1, e clientes do depósito 2 em rotas
+   do depósito 2. Os clientes nunca trocam de depósito durante a otimização das rotas.
+5. **O que muda no resumo do painel:**
+   Cada linha de rota ganha ao final a indicação `| depósito {id}`:
+   ```text
+   -> Rotas geradas: 4
+   -> Paradas atendidas: 28
+   -> Carga total: 140.00
+   -> Distância total: 42350.80 m
+   Rota 1: 7 paradas | carga 35.00 | distância 10240.50 m | depósito 1
+   Rota 2: 8 paradas | carga 40.00 | distância 11120.30 m | depósito 1
+   Rota 3: 6 paradas | carga 30.00 | distância 9850.00 m | depósito 2
+   Rota 4: 7 paradas | carga 35.00 | distância 11140.00 m | depósito 2
+   Backend de otimização: python
+   ```
+6. **O que muda nas camadas de saída:**
+   O campo **`depot_id`** é preenchido em todas as rotas e paradas:
+   - Em **Rotas geradas**: indica qual depósito originou aquela rota.
+   - Em **Paradas por rota**: indica a qual depósito aquele cliente e sua rota pertencem.
 
 ### Ler o painel de resultados do CVRP
 
@@ -259,7 +302,7 @@ O painel abre com quatro totais e, em seguida, uma linha por rota:
 | **Paradas atendidas** | soma de `stop_count` | Total de clientes atendidos, somando todas as rotas. |
 | **Carga total** | soma de `route_load` | Soma das demandas atendidas, na unidade do campo de peso (ou o número de paradas, quando o campo fica vazio). |
 | **Distância total** | soma de `route_dist` | Quilometragem do plano inteiro, na unidade do CRS de cálculo (metros). |
-| **Rota N: k paradas \| carga L \| distância D** | `route_id`, `stop_count`, `route_load`, `route_dist` | Uma linha por rota gerada — é por aqui que se vê o **equilíbrio da frota**: rotas com carga muito abaixo da capacidade, ou uma rota muito mais longa que as demais. |
+| **Rota N: k paradas \| carga L \| distância D \| depósito ID** | `route_id`, `stop_count`, `route_load`, `route_dist`, `depot_id` | Uma linha por rota gerada com o depósito ao qual pertence — é por aqui que se vê o **equilíbrio da frota**: rotas com carga muito abaixo da capacidade, ou uma rota muito mais longa que as demais. |
 | **Backend de otimização** | `backend` | `ortools` quando o OR-Tools resolveu a instância, ou `python` quando caiu no fallback da heurística nativa. |
 
 ### Ler as camadas de saída
@@ -274,6 +317,7 @@ clientes → depósito:
 | `route_load` | Carga total transportada na rota — comparar com a capacidade informada mostra a folga do veículo. |
 | `route_dist` | Distância total da rota, ida e volta ao depósito. |
 | `backend` | Backend efetivamente utilizado na otimização: `ortools` ou `python`. |
+| `depot_id` | Identificador do depósito de partida e retorno desta rota. |
 
 **Paradas por rota** (pontos) — uma feição por cliente, com os atributos originais da
 camada de demanda acrescidos de:
@@ -283,6 +327,7 @@ camada de demanda acrescidos de:
 | `route_id` | Rota à qual o cliente foi atribuído — bom campo para uma simbologia **Categorizada**, que pinta cada rota de uma cor. |
 | `stop_seq` | Posição da parada dentro da rota, de 1 até `stop_count`. |
 | `cum_load` | Carga acumulada no veículo **depois** de atender esta parada; na última parada da rota, iguala o `route_load`. |
+| `depot_id` | Identificador do depósito ao qual o cliente e sua rota foram atribuídos. |
 
 > **A sequência de visita está na tabela de atributos.** Como no TSP, a ordem de
 > armazenamento das feições não é a ordem de atendimento: abra a tabela de atributos de

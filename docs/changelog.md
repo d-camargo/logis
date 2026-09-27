@@ -4,6 +4,7 @@ Este documento registra as principais alterações e evoluções do plugin **log
 
 ## 0.7.0 - 2026-09-27
 
+- **Roteirização (CVRP): vários depósitos de origem/destino** — a camada de depósito pode ter mais de um ponto; cada ponto de demanda vai para o depósito indicado num campo (ou, sem o campo, para o mais próximo), as rotas são montadas por depósito e as saídas ganham o campo `depot_id`; antes só o primeiro depósito era usado.
 - **Resíduos: setor censitário associado às vias com um clique** — na aba Geração, se a camada de vias ainda não tiver o campo de setor, o plugin faz sozinho a junção espacial com os setores censitários (novo algoritmo `logis:waste_street_sector_join`, que usa o `native:joinattributesbylocation` e fica com o setor de maior sobreposição); não é mais preciso rodar a junção pela Caixa de Ferramentas.
 
 ## 0.6.6 - 2026-09-25

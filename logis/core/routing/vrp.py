@@ -27,7 +27,7 @@ Complexity/Scale limits:
     - 2-opt: O(k^2) per swap iteration (k customers in route), tested up to 500 stops per route.
 """
 import math
-from typing import List, Tuple, Optional
+from typing import List, Tuple, Optional, Dict
 
 try:
     from ..optim_backend import pick_backend, load_routing_solver, log_warning
@@ -635,3 +635,171 @@ def solve_cvrp_ortools(
     return routes, total_distance, route_loads
 
 
+def solve_multi_depot_cvrp(
+    distance_matrix: List[List[float]],
+    demands: List[float],
+    capacity: float,
+    depots: List[int],
+    assignment: Optional[Dict[int, int]] = None,
+    improve: bool = True,
+    backend: str = "python",
+    feedback=None
+) -> Tuple[List[List[int]], float, List[float], List[int]]:
+    """Solves the Multi-Depot Capacitated Vehicle Routing Problem (MDVRP) using cluster-first, route-second.
+
+    Partitions customers among depots (either using explicit assignment or by assigning each customer
+    to the nearest depot according to distance_matrix[d][c]), and solves each depot's CVRP subproblem
+    using solve_cvrp.
+
+    Referência Bibliográfica da Técnica:
+        - Gillett, B. E., & Johnson, J. G. (1976). Multi-terminal vehicle-dispatch algorithm.
+          Omega, 4(6), 711-718.
+        - Clarke, G., & Wright, J. W. (1964). Scheduling of vehicles from a central depot
+          to a number of delivery points. Operations Research, 12(4), 568-581.
+
+    Limite de Complexidade:
+        Complexidade de Tempo: Soma dos custos de solve_cvrp por grupo de depósito:
+        O(sum(N_d^2 log N_d)) para a fase de construção + O(sum(R_d * k_d^2)) para a fase de melhoria,
+        onde N_d é o número de nós atendidos pelo depósito d.
+        Complexidade de Espaço: O(max(N_d^2)) para as submatrizes de distâncias.
+        Testado com até 1.000 nós de demanda.
+
+    Args:
+        distance_matrix (List[List[float]]): Matriz N x N de custos/distâncias.
+        demands (List[float]): Vetor N com a demanda de cada nó (demanda dos depósitos deve ser 0).
+        capacity (float): Capacidade máxima do veículo (capacidade > 0).
+        depots (List[int]): Índices dos nós que são depósitos na matriz.
+        assignment (Optional[Dict[int, int]]): Dicionário {nó_cliente: nó_depósito}.
+            Quem não estiver nele vai para o depósito de menor custo distance_matrix[d][c].
+        improve (bool): Se True, aplica 2-opt e Or-opt até convergência em cada rota (padrão: True).
+        backend (str): Backend de otimização ("python" ou "ortools", padrão: "python").
+        feedback: Objeto opcional para cancelamento e progresso.
+
+    Returns:
+        Tuple[List[List[int]], float, List[float], List[int]]:
+            - routes (List[List[int]]): Lista de rotas com índices globais de clientes.
+            - total_distance (float): Soma das distâncias de todas as rotas.
+            - route_loads (List[float]): Carga total transportada em cada rota.
+            - route_depots (List[int]): Índice do nó depósito de cada rota, ordenadas por depósito.
+
+    Raises:
+        ValueError: Se entradas forem inválidas, capacidade for excedida ou cliente
+            não possuir depósito alcançável (custo >= 1e18).
+    """
+    if feedback is None:
+        feedback = NullProgress()
+
+    if not depots:
+        raise ValueError("A lista de depósitos (depots) não pode ser vazia.")
+
+    num_nodes = _validate_matrix_and_depot(distance_matrix, depots[0])
+
+    depot_set = set(depots)
+    if len(depot_set) != len(depots):
+        raise ValueError("A lista de depósitos não pode conter depósitos duplicados.")
+
+    for d in depots:
+        if not (0 <= d < num_nodes):
+            raise ValueError(
+                f"Índice de depósito inválido: {d}. Deve estar entre 0 e {num_nodes - 1}."
+            )
+
+    if len(demands) != num_nodes:
+        raise ValueError(
+            f"O número de demandas ({len(demands)}) deve ser igual ao tamanho da matriz ({num_nodes})."
+        )
+
+    for i, d in enumerate(demands):
+        if d < 0:
+            raise ValueError(f"Demanda negativa encontrada no nó {i}: {d}.")
+
+    if capacity <= 0:
+        raise ValueError("A capacidade do veículo deve ser estritamente maior que zero.")
+
+    for i, d in enumerate(demands):
+        if i not in depot_set and d > capacity:
+            raise ValueError(
+                f"A demanda do nó {i} ({d}) excede a capacidade máxima do veículo ({capacity})."
+            )
+
+    if assignment is None:
+        assignment = {}
+    else:
+        for c, d in assignment.items():
+            if not (0 <= c < num_nodes):
+                raise ValueError(
+                    f"Nó cliente {c} inválido no assignment. Deve estar entre 0 e {num_nodes - 1}."
+                )
+            if c in depot_set:
+                raise ValueError(
+                    f"Nó {c} está na lista de depósitos e não pode ser cliente no assignment."
+                )
+            if d not in depot_set:
+                raise ValueError(
+                    f"Depósito {d} atribuído ao cliente {c} não está na lista de depósitos."
+                )
+
+    customers = [i for i in range(num_nodes) if i not in depot_set]
+    if not customers:
+        return [], 0.0, [], []
+
+    depot_customers: Dict[int, List[int]] = {d: [] for d in depots}
+
+    for c in customers:
+        if c in assignment:
+            chosen_depot = assignment[c]
+            if distance_matrix[chosen_depot][c] >= 1e18 or math.isinf(distance_matrix[chosen_depot][c]):
+                raise ValueError(
+                    f"Cliente {c} não possui depósito alcançável (custo >= 1e18)."
+                )
+        else:
+            best_depot = None
+            best_cost = float("inf")
+            for d in depots:
+                cost = distance_matrix[d][c]
+                if cost < best_cost:
+                    best_cost = cost
+                    best_depot = d
+            if best_depot is None or best_cost >= 1e18 or math.isinf(best_cost):
+                raise ValueError(
+                    f"Cliente {c} não possui depósito alcançável (custo >= 1e18)."
+                )
+            chosen_depot = best_depot
+        depot_customers[chosen_depot].append(c)
+
+    all_routes: List[List[int]] = []
+    all_loads: List[float] = []
+    all_depots: List[int] = []
+    total_distance: float = 0.0
+
+    for d in depots:
+        if feedback.isCanceled():
+            break
+
+        group = depot_customers[d]
+        if not group:
+            continue
+
+        sub_nodes = [d] + group
+        sub_matrix = [[distance_matrix[i][j] for j in sub_nodes] for i in sub_nodes]
+        sub_demands = [demands[i] for i in sub_nodes]
+
+        sub_routes, sub_dist, sub_loads = solve_cvrp(
+            sub_matrix,
+            sub_demands,
+            capacity,
+            depot=0,
+            improve=improve,
+            backend=backend,
+            feedback=feedback,
+        )
+
+        for sub_route, load in zip(sub_routes, sub_loads):
+            global_route = [sub_nodes[idx] for idx in sub_route]
+            all_routes.append(global_route)
+            all_loads.append(load)
+            all_depots.append(d)
+
+        total_distance += sub_dist
+
+    return all_routes, total_distance, all_loads, all_depots

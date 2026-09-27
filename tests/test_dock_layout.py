@@ -149,7 +149,9 @@ class TestDockLayout(unittest.TestCase):
         self.assertIn("self.cmb_tsp_backend", content)
         self.assertIn("self.btn_run_tsp", content)
         self.assertIn("self.cmb_depot", content)
+        self.assertIn("self.cmb_depot_id_field", content)
         self.assertIn("self.cmb_demand", content)
+        self.assertIn("self.cmb_demand_depot_field", content)
         self.assertIn("self.cmb_demand_field", content)
         self.assertIn("self.spin_capacity", content)
         self.assertIn("self.cmb_cvrp_backend", content)
@@ -164,6 +166,28 @@ class TestDockLayout(unittest.TestCase):
         self.assertIn("logis:vrp_cvrp", content)
         self.assertIn("'BACKEND': self.cmb_tsp_backend.currentIndex()", content)
         self.assertIn("'BACKEND': self.cmb_cvrp_backend.currentIndex()", content)
+        self.assertIn("'FIELD_DEPOT_ID':", content)
+        self.assertIn("'FIELD_DEMAND_DEPOT':", content)
+
+    def test_routing_dock_cvrp_multi_depot(self):
+        content = (pathlib.Path(__file__).resolve().parent.parent / "logis/gui/routing_dock.py").read_text(
+            encoding="utf-8"
+        )
+
+        self.assertIn("self.cmb_depot_id_field", content)
+        self.assertIn("self.cmb_demand_depot_field", content)
+        self.assertIn("Camada de depósitos (Pontos) — origem/destino das rotas", content)
+        self.assertIn("Campo ID do depósito (opcional)", content)
+        self.assertIn("Campo do depósito de cada ponto (opcional — vazio: depósito mais próximo)", content)
+        self.assertIn("a partir de um ou mais depósitos", content)
+
+        run_cvrp_code = content.split("def run_cvrp(self):")[1].split("def _on_cvrp_finished")[0]
+        self.assertIn("'FIELD_DEPOT_ID':", run_cvrp_code)
+        self.assertIn("'FIELD_DEMAND_DEPOT':", run_cvrp_code)
+
+        on_cvrp_finished_code = content.split("def _on_cvrp_finished")[1].split("def ")[0]
+        self.assertIn("self._attr(feat, fields, 'depot_id', '')", on_cvrp_finished_code)
+        self.assertIn("depósito {id}", on_cvrp_finished_code)
 
     def test_routing_dock_tsp_distance_mode(self):
         content = (pathlib.Path(__file__).resolve().parent.parent / "logis/gui/routing_dock.py").read_text(

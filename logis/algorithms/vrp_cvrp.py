@@ -15,6 +15,7 @@ Algoritmo de processamento para Roteirização de Veículos Capacitados (CVRP).
 """
 
 import math
+from collections import defaultdict
 
 from qgis.core import (
     QgsProcessing,
@@ -44,7 +45,7 @@ try:
     from ..core.crs_check import classify_input_crs, valid_extent, utm_sirgas_epsg
     from ..core.progress import PhaseProgress
     from ..core.optim_backend import pick_backend
-    from ..core.routing.vrp import solve_cvrp, compute_route_distance
+    from ..core.routing.vrp import solve_multi_depot_cvrp, compute_route_distance
     from ..core.network.graph_builder import build_graph
     from ..core.network.od_matrix import compute_od_matrix
     from ..core.crs_transform import TransformCheckError, checked_transform, transform_points, transform_bbox
@@ -53,7 +54,7 @@ except ImportError:
     from core.crs_check import classify_input_crs, valid_extent, utm_sirgas_epsg
     from core.progress import PhaseProgress
     from core.optim_backend import pick_backend
-    from core.routing.vrp import solve_cvrp, compute_route_distance
+    from core.routing.vrp import solve_multi_depot_cvrp, compute_route_distance
     from core.network.graph_builder import build_graph
     from core.network.od_matrix import compute_od_matrix
     from core.crs_transform import TransformCheckError, checked_transform, transform_points, transform_bbox
@@ -138,10 +139,14 @@ class VrpCvrp(QgsProcessingAlgorithm):
     """
     Algoritmo QGIS Processing para resolver o Problema de Roteirização de Veículos Capacitados (CVRP).
 
+    Agrupa primeiro, roteiriza depois: os pontos de demanda são divididos por depósito,
+    e cada grupo é roteirizado individualmente.
     Utiliza o algoritmo de economias de Clarke & Wright (1964) para construção de rotas iniciais,
     combinado com as heurísticas de busca local 2-opt (Lin, 1965) e Or-opt (Or, 1976) para otimização.
 
     Referência Bibliográfica da Técnica:
+        - Gillett, B. E., & Johnson, J. G. (1976). Multi-terminal vehicle-dispatch algorithm.
+          Omega, 4(6), 711-718.
         - Clarke, G., & Wright, J. W. (1964). Scheduling of vehicles from a central depot
           to a number of delivery points. Operations Research, 12(4), 568-581.
         - Lin, S. (1965). Computer solutions of the traveling salesman problem.
@@ -157,8 +162,10 @@ class VrpCvrp(QgsProcessingAlgorithm):
     """
 
     INPUT_DEPOT = 'INPUT_DEPOT'
+    FIELD_DEPOT_ID = 'FIELD_DEPOT_ID'
     INPUT_DEMAND = 'INPUT_DEMAND'
     FIELD_DEMAND = 'FIELD_DEMAND'
+    FIELD_DEMAND_DEPOT = 'FIELD_DEMAND_DEPOT'
     CAPACITY = 'CAPACITY'
     INPUT_NETWORK = 'INPUT_NETWORK'
     IMPROVE = 'IMPROVE'
@@ -179,10 +186,28 @@ class VrpCvrp(QgsProcessingAlgorithm):
             )
         )
         self.addParameter(
+            QgsProcessingParameterField(
+                self.FIELD_DEPOT_ID,
+                self.tr("Campo de ID do depósito (opcional)"),
+                type=QgsProcessingParameterField.DataType.Any,
+                parentLayerParameterName=self.INPUT_DEPOT,
+                optional=True
+            )
+        )
+        self.addParameter(
             QgsProcessingParameterFeatureSource(
                 self.INPUT_DEMAND,
                 self.tr("Camada de demanda / clientes (Pontos/Polígonos)"),
                 [QgsProcessing.SourceType.TypeVectorPoint, QgsProcessing.SourceType.TypeVectorPolygon]
+            )
+        )
+        self.addParameter(
+            QgsProcessingParameterField(
+                self.FIELD_DEMAND_DEPOT,
+                self.tr("Campo do depósito de cada ponto (opcional)"),
+                type=QgsProcessingParameterField.DataType.Any,
+                parentLayerParameterName=self.INPUT_DEMAND,
+                optional=True
             )
         )
         self.addParameter(
@@ -246,12 +271,20 @@ class VrpCvrp(QgsProcessingAlgorithm):
 
     def processAlgorithm(self, parameters, context, feedback):
         depot_source = self.parameterAsSource(parameters, self.INPUT_DEPOT, context)
+        depot_field_name = self.parameterAsString(parameters, self.FIELD_DEPOT_ID, context)
         demand_source = self.parameterAsSource(parameters, self.INPUT_DEMAND, context)
         demand_field_name = self.parameterAsString(parameters, self.FIELD_DEMAND, context)
+        demand_depot_field_name = self.parameterAsString(parameters, self.FIELD_DEMAND_DEPOT, context)
         capacity = self.parameterAsDouble(parameters, self.CAPACITY, context)
         network_layer = self.parameterAsVectorLayer(parameters, self.INPUT_NETWORK, context)
         improve = self.parameterAsBool(parameters, self.IMPROVE, context)
         backend_idx = self.parameterAsEnum(parameters, self.BACKEND, context)
+
+        if demand_depot_field_name and not depot_field_name:
+            raise QgsProcessingException(self.tr("O parâmetro '{param1}' não pode ser preenchido sem o '{param2}'.").format(
+                param1=self.tr("Campo do depósito de cada ponto (opcional)"),
+                param2=self.tr("Campo de ID do depósito (opcional)")
+            ))
 
         if backend_idx == 1:
             req_backend = "python"
@@ -268,17 +301,24 @@ class VrpCvrp(QgsProcessingAlgorithm):
             raise QgsProcessingException(self.tr("A capacidade do veículo deve ser estritamente maior que zero."))
 
         # 1) Leitura das geometrias cruas do depósito
-        raw_depot_pt = None
+        depot_field_idx = depot_source.fields().indexOf(depot_field_name) if depot_field_name else -1
+
+        raw_depot_pts = []
+        depot_ids = []
         for feat in depot_source.getFeatures():
             geom = feat.geometry()
             if geom and not geom.isEmpty():
-                raw_depot_pt = _extract_point(geom)
-                break
+                raw_depot_pts.append(_extract_point(geom))
+                if depot_field_idx != -1:
+                    depot_ids.append(str(feat.attribute(depot_field_idx)).strip())
+                else:
+                    depot_ids.append(str(feat.id()))
 
-        if raw_depot_pt is None:
+        if not raw_depot_pts:
             raise QgsProcessingException(self.tr("Nenhum ponto de depósito válido encontrado."))
 
-        raw_depot_pts = [raw_depot_pt]
+        if len(set(depot_ids)) != len(depot_ids):
+            raise QgsProcessingException(self.tr("ID de depósito repetido na camada de depósito."))
 
         # 2) Leitura das geometrias cruas da demanda e pesos
         p_read = PhaseProgress(feedback, 0.0, 8.0)
@@ -286,10 +326,13 @@ class VrpCvrp(QgsProcessingAlgorithm):
         feedback.pushInfo(self.tr("Lendo pontos de demanda..."))
 
         demand_field_idx = demand_source.fields().indexOf(demand_field_name) if demand_field_name else -1
+        demand_depot_field_idx = demand_source.fields().indexOf(demand_depot_field_name) if demand_depot_field_name else -1
 
         demand_features = []
         raw_demand_pts = []
         demand_weights = []
+        demand_assigned_depot_id = []
+        empty_depot_count = 0
 
         total_pts = demand_source.featureCount()
         for i, feat in enumerate(demand_source.getFeatures()):
@@ -320,11 +363,25 @@ class VrpCvrp(QgsProcessingAlgorithm):
                     )
                 )
 
+            assigned_id = None
+            if demand_depot_field_idx != -1:
+                val = feat.attribute(demand_depot_field_idx)
+                if not qgis_compat.is_null(val) and str(val).strip() != "":
+                    assigned_id = str(val).strip()
+                    if assigned_id not in depot_ids:
+                        raise QgsProcessingException(self.tr("O valor '{val}' no campo de depósito da demanda não existe na camada de depósitos. IDs válidos: {ids}").format(val=assigned_id, ids=", ".join(depot_ids)))
+                else:
+                    empty_depot_count += 1
+            demand_assigned_depot_id.append(assigned_id)
+
             demand_features.append(feat)
             raw_demand_pts.append(raw_pt)
             demand_weights.append(weight)
 
         p_read.setProgress(100.0)
+
+        if empty_depot_count > 0 and feedback:
+            feedback.pushWarning(self.tr("{count} ponto(s) de demanda com o campo de depósito vazio; serão alocados ao depósito mais próximo.").format(count=empty_depot_count))
 
         if not raw_demand_pts:
             raise QgsProcessingException(self.tr("Nenhum ponto de demanda válido encontrado."))
@@ -389,7 +446,7 @@ class VrpCvrp(QgsProcessingAlgorithm):
         for cand_idx, cand_crs in enumerate(candidates):
             is_last = cand_idx == len(candidates) - 1
             try:
-                transform_depot = checked_transform(depot_crs, cand_crs, contexts, raw_depot_pt)
+                transform_depot = checked_transform(depot_crs, cand_crs, contexts, raw_depot_pts[0])
                 transform_demand = checked_transform(demand_crs, cand_crs, contexts, raw_demand_pts[0])
                 net_extent = None
                 if net_crs is not None:
@@ -411,7 +468,7 @@ class VrpCvrp(QgsProcessingAlgorithm):
 
         if feedback:
             probes = [
-                (depot_crs, raw_depot_pt, transform_depot),
+                (depot_crs, raw_depot_pts[0], transform_depot),
                 (demand_crs, raw_demand_pts[0], transform_demand),
             ]
             for src_crs, probe_pt, ct in probes:
@@ -427,14 +484,24 @@ class VrpCvrp(QgsProcessingAlgorithm):
             feedback.pushInfo(self.tr("SRC de depósito: {} → {}").format(depot_crs.authid(), target_crs.authid()))
             feedback.pushInfo(self.tr("SRC de demanda: {} → {}").format(demand_crs.authid(), target_crs.authid()))
 
-        depot_pt = transform_points(transform_depot, [raw_depot_pt], target_crs)[0]
+        depot_points = transform_points(transform_depot, raw_depot_pts, target_crs)
         demand_points = transform_points(transform_demand, raw_demand_pts, target_crs)
 
-        crashlog.mark("cvrp-transform", f"1 deposito, {len(demand_points)} demandas -> CRS {target_crs.authid()}")
+        crashlog.mark("cvrp-transform", f"{len(depot_points)} depositos, {len(demand_points)} demandas -> CRS {target_crs.authid()}")
 
-        # 4) Matriz de distâncias (Nó 0 = depósito, Nôs 1..N = demandas)
-        all_points = [depot_pt] + demand_points
-        all_demands = [0.0] + demand_weights
+        # 4) Matriz de distâncias (Nós 0..D-1 = depósitos, Nós D..D+N-1 = demandas)
+        all_points = depot_points + demand_points
+        D = len(depot_points)
+        all_demands = [0.0] * D + demand_weights
+
+        # assignment dict
+        assignment = {}
+        for i, assigned_id in enumerate(demand_assigned_depot_id):
+            if assigned_id is not None:
+                depot_idx = depot_ids.index(assigned_id)
+                assignment[D + i] = depot_idx
+
+        depot_indices = list(range(D))
 
         graph = None
         vertices = None
@@ -532,11 +599,12 @@ class VrpCvrp(QgsProcessingAlgorithm):
         feedback.pushInfo(self.tr("Executando a otimização CVRP..."))
         crashlog.mark("cvrp-ortools-import", f"backend resolvido: {used_backend}")
         try:
-            routes, total_distance, route_loads = solve_cvrp(
+            routes, total_distance, route_loads, route_depots = solve_multi_depot_cvrp(
                 distance_matrix=cost_matrix,
                 demands=all_demands,
                 capacity=capacity,
-                depot=0,
+                depots=depot_indices,
+                assignment=assignment,
                 improve=improve,
                 backend=req_backend,
                 feedback=p_opt
@@ -561,13 +629,13 @@ class VrpCvrp(QgsProcessingAlgorithm):
             p_out = PhaseProgress(feedback, 85.0, 100.0)
 
         out_crs = QgsCoordinateReferenceSystem("EPSG:4674")
-        transform_out_depot = _checked(depot_crs, out_crs, raw_depot_pt)
-        depot_pt_out = transform_points(transform_out_depot, [raw_depot_pt], out_crs)[0]
+        transform_out_depot = _checked(depot_crs, out_crs, raw_depot_pts[0])
+        depot_points_out = transform_points(transform_out_depot, raw_depot_pts, out_crs)
 
         transform_out_demand = _checked(demand_crs, out_crs, raw_demand_pts[0])
         demand_points_out = transform_points(transform_out_demand, raw_demand_pts, out_crs)
 
-        all_points_out = [depot_pt_out] + demand_points_out
+        all_points_out = depot_points_out + demand_points_out
 
         has_network = bool(network_layer and network_layer.isValid() and graph is not None and vertices is not None)
         transform_out_network = None
@@ -581,6 +649,7 @@ class VrpCvrp(QgsProcessingAlgorithm):
         route_fields.append(QgsField("route_load", qgis_compat.field_type("double")))
         route_fields.append(QgsField("route_dist", qgis_compat.field_type("double")))
         route_fields.append(QgsField("backend", qgis_compat.field_type("string")))
+        route_fields.append(QgsField("depot_id", qgis_compat.field_type("string")))
 
         (sink_routes, dest_routes) = self.parameterAsSink(
             parameters,
@@ -595,6 +664,7 @@ class VrpCvrp(QgsProcessingAlgorithm):
         stop_fields.append(QgsField("route_id", qgis_compat.field_type("int")))
         stop_fields.append(QgsField("stop_seq", qgis_compat.field_type("int")))
         stop_fields.append(QgsField("cum_load", qgis_compat.field_type("double")))
+        stop_fields.append(QgsField("depot_id", qgis_compat.field_type("string")))
 
         (sink_stops, dest_stops) = self.parameterAsSink(
             parameters,
@@ -611,11 +681,12 @@ class VrpCvrp(QgsProcessingAlgorithm):
         written_items = 0
         dijkstra_trees = {}
 
-        for route_idx, route_nodes in enumerate(routes, start=1):
+        for route_idx, (route_nodes, r_depot) in enumerate(zip(routes, route_depots), start=1):
             if not route_nodes:
                 continue
-            r_dist = compute_route_distance(route_nodes, cost_matrix, depot=0)
+            r_dist = compute_route_distance(route_nodes, cost_matrix, depot=r_depot)
             r_load = sum(all_demands[node] for node in route_nodes)
+            r_depot_id = depot_ids[r_depot]
 
             if sink_routes is not None:
                 if p_out.isCanceled():
@@ -623,10 +694,10 @@ class VrpCvrp(QgsProcessingAlgorithm):
 
                 pts = []
                 if has_network:
-                    legs = [(0, route_nodes[0])] + [
+                    legs = [(r_depot, route_nodes[0])] + [
                         (route_nodes[i], route_nodes[i + 1])
                         for i in range(len(route_nodes) - 1)
-                    ] + [(route_nodes[-1], 0)]
+                    ] + [(route_nodes[-1], r_depot)]
 
                     for u, v in legs:
                         leg_pts = []
@@ -671,12 +742,12 @@ class VrpCvrp(QgsProcessingAlgorithm):
                         else:
                             pts.extend(leg_pts[1:])
                 else:
-                    pts = [all_points_out[0]] + [all_points_out[node] for node in route_nodes] + [all_points_out[0]]
+                    pts = [all_points_out[r_depot]] + [all_points_out[node] for node in route_nodes] + [all_points_out[r_depot]]
 
                 geom = QgsGeometry.fromPolylineXY(pts)
                 feat = QgsFeature(route_fields)
                 feat.setGeometry(geom)
-                feat.setAttributes([route_idx, len(route_nodes), r_load, r_dist, used_backend])
+                feat.setAttributes([route_idx, len(route_nodes), r_load, r_dist, used_backend, r_depot_id])
                 sink_routes.addFeature(feat, QgsFeatureSink.Flag.FastInsert)
                 written_items += 1
                 if total_out_items > 0:
@@ -687,12 +758,12 @@ class VrpCvrp(QgsProcessingAlgorithm):
                 for seq_idx, node in enumerate(route_nodes, start=1):
                     if p_out.isCanceled():
                         return {}
-                    demand_feat = demand_features[node - 1]
+                    demand_feat = demand_features[node - D]
                     cum_load += all_demands[node]
                     stop_feat = QgsFeature(stop_fields)
-                    stop_feat.setGeometry(QgsGeometry.fromPointXY(demand_points_out[node - 1]))
+                    stop_feat.setGeometry(QgsGeometry.fromPointXY(demand_points_out[node - D]))
                     attrs = list(demand_feat.attributes())
-                    attrs.extend([route_idx, seq_idx, cum_load])
+                    attrs.extend([route_idx, seq_idx, cum_load, r_depot_id])
                     stop_feat.setAttributes(attrs)
                     sink_stops.addFeature(stop_feat, QgsFeatureSink.Flag.FastInsert)
                     written_items += 1
@@ -702,6 +773,19 @@ class VrpCvrp(QgsProcessingAlgorithm):
         p_out.setProgress(100.0)
 
         crashlog.mark("cvrp-fim", "concluido")
+
+        routes_per_depot = defaultdict(int)
+        load_per_depot = defaultdict(float)
+        for r_depot, load in zip(route_depots, route_loads):
+            did = depot_ids[r_depot]
+            routes_per_depot[did] += 1
+            load_per_depot[did] += load
+        
+        for did in depot_ids:
+            if routes_per_depot[did] > 0:
+                feedback.pushInfo(self.tr("Depósito {did}: {count} rota(s), carga {load:.2f}").format(
+                    did=did, count=routes_per_depot[did], load=load_per_depot[did]
+                ))
 
         results = {self.OUTPUT_ROUTES: dest_routes}
         if sink_stops is not None:
@@ -724,13 +808,19 @@ class VrpCvrp(QgsProcessingAlgorithm):
     def shortHelpString(self):
         return self.tr(
             "Resolve o Problema de Roteirização de Veículos Capacitados (CVRP) a partir de uma "
-            "camada de depósito e uma camada de pontos de demanda (clientes).\n\n"
+            "ou mais feições de depósito e uma camada de pontos de demanda (clientes).\n\n"
+            "Limitação (agrupa primeiro, roteiriza depois): os pontos são alocados aos depósitos "
+            "antes da roteirização (Gillett & Johnson, 1976) e nunca trocam de depósito, sendo uma solução "
+            "boa, não ótima. Se o campo de depósito da demanda for vazio, o cliente é alocado ao depósito "
+            "mais próximo.\n\n"
             "Constroi rotas que iniciam e terminam no depósito, respeitando a capacidade máxima do veículo, "
             "utilizando a heurística de economias de Clarke & Wright (1964) e refinamento opcional por "
             "busca local 2-opt (Lin, 1965) e Or-opt (Or, 1976).\n\n"
             "Parâmetros:\n"
-            "- Camada de depósito: feição de ponto/polígono representando o depósito de partida/chegada.\n"
+            "- Camada de depósito: feição(ões) de ponto/polígono representando o(s) depósito(s).\n"
+            "- Campo de ID do depósito: campo que identifica cada depósito (opcional).\n"
             "- Camada de demanda / clientes: feições de pontos ou polígonos com demandas a atender.\n"
+            "- Campo do depósito de cada ponto: indica qual depósito atende o cliente (opcional).\n"
             "- Campo de peso/demanda: campo numérico da demanda de cada cliente (opcional, default=1.0).\n"
             "- Capacidade do veículo: carga máxima transportada por cada veículo em uma rota.\n"
             "- Camada de rede viária: rede viária para distâncias reais (opcional, usa distância euclidiana se omitida).\n"
