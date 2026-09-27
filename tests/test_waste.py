@@ -13,7 +13,7 @@ from logis.core.indicators.waste import (
 try:
     from qgis.core import (
         QgsApplication, QgsVectorLayer, QgsFeature, QgsGeometry, QgsPointXY,
-        QgsField, QgsProcessingContext, QgsProcessingFeedback, NULL,
+        QgsField, QgsProcessingContext, QgsProcessingFeedback, QgsProcessingException, NULL,
         QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsCoordinateTransformContext,
     )
     from qgis.PyQt.QtCore import QVariant
@@ -46,6 +46,16 @@ if _HAS_QGIS:
         if not any(p.id() == "logis" for p in QgsApplication.processingRegistry().providers()):
             _logis_provider_instance = LogisProvider()
             QgsApplication.processingRegistry().addProvider(_logis_provider_instance)
+        else:
+            _logis_provider_instance = QgsApplication.processingRegistry().providerById("logis")
+
+        from logis.algorithms.waste_street_sector_join import WasteStreetSectorJoin
+
+        if _logis_provider_instance and not any(
+            a.name() == "waste_street_sector_join"
+            for a in _logis_provider_instance.algorithms()
+        ):
+            _logis_provider_instance.addAlgorithm(WasteStreetSectorJoin())
         _HAS_PROCESSING_REGISTRY = True
     except Exception:
         _HAS_PROCESSING_REGISTRY = False
@@ -489,6 +499,236 @@ class TestWaste(unittest.TestCase):
             self.assertIsInstance(alg.createInstance(), WasteCollectionCoverage)
         except ImportError:
             pass
+
+    def test_waste_street_sector_join_algorithm_metadata(self):
+        try:
+            from logis.algorithms.waste_street_sector_join import WasteStreetSectorJoin
+
+            alg = WasteStreetSectorJoin()
+            self.assertEqual(alg.name(), "waste_street_sector_join")
+            self.assertEqual(alg.groupId(), "waste")
+            self.assertTrue(callable(alg.createInstance))
+            self.assertIsInstance(alg.createInstance(), WasteStreetSectorJoin)
+            self.assertIn("sobreposição", alg.shortHelpString().lower())
+        except ImportError:
+            pass
+
+    @unittest.skipUnless(
+        _HAS_PROCESSING_REGISTRY, "requer QGIS + Processing com o provider logis registrado"
+    )
+    def test_waste_street_sector_join_assigns_largest_overlap(self):
+        # Dois setores quadrados A e B adjacentes em EPSG:31983:
+        # A: (0, 0) a (100, 100)
+        # B: (100, 0) a (200, 100)
+        # Três trechos de via:
+        # 1. Dentro de A: (20, 50) a (80, 50) -> deve receber 'A'
+        # 2. Cruza a divisa (x=100) com maior parte em B: (80, 50) a (180, 50) -> deve receber 'B'
+        # 3. Fora dos dois: (300, 50) a (400, 50) -> deve receber NULL
+        sectors_layer = QgsVectorLayer("Polygon?crs=EPSG:31983", "sectors", "memory")
+        sp = sectors_layer.dataProvider()
+        sp.addAttributes([QgsField("cd_setor", QVariant.String)])
+        sectors_layer.updateFields()
+
+        feat_a = QgsFeature(sectors_layer.fields())
+        feat_a.setGeometry(
+            QgsGeometry.fromPolygonXY(
+                [[QgsPointXY(0, 0), QgsPointXY(100, 0), QgsPointXY(100, 100), QgsPointXY(0, 100)]]
+            )
+        )
+        feat_a.setAttributes(["A"])
+
+        feat_b = QgsFeature(sectors_layer.fields())
+        feat_b.setGeometry(
+            QgsGeometry.fromPolygonXY(
+                [[QgsPointXY(100, 0), QgsPointXY(200, 0), QgsPointXY(200, 100), QgsPointXY(100, 100)]]
+            )
+        )
+        feat_b.setAttributes(["B"])
+        sp.addFeatures([feat_a, feat_b])
+        sectors_layer.updateExtents()
+
+        streets_layer = QgsVectorLayer("LineString?crs=EPSG:31983", "streets", "memory")
+        stp = streets_layer.dataProvider()
+        stp.addAttributes([QgsField("id", QVariant.Int)])
+        streets_layer.updateFields()
+
+        s1 = QgsFeature(streets_layer.fields())
+        s1.setGeometry(QgsGeometry.fromPolylineXY([QgsPointXY(20, 50), QgsPointXY(80, 50)]))
+        s1.setAttributes([1])
+
+        s2 = QgsFeature(streets_layer.fields())
+        s2.setGeometry(QgsGeometry.fromPolylineXY([QgsPointXY(80, 50), QgsPointXY(180, 50)]))
+        s2.setAttributes([2])
+
+        s3 = QgsFeature(streets_layer.fields())
+        s3.setGeometry(QgsGeometry.fromPolylineXY([QgsPointXY(300, 50), QgsPointXY(400, 50)]))
+        s3.setAttributes([3])
+        stp.addFeatures([s1, s2, s3])
+        streets_layer.updateExtents()
+
+        result = processing.run(
+            "logis:waste_street_sector_join",
+            {
+                "INPUT_STREETS": streets_layer,
+                "INPUT_SECTORS": sectors_layer,
+                "FIELD_SECTOR_ID": "cd_setor",
+                "OUTPUT": "memory:out",
+            },
+        )
+        out_layer = result["OUTPUT"]
+
+        # Conferir que a saída tem exatamente 3 feições (nenhuma duplicada nem descartada)
+        self.assertEqual(out_layer.featureCount(), 3)
+
+        idx_id = out_layer.fields().indexFromName("id")
+        idx_sec = out_layer.fields().indexFromName("cd_setor")
+        self.assertNotEqual(idx_sec, -1)
+
+        sectors_by_id = {
+            feat.attribute(idx_id): feat.attribute(idx_sec) for feat in out_layer.getFeatures()
+        }
+        self.assertEqual(len(sectors_by_id), 3)
+        self.assertEqual(sectors_by_id[1], "A")
+        self.assertEqual(sectors_by_id[2], "B")
+        self.assertTrue(sectors_by_id[3] is None or sectors_by_id[3] == NULL)
+
+    @unittest.skipUnless(
+        _HAS_PROCESSING_REGISTRY, "requer QGIS + Processing com o provider logis registrado"
+    )
+    def test_waste_street_sector_join_cross_crs(self):
+        # Repetir com setores em EPSG:31983 e vias em EPSG:4674
+        base_x, base_y = 330000.0, 7395000.0
+
+        sectors_layer = QgsVectorLayer("Polygon?crs=EPSG:31983", "sectors_utm", "memory")
+        sp = sectors_layer.dataProvider()
+        sp.addAttributes([QgsField("cd_setor", QVariant.String)])
+        sectors_layer.updateFields()
+
+        feat_a = QgsFeature(sectors_layer.fields())
+        feat_a.setGeometry(
+            QgsGeometry.fromPolygonXY(
+                [
+                    [
+                        QgsPointXY(base_x, base_y),
+                        QgsPointXY(base_x + 100.0, base_y),
+                        QgsPointXY(base_x + 100.0, base_y + 100.0),
+                        QgsPointXY(base_x, base_y + 100.0),
+                    ]
+                ]
+            )
+        )
+        feat_a.setAttributes(["A"])
+
+        feat_b = QgsFeature(sectors_layer.fields())
+        feat_b.setGeometry(
+            QgsGeometry.fromPolygonXY(
+                [
+                    [
+                        QgsPointXY(base_x + 100.0, base_y),
+                        QgsPointXY(base_x + 200.0, base_y),
+                        QgsPointXY(base_x + 200.0, base_y + 100.0),
+                        QgsPointXY(base_x + 100.0, base_y + 100.0),
+                    ]
+                ]
+            )
+        )
+        feat_b.setAttributes(["B"])
+        sp.addFeatures([feat_a, feat_b])
+        sectors_layer.updateExtents()
+
+        ct = QgsCoordinateTransform(
+            QgsCoordinateReferenceSystem("EPSG:31983"),
+            QgsCoordinateReferenceSystem("EPSG:4674"),
+            QgsCoordinateTransformContext(),
+        )
+
+        streets_layer = QgsVectorLayer("LineString?crs=EPSG:4674", "streets_geo", "memory")
+        stp = streets_layer.dataProvider()
+        stp.addAttributes([QgsField("id", QVariant.Int)])
+        streets_layer.updateFields()
+
+        def make_geo_segment(coords, fid):
+            f = QgsFeature(streets_layer.fields())
+            pts = [ct.transform(QgsPointXY(*c)) for c in coords]
+            f.setGeometry(QgsGeometry.fromPolylineXY(pts))
+            f.setAttributes([fid])
+            return f
+
+        stp.addFeatures(
+            [
+                make_geo_segment([(base_x + 20.0, base_y + 50.0), (base_x + 80.0, base_y + 50.0)], 1),
+                make_geo_segment([(base_x + 80.0, base_y + 50.0), (base_x + 180.0, base_y + 50.0)], 2),
+                make_geo_segment([(base_x + 300.0, base_y + 50.0), (base_x + 400.0, base_y + 50.0)], 3),
+            ]
+        )
+        streets_layer.updateExtents()
+
+        result = processing.run(
+            "logis:waste_street_sector_join",
+            {
+                "INPUT_STREETS": streets_layer,
+                "INPUT_SECTORS": sectors_layer,
+                "FIELD_SECTOR_ID": "cd_setor",
+                "OUTPUT": "memory:out_geo",
+            },
+        )
+        out_layer = result["OUTPUT"]
+
+        self.assertEqual(out_layer.featureCount(), 3)
+
+        idx_id = out_layer.fields().indexFromName("id")
+        idx_sec = out_layer.fields().indexFromName("cd_setor")
+        self.assertNotEqual(idx_sec, -1)
+
+        sectors_by_id = {
+            feat.attribute(idx_id): feat.attribute(idx_sec) for feat in out_layer.getFeatures()
+        }
+        self.assertEqual(len(sectors_by_id), 3)
+        self.assertEqual(sectors_by_id[1], "A")
+        self.assertEqual(sectors_by_id[2], "B")
+        self.assertTrue(sectors_by_id[3] is None or sectors_by_id[3] == NULL)
+
+    @unittest.skipUnless(
+        _HAS_PROCESSING_REGISTRY, "requer QGIS + Processing com o provider logis registrado"
+    )
+    def test_waste_street_sector_join_raises_when_streets_already_have_field(self):
+        # Conferir que dá QgsProcessingException quando as vias já têm o campo.
+        sectors_layer = QgsVectorLayer("Polygon?crs=EPSG:31983", "sectors", "memory")
+        sp = sectors_layer.dataProvider()
+        sp.addAttributes([QgsField("cd_setor", QVariant.String)])
+        sectors_layer.updateFields()
+
+        feat_a = QgsFeature(sectors_layer.fields())
+        feat_a.setGeometry(
+            QgsGeometry.fromPolygonXY(
+                [[QgsPointXY(0, 0), QgsPointXY(10, 0), QgsPointXY(10, 10), QgsPointXY(0, 10)]]
+            )
+        )
+        feat_a.setAttributes(["A"])
+        sp.addFeatures([feat_a])
+        sectors_layer.updateExtents()
+
+        streets_layer = QgsVectorLayer("LineString?crs=EPSG:31983", "streets_with_field", "memory")
+        stp = streets_layer.dataProvider()
+        stp.addAttributes([QgsField("id", QVariant.Int), QgsField("cd_setor", QVariant.String)])
+        streets_layer.updateFields()
+
+        s1 = QgsFeature(streets_layer.fields())
+        s1.setGeometry(QgsGeometry.fromPolylineXY([QgsPointXY(2, 2), QgsPointXY(8, 2)]))
+        s1.setAttributes([1, "A"])
+        stp.addFeatures([s1])
+        streets_layer.updateExtents()
+
+        with self.assertRaises(QgsProcessingException):
+            processing.run(
+                "logis:waste_street_sector_join",
+                {
+                    "INPUT_STREETS": streets_layer,
+                    "INPUT_SECTORS": sectors_layer,
+                    "FIELD_SECTOR_ID": "cd_setor",
+                    "OUTPUT": "memory:out_err",
+                },
+            )
 
     @unittest.skipUnless(_HAS_QGIS, "requer bindings QGIS completos")
     def test_waste_sector_balance_computes_stats_per_sector(self):

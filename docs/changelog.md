@@ -2,6 +2,10 @@
 
 Este documento registra as principais alterações e evoluções do plugin **logis** organizadas por versão.
 
+## 0.7.0 - 2026-09-27
+
+- **Resíduos: setor censitário associado às vias com um clique** — na aba Geração, se a camada de vias ainda não tiver o campo de setor, o plugin faz sozinho a junção espacial com os setores censitários (novo algoritmo `logis:waste_street_sector_join`, que usa o `native:joinattributesbylocation` e fica com o setor de maior sobreposição); não é mais preciso rodar a junção pela Caixa de Ferramentas.
+
 ## 0.6.6 - 2026-09-25
 
 - **OR-Tools: falha ao localizar o pip passa a ficar registrada no log** — antes, se nenhum dos pontos de entrada do pip fosse encontrado, o motivo era descartado em silêncio; também libera a publicação no repositório oficial do QGIS, cujo scanner barra esse padrão.

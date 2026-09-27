@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import os
 import unittest
-from PyQt5.QtCore import QCoreApplication, QTranslator
+from qgis.PyQt.QtCore import QCoreApplication, QTranslator
 
 
 class TestI18n(unittest.TestCase):

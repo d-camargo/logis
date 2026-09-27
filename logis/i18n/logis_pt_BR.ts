@@ -661,7 +661,7 @@ Retorno:
 <context>
     <name>LogisProvider</name>
     <message>
-        <location filename="../provider.py" line="77"/>
+        <location filename="../provider.py" line="79"/>
         <source>logis — suporte a projetos de logística no Brasil</source>
         <translation type="unfinished"></translation>
     </message>
@@ -4142,472 +4142,467 @@ Saída:
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="432"/>
+        <location filename="../gui/waste_dock.py" line="434"/>
         <source>Camada de trechos de via (Linhas):</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="268"/>
-        <source>Campo ID do setor (Vias):</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../gui/waste_dock.py" line="275"/>
+        <location filename="../gui/waste_dock.py" line="277"/>
         <source>Taxa per capita (kg/hab/dia):</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="283"/>
+        <location filename="../gui/waste_dock.py" line="285"/>
         <source>Fração de cobertura (0.0 a 1.0):</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="291"/>
+        <location filename="../gui/waste_dock.py" line="293"/>
         <source>Calcular Estimativa de Geração</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="350"/>
+        <location filename="../gui/waste_dock.py" line="352"/>
         <source>&lt;b&gt;Roteirização CPP&lt;/b&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="635"/>
+        <location filename="../gui/waste_dock.py" line="637"/>
         <source>Campo de setor de coleta (opcional):</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="477"/>
+        <location filename="../gui/waste_dock.py" line="479"/>
         <source>Tolerância de nó (m):</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="378"/>
+        <location filename="../gui/waste_dock.py" line="380"/>
         <source>Executar Roteirização CPP</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="384"/>
+        <location filename="../gui/waste_dock.py" line="386"/>
         <source>&lt;b&gt;Roteirização RPP&lt;/b&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="438"/>
+        <location filename="../gui/waste_dock.py" line="440"/>
         <source>Campo de via obrigatória (opcional):</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="421"/>
+        <location filename="../gui/waste_dock.py" line="423"/>
         <source>Executar Roteirização RPP</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="427"/>
+        <location filename="../gui/waste_dock.py" line="429"/>
         <source>&lt;b&gt;Roteirização CARP&lt;/b&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="447"/>
+        <location filename="../gui/waste_dock.py" line="449"/>
         <source>Campo de demanda de resíduos (kg):</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="454"/>
+        <location filename="../gui/waste_dock.py" line="456"/>
         <source>Camada de ponto do depósito/aterro (Pontos):</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="460"/>
+        <location filename="../gui/waste_dock.py" line="462"/>
         <source>Capacidade do veículo:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="485"/>
+        <location filename="../gui/waste_dock.py" line="487"/>
         <source>Executar Roteirização CARP</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="496"/>
+        <location filename="../gui/waste_dock.py" line="498"/>
         <source>&lt;b&gt;Dimensionamento de Frota&lt;/b&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="604"/>
+        <location filename="../gui/waste_dock.py" line="606"/>
         <source>Camada de rotas de coleta (Linhas):</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="507"/>
+        <location filename="../gui/waste_dock.py" line="509"/>
         <source>Campo ID da rota:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="644"/>
+        <location filename="../gui/waste_dock.py" line="646"/>
         <source>Velocidade média de coleta (km/h):</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="531"/>
+        <location filename="../gui/waste_dock.py" line="533"/>
         <source>Duração da jornada de trabalho (horas):</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="652"/>
+        <location filename="../gui/waste_dock.py" line="654"/>
         <source>Tempo de descarga por rota (horas):</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="660"/>
+        <location filename="../gui/waste_dock.py" line="662"/>
         <source>Tempo de deslocamento ao destino por rota (horas):</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="555"/>
+        <location filename="../gui/waste_dock.py" line="557"/>
         <source>Executar Dimensionamento de Frota</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="599"/>
+        <location filename="../gui/waste_dock.py" line="601"/>
         <source>&lt;b&gt;Equilíbrio entre Setores&lt;/b&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="610"/>
+        <location filename="../gui/waste_dock.py" line="612"/>
         <source>Campo de carga da rota (kg):</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="617"/>
+        <location filename="../gui/waste_dock.py" line="619"/>
         <source>Campo de distância da rota em km (opcional):</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="626"/>
+        <location filename="../gui/waste_dock.py" line="628"/>
         <source>Campo ID da rota (opcional):</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="668"/>
+        <location filename="../gui/waste_dock.py" line="670"/>
         <source>Executar Equilíbrio entre Setores</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="674"/>
+        <location filename="../gui/waste_dock.py" line="676"/>
         <source>&lt;b&gt;Distância ao Destino&lt;/b&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="679"/>
+        <location filename="../gui/waste_dock.py" line="681"/>
         <source>Camada de rede viária (Linhas):</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="685"/>
+        <location filename="../gui/waste_dock.py" line="687"/>
         <source>Camada de destinos de resíduos (Pontos):</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="691"/>
+        <location filename="../gui/waste_dock.py" line="693"/>
         <source>Camada de setores/origens de coleta (Pontos ou Polígonos):</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="697"/>
+        <location filename="../gui/waste_dock.py" line="699"/>
         <source>Critério de custo:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="699"/>
+        <location filename="../gui/waste_dock.py" line="701"/>
         <source>Distância</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="699"/>
+        <location filename="../gui/waste_dock.py" line="701"/>
         <source>Tempo de viagem</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="703"/>
+        <location filename="../gui/waste_dock.py" line="705"/>
         <source>Executar Distância ao Destino</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="709"/>
+        <location filename="../gui/waste_dock.py" line="711"/>
         <source>&lt;b&gt;Cobertura por Frequência&lt;/b&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="714"/>
+        <location filename="../gui/waste_dock.py" line="716"/>
         <source>Camada de vias exigidas (faixa de frequência) (Linhas):</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="720"/>
+        <location filename="../gui/waste_dock.py" line="722"/>
         <source>Campo de setor da camada de vias exigidas (opcional):</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="729"/>
+        <location filename="../gui/waste_dock.py" line="731"/>
         <source>Camada de rota coberta (Linhas):</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="735"/>
+        <location filename="../gui/waste_dock.py" line="737"/>
         <source>Campo indicador de deadhead/conector (opcional):</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="744"/>
+        <location filename="../gui/waste_dock.py" line="746"/>
         <source>Campo de setor da camada de rota coberta (opcional):</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="753"/>
+        <location filename="../gui/waste_dock.py" line="755"/>
         <source>Rótulo de frequência de coleta:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="758"/>
+        <location filename="../gui/waste_dock.py" line="760"/>
         <source>Executar Cobertura por Frequência</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="766"/>
+        <location filename="../gui/waste_dock.py" line="768"/>
         <source>Resultados:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="1394"/>
+        <location filename="../gui/waste_dock.py" line="1433"/>
         <source>Aviso</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="793"/>
+        <location filename="../gui/waste_dock.py" line="795"/>
         <source>Por favor, selecione todas as camadas e campos necessários para a estimativa de geração.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="1399"/>
+        <location filename="../gui/waste_dock.py" line="1438"/>
         <source>&lt;span style='color: #fc8181;'&gt;Erro: Parâmetros incompletos.&lt;/span&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="1405"/>
+        <location filename="../gui/waste_dock.py" line="1444"/>
         <source>Erro</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="1405"/>
+        <location filename="../gui/waste_dock.py" line="1444"/>
         <source>QGIS Processing não está disponível no ambiente atual.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="1410"/>
+        <location filename="../gui/waste_dock.py" line="1449"/>
         <source>&lt;span style='color: #fc8181;'&gt;Erro: QGIS Processing não disponível.&lt;/span&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="813"/>
+        <location filename="../gui/waste_dock.py" line="815"/>
         <source>&lt;b&gt;=== CALCULANDO ESTIMATIVA DE GERAÇÃO ===&lt;/b&gt;&lt;br&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="833"/>
+        <location filename="../gui/waste_dock.py" line="872"/>
         <source>-&gt; &lt;b&gt;Estimativa calculada com sucesso!&lt;/b&gt; (Camada com {count} trechos viários)&lt;br&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="837"/>
+        <location filename="../gui/waste_dock.py" line="876"/>
         <source>-&gt; &lt;b&gt;Resultado da estimativa retornou vazio.&lt;/b&gt;&lt;br&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="840"/>
+        <location filename="../gui/waste_dock.py" line="879"/>
         <source>&lt;span style=&apos;color: #fc8181;&apos;&gt;Erro ao calcular estimativa: {error}&lt;/span&gt;&lt;br&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="1442"/>
+        <location filename="../gui/waste_dock.py" line="1481"/>
         <source>&lt;b&gt;=== CÁLCULO CONCLUÍDO ===&lt;/b&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="924"/>
+        <location filename="../gui/waste_dock.py" line="963"/>
         <source>Por favor, selecione a camada de vias para a roteirização CPP.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="944"/>
+        <location filename="../gui/waste_dock.py" line="983"/>
         <source>&lt;b&gt;=== EXECUTANDO ROTEIRIZAÇÃO CPP ===&lt;/b&gt;&lt;br&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="961"/>
+        <location filename="../gui/waste_dock.py" line="1000"/>
         <source>-&gt; &lt;b&gt;Roteirização CPP concluída com sucesso!&lt;/b&gt; (Camada com {count} trechos viários)&lt;br&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="1099"/>
+        <location filename="../gui/waste_dock.py" line="1138"/>
         <source>-&gt; &lt;b&gt;Resultado da roteirização retornou vazio.&lt;/b&gt;&lt;br&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="968"/>
+        <location filename="../gui/waste_dock.py" line="1007"/>
         <source>&lt;span style='color: #fc8181;'&gt;Erro ao executar roteirização CPP: {error}&lt;/span&gt;&lt;br&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="1106"/>
+        <location filename="../gui/waste_dock.py" line="1145"/>
         <source>&lt;b&gt;=== ROTEIRIZAÇÃO CONCLUÍDA ===&lt;/b&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="987"/>
+        <location filename="../gui/waste_dock.py" line="1026"/>
         <source>Por favor, selecione a camada de vias para a roteirização RPP.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="1007"/>
+        <location filename="../gui/waste_dock.py" line="1046"/>
         <source>&lt;b&gt;=== EXECUTANDO ROTEIRIZAÇÃO RPP ===&lt;/b&gt;&lt;br&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="1025"/>
+        <location filename="../gui/waste_dock.py" line="1064"/>
         <source>-&gt; &lt;b&gt;Roteirização RPP concluída com sucesso!&lt;/b&gt; (Camada com {count} trechos viários)&lt;br&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="1032"/>
+        <location filename="../gui/waste_dock.py" line="1071"/>
         <source>&lt;span style='color: #fc8181;'&gt;Erro ao executar roteirização RPP: {error}&lt;/span&gt;&lt;br&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="1054"/>
+        <location filename="../gui/waste_dock.py" line="1093"/>
         <source>Por favor, selecione a camada de vias, o campo de demanda e a camada do depósito para a roteirização CARP.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="1074"/>
+        <location filename="../gui/waste_dock.py" line="1113"/>
         <source>&lt;b&gt;=== EXECUTANDO ROTEIRIZAÇÃO CARP ===&lt;/b&gt;&lt;br&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="1095"/>
+        <location filename="../gui/waste_dock.py" line="1134"/>
         <source>-&gt; &lt;b&gt;Roteirização CARP concluída com sucesso!&lt;/b&gt; (Camada com {count} trechos viários)&lt;br&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="1102"/>
+        <location filename="../gui/waste_dock.py" line="1141"/>
         <source>&lt;span style='color: #fc8181;'&gt;Erro ao executar roteirização CARP: {error}&lt;/span&gt;&lt;br&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="1124"/>
+        <location filename="../gui/waste_dock.py" line="1163"/>
         <source>Por favor, selecione a camada de rotas e o campo ID da rota para o dimensionamento de frota.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="1144"/>
+        <location filename="../gui/waste_dock.py" line="1183"/>
         <source>&lt;b&gt;=== EXECUTANDO DIMENSIONAMENTO DE FROTA ===&lt;/b&gt;&lt;br&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="1165"/>
+        <location filename="../gui/waste_dock.py" line="1204"/>
         <source>-&gt; &lt;b&gt;Dimensionamento de frota concluído com sucesso!&lt;/b&gt; (Camada com {count} registros)&lt;br&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="1169"/>
+        <location filename="../gui/waste_dock.py" line="1208"/>
         <source>-&gt; &lt;b&gt;Resultado do dimensionamento retornou vazio.&lt;/b&gt;&lt;br&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="1172"/>
+        <location filename="../gui/waste_dock.py" line="1211"/>
         <source>&lt;span style=&apos;color: #fc8181;&apos;&gt;Erro ao executar dimensionamento de frota: {error}&lt;/span&gt;&lt;br&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="1176"/>
+        <location filename="../gui/waste_dock.py" line="1215"/>
         <source>&lt;b&gt;=== DIMENSIONAMENTO CONCLUÍDO ===&lt;/b&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="1195"/>
+        <location filename="../gui/waste_dock.py" line="1234"/>
         <source>Por favor, selecione a camada de rotas e o campo de carga para a análise de equilíbrio.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="1215"/>
+        <location filename="../gui/waste_dock.py" line="1254"/>
         <source>&lt;b&gt;=== EXECUTANDO EQUILÍBRIO ENTRE SETORES ===&lt;/b&gt;&lt;br&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="1237"/>
+        <location filename="../gui/waste_dock.py" line="1276"/>
         <source>-&gt; &lt;b&gt;Equilíbrio entre setores calculado com sucesso!&lt;/b&gt; (Camada com {count} registros)&lt;br&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="1241"/>
+        <location filename="../gui/waste_dock.py" line="1280"/>
         <source>-&gt; &lt;b&gt;Resultado do equilíbrio retornou vazio.&lt;/b&gt;&lt;br&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="1244"/>
+        <location filename="../gui/waste_dock.py" line="1283"/>
         <source>&lt;span style='color: #fc8181;'&gt;Erro ao executar equilíbrio entre setores: {error}&lt;/span&gt;&lt;br&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="1248"/>
+        <location filename="../gui/waste_dock.py" line="1287"/>
         <source>&lt;b&gt;=== ANÁLISE CONCLUÍDA ===&lt;/b&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="1263"/>
+        <location filename="../gui/waste_dock.py" line="1302"/>
         <source>Por favor, selecione a rede viária, a camada de destinos e a camada de setores para o cálculo de distância ao destino.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="1283"/>
+        <location filename="../gui/waste_dock.py" line="1322"/>
         <source>&lt;b&gt;=== EXECUTANDO DISTÂNCIA AO DESTINO ===&lt;/b&gt;&lt;br&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="1301"/>
+        <location filename="../gui/waste_dock.py" line="1340"/>
         <source>-&gt; &lt;b&gt;Distância ao destino calculada com sucesso!&lt;/b&gt; (Camada com {count} registro(s))&lt;br&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="1305"/>
+        <location filename="../gui/waste_dock.py" line="1344"/>
         <source>-&gt; &lt;b&gt;Resultado da distância ao destino retornou vazio.&lt;/b&gt;&lt;br&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="1308"/>
+        <location filename="../gui/waste_dock.py" line="1347"/>
         <source>&lt;span style='color: #fc8181;'&gt;Erro ao executar distância ao destino: {error}&lt;/span&gt;&lt;br&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="1329"/>
+        <location filename="../gui/waste_dock.py" line="1368"/>
         <source>Por favor, selecione a camada de vias exigidas e a camada de rota coberta para o cálculo de cobertura por frequência.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="1349"/>
+        <location filename="../gui/waste_dock.py" line="1388"/>
         <source>&lt;b&gt;=== EXECUTANDO COBERTURA POR FREQUÊNCIA ===&lt;/b&gt;&lt;br&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="1369"/>
+        <location filename="../gui/waste_dock.py" line="1408"/>
         <source>-&gt; &lt;b&gt;Cobertura por frequência calculada com sucesso!&lt;/b&gt; (Camada com {count} registro(s))&lt;br&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="1373"/>
+        <location filename="../gui/waste_dock.py" line="1412"/>
         <source>-&gt; &lt;b&gt;Resultado da cobertura por frequência retornou vazio.&lt;/b&gt;&lt;br&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="1376"/>
+        <location filename="../gui/waste_dock.py" line="1415"/>
         <source>&lt;span style='color: #fc8181;'&gt;Erro ao executar cobertura por frequência: {error}&lt;/span&gt;&lt;br&gt;</source>
         <translation type="unfinished"></translation>
     </message>
@@ -4617,124 +4612,139 @@ Saída:
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="297"/>
+        <location filename="../gui/waste_dock.py" line="299"/>
         <source>&lt;b&gt;Setorização&lt;/b&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="308"/>
+        <location filename="../gui/waste_dock.py" line="310"/>
         <source>Campo de carga (opcional):</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="317"/>
+        <location filename="../gui/waste_dock.py" line="319"/>
         <source>Número de setores de coleta desejado:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="332"/>
+        <location filename="../gui/waste_dock.py" line="334"/>
         <source>Máximo de iterações de rebalanceamento:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="339"/>
+        <location filename="../gui/waste_dock.py" line="341"/>
         <source>Executar Setorização</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="347"/>
+        <location filename="../gui/waste_dock.py" line="349"/>
         <source>Roteirização</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="493"/>
+        <location filename="../gui/waste_dock.py" line="495"/>
         <source>Frota</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="563"/>
+        <location filename="../gui/waste_dock.py" line="565"/>
         <source>Indicadores</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="566"/>
+        <location filename="../gui/waste_dock.py" line="568"/>
         <source>&lt;b&gt;Deadhead Ratio (Razão de Deadhead)&lt;/b&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="571"/>
+        <location filename="../gui/waste_dock.py" line="573"/>
         <source>Camada de rotas/vias de coleta (Linhas):</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="577"/>
+        <location filename="../gui/waste_dock.py" line="579"/>
         <source>Campo indicador de deadhead/improdutivo:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="584"/>
+        <location filename="../gui/waste_dock.py" line="586"/>
         <source>Campo de identificação da rota/setor (opcional):</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="593"/>
+        <location filename="../gui/waste_dock.py" line="595"/>
         <source>Executar Razão de Deadhead</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="860"/>
+        <location filename="../gui/waste_dock.py" line="899"/>
         <source>Por favor, selecione a camada de vias para a setorização.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="880"/>
+        <location filename="../gui/waste_dock.py" line="919"/>
         <source>&lt;b&gt;=== EXECUTANDO SETORIZAÇÃO ===&lt;/b&gt;&lt;br&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="899"/>
+        <location filename="../gui/waste_dock.py" line="938"/>
         <source>-&gt; &lt;b&gt;Setorização concluída com sucesso!&lt;/b&gt; (Camada com {count} trechos viários)&lt;br&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="903"/>
+        <location filename="../gui/waste_dock.py" line="942"/>
         <source>-&gt; &lt;b&gt;Resultado da setorização retornou vazio.&lt;/b&gt;&lt;br&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="906"/>
+        <location filename="../gui/waste_dock.py" line="945"/>
         <source>&lt;span style='color: #fc8181;'&gt;Erro ao executar setorização: {error}&lt;/span&gt;&lt;br&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="910"/>
+        <location filename="../gui/waste_dock.py" line="949"/>
         <source>&lt;b&gt;=== EXECUÇÃO CONCLUÍDA ===&lt;/b&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="1394"/>
+        <location filename="../gui/waste_dock.py" line="1433"/>
         <source>Por favor, selecione a camada de rotas e o campo indicador de deadhead para a análise.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="1414"/>
+        <location filename="../gui/waste_dock.py" line="1453"/>
         <source>&lt;b&gt;=== EXECUTANDO RAZÃO DE DEADHEAD ===&lt;/b&gt;&lt;br&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="1431"/>
+        <location filename="../gui/waste_dock.py" line="1470"/>
         <source>-&gt; &lt;b&gt;Razão de deadhead calculada com sucesso!&lt;/b&gt; (Camada com {count} registro(s))&lt;br&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="1435"/>
+        <location filename="../gui/waste_dock.py" line="1474"/>
         <source>-&gt; &lt;b&gt;Resultado da razão de deadhead retornou vazio.&lt;/b&gt;&lt;br&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="1438"/>
+        <location filename="../gui/waste_dock.py" line="1477"/>
         <source>&lt;span style='color: #fc8181;'&gt;Erro ao executar razão de deadhead: {error}&lt;/span&gt;&lt;br&gt;</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../gui/waste_dock.py" line="268"/>
+        <source>Campo ID do setor (Vias) — vazio: associa automaticamente</source>
+        <translation>Campo ID do setor (Vias) — vazio: associa automaticamente</translation>
+    </message>
+    <message>
+        <location filename="../gui/waste_dock.py" line="842"/>
+        <source>-&gt; &lt;b&gt;Setores associados às vias com sucesso!&lt;/b&gt; ({count} trechos viários)&lt;br&gt;</source>
+        <translation>-&gt; &lt;b&gt;Setores associados às vias com sucesso!&lt;/b&gt; ({count} trechos viários)&lt;br&gt;</translation>
+    </message>
+    <message>
+        <location filename="../gui/waste_dock.py" line="848"/>
+        <source>&lt;span style='color: #fc8181;'&gt;Erro: Falha na associação das vias aos setores.&lt;/span&gt;&lt;br&gt;</source>
+        <translation>&lt;span style='color: #fc8181;'&gt;Erro: Falha na associação das vias aos setores.&lt;/span&gt;&lt;br&gt;</translation>
     </message>
 </context>
 <context>
@@ -4965,7 +4975,7 @@ Retorno:
         <location filename="../algorithms/waste_generation_estimate.py" line="252"/>
         <source>Estima a geração de resíduos sólidos (em kg/dia) por trecho de via, a partir da população de cada setor e do rateio proporcional ao comprimento dos trechos de via associados a esse setor.
 
-A camada de vias deve chegar com um campo de identificação do setor já preenchido (ex.: executando native:joinbylocation manualmente no QGIS antes deste algorithm, ou trazendo o campo de outra fonte) — este algorithm não faz nenhum spatial join.
+A camada de vias deve chegar com um campo de identificação do setor já preenchido (ex.: rodando antes logis:waste_street_sector_join no QGIS antes deste algorithm, ou trazendo o campo de outra fonte) — este algorithm não faz nenhum spatial join.
 
 Parâmetros:
 - Camada de setores: feições de polígono representando os setores de coleta.
@@ -4978,7 +4988,21 @@ Parâmetros:
 
 Retorno:
 - Camada de vias com a nova coluna 'waste_kg_day', contendo a geração de resíduos rateada de cada trecho (kg/dia).</source>
-        <translation type="unfinished"></translation>
+        <translation>Estima a geração de resíduos sólidos (em kg/dia) por trecho de via, a partir da população de cada setor e do rateio proporcional ao comprimento dos trechos de via associados a esse setor.
+
+A camada de vias deve chegar com um campo de identificação do setor já preenchido (ex.: rodando antes logis:waste_street_sector_join no QGIS antes deste algorithm, ou trazendo o campo de outra fonte) — este algorithm não faz nenhum spatial join.
+
+Parâmetros:
+- Camada de setores: feições de polígono representando os setores de coleta.
+- Campo de identificação do setor (setores): identifica cada setor.
+- Campo de população: população de cada setor.
+- Camada de vias: feições de linha representando os trechos de via a coletar.
+- Campo de identificação do setor (vias): associa cada trecho de via ao seu setor.
+- Geração per capita: taxa de geração diária por habitante em kg (default: 0.9 kg/hab/dia).
+- Fração de cobertura: fração da população do setor efetivamente coberta pela coleta (default: 1.0).
+
+Retorno:
+- Camada de vias com a nova coluna 'waste_kg_day', contendo a geração de resíduos rateada de cada trecho (kg/dia).</translation>
     </message>
 </context>
 <context>
@@ -5202,6 +5226,98 @@ Parâmetros:
 Retorno:
 - Tabela sem geometria com uma feição por setor: 'sector_id', 'num_routes', 'total_load_kg', 'mean_load_kg', 'std_dev_load_kg', 'min_load_kg', 'max_load_kg', 'cv_load', 'total_time_h', 'mean_time_h', 'std_dev_time_h', 'min_time_h', 'max_time_h' e 'cv_time'.</source>
         <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>WasteStreetSectorJoin</name>
+    <message>
+        <location filename="../algorithms/waste_street_sector_join.py" line="57"/>
+        <source>Camada de vias</source>
+        <translation>Camada de vias</translation>
+    </message>
+    <message>
+        <location filename="../algorithms/waste_street_sector_join.py" line="64"/>
+        <source>Camada de setores</source>
+        <translation>Camada de setores</translation>
+    </message>
+    <message>
+        <location filename="../algorithms/waste_street_sector_join.py" line="71"/>
+        <source>Campo de identificação do setor</source>
+        <translation>Campo de identificação do setor</translation>
+    </message>
+    <message>
+        <location filename="../algorithms/waste_street_sector_join.py" line="79"/>
+        <source>Vias com setor associado</source>
+        <translation>Vias com setor associado</translation>
+    </message>
+    <message>
+        <location filename="../algorithms/waste_street_sector_join.py" line="94"/>
+        <source>Camada de vias inválida.</source>
+        <translation>Camada de vias inválida.</translation>
+    </message>
+    <message>
+        <location filename="../algorithms/waste_street_sector_join.py" line="96"/>
+        <source>Camada de setores inválida.</source>
+        <translation>Camada de setores inválida.</translation>
+    </message>
+    <message>
+        <location filename="../algorithms/waste_street_sector_join.py" line="99"/>
+        <source>Campo de identificação do setor '{field}' não encontrado na camada de setores.</source>
+        <translation>Campo de identificação do setor '{field}' não encontrado na camada de setores.</translation>
+    </message>
+    <message>
+        <location filename="../algorithms/waste_street_sector_join.py" line="106"/>
+        <source>A camada de vias já possui o campo '{field}'. Utilize esse campo diretamente em vez de refazer a junção.</source>
+        <translation>A camada de vias já possui o campo '{field}'. Utilize esse campo diretamente em vez de refazer a junção.</translation>
+    </message>
+    <message>
+        <location filename="../algorithms/waste_street_sector_join.py" line="131"/>
+        <source>Executando junção espacial por maior sobreposição...</source>
+        <translation>Executando junção espacial por maior sobreposição...</translation>
+    </message>
+    <message>
+        <location filename="../algorithms/waste_street_sector_join.py" line="158"/>
+        <source>{count} trecho(s) de via ficaram sem setor associado (valor NULL).</source>
+        <translation>{count} trecho(s) de via ficaram sem setor associado (valor NULL).</translation>
+    </message>
+    <message>
+        <location filename="../algorithms/waste_street_sector_join.py" line="170"/>
+        <source>Associar Vias a Setores Censitários</source>
+        <translation>Associar Vias a Setores Censitários</translation>
+    </message>
+    <message>
+        <location filename="../algorithms/waste_street_sector_join.py" line="173"/>
+        <source>Logística Especializada — Coleta de Lixo</source>
+        <translation>Logística Especializada — Coleta de Lixo</translation>
+    </message>
+    <message>
+        <location filename="../algorithms/waste_street_sector_join.py" line="179"/>
+        <source>Associa espacialmente cada trecho de via ao setor censitário correspondente.
+
+A operação utiliza a sobreposição espacial com critério de maior sobreposição (um para um), garantindo que trechos que cruzam a divisa entre dois setores sejam atribuídos ao setor onde possuem maior extensão, sem duplicar feições nem distorcer o rateio de extensão.
+
+Trechos que estiverem fora de todos os setores recebem valor NULL no campo de setor, sem serem descartados da camada de saída.
+
+Parâmetros:
+- Camada de vias: linhas representando a malha viária a ser associada.
+- Camada de setores: polígonos representando os setores censitários ou áreas de coleta.
+- Campo de identificação do setor: campo da camada de setores que identifica unicamente cada setor.
+
+Retorno:
+- Camada de vias contendo todos os atributos originais mais o campo de identificação do setor preenchido conforme a sobreposição espacial.</source>
+        <translation>Associa espacialmente cada trecho de via ao setor censitário correspondente.
+
+A operação utiliza a sobreposição espacial com critério de maior sobreposição (um para um), garantindo que trechos que cruzam a divisa entre dois setores sejam atribuídos ao setor onde possuem maior extensão, sem duplicar feições nem distorcer o rateio de extensão.
+
+Trechos que estiverem fora de todos os setores recebem valor NULL no campo de setor, sem serem descartados da camada de saída.
+
+Parâmetros:
+- Camada de vias: linhas representando a malha viária a ser associada.
+- Camada de setores: polígonos representando os setores censitários ou áreas de coleta.
+- Campo de identificação do setor: campo da camada de setores que identifica unicamente cada setor.
+
+Retorno:
+- Camada de vias contendo todos os atributos originais mais o campo de identificação do setor preenchido conforme a sobreposição espacial.</translation>
     </message>
 </context>
 </TS>

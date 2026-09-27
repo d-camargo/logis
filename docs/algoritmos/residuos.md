@@ -1,6 +1,6 @@
 # Algoritmos de Coleta de Resíduos Sólidos
 
-Esta página documenta os **10 algoritmos de processamento** do grupo **Logística Especializada — Coleta de Lixo** (`logis:waste_*`), destinados ao planejamento, setorização, roteirização por arcos, dimensionamento de frota e análise de indicadores operacionais de serviços de limpeza urbana e manejo de resíduos sólidos.
+Esta página documenta os **11 algoritmos de processamento** do grupo **Logística Especializada — Coleta de Lixo** (`logis:waste_*`), destinados ao planejamento, setorização, roteirização por arcos, dimensionamento de frota e análise de indicadores operacionais de serviços de limpeza urbana e manejo de resíduos sólidos.
 
 ---
 
@@ -19,28 +19,65 @@ Os algoritmos do módulo especializado de coleta de resíduos estão organizados
 ## Sumário dos Algoritmos
 
 ### 1. Geração de Resíduos
-1. [`logis:waste_generation_estimate`](#1-estimativa-de-geração-de-resíduos-sólidos-logiswaste_generation_estimate) — Estimativa de Geração de Resíduos Sólidos
+1. [`logis:waste_street_sector_join`](#1-associar-vias-a-setores-censitários-logiswaste_street_sector_join) — Associar Vias a Setores Censitários
+2. [`logis:waste_generation_estimate`](#2-estimativa-de-geração-de-resíduos-sólidos-logiswaste_generation_estimate) — Estimativa de Geração de Resíduos Sólidos
 
 ### 2. Setorização
-2. [`logis:waste_districting`](#2-setorização-de-coleta-de-resíduos--districting-logiswaste_districting) — Setorização de Coleta de Resíduos (*Districting*)
+3. [`logis:waste_districting`](#3-setorização-de-coleta-de-resíduos--districting-logiswaste_districting) — Setorização de Coleta de Resíduos (*Districting*)
 
 ### 3. Roteirização por Arcos
-3. [`logis:waste_cpp_route`](#3-roteirização-por-arcos--cpp-logiswaste_cpp_route) — Roteirização por Arcos (Chinese Postman Problem - CPP)
-4. [`logis:waste_rpp_route`](#4-roteirização-por-arcos--rpp-logiswaste_rpp_route) — Roteirização por Arcos (Rural Postman Problem - RPP)
-5. [`logis:waste_carp_route`](#5-roteirização-por-arcos-capacitada--carp-logiswaste_carp_route) — Roteirização por Arcos Capacitada (Capacitated Arc Routing Problem - CARP)
+4. [`logis:waste_cpp_route`](#4-roteirização-por-arcos--cpp-logiswaste_cpp_route) — Roteirização por Arcos (Chinese Postman Problem - CPP)
+5. [`logis:waste_rpp_route`](#5-roteirização-por-arcos--rpp-logiswaste_rpp_route) — Roteirização por Arcos (Rural Postman Problem - RPP)
+6. [`logis:waste_carp_route`](#6-roteirização-por-arcos-capacitada--carp-logiswaste_carp_route) — Roteirização por Arcos Capacitada (Capacitated Arc Routing Problem - CARP)
 
 ### 4. Dimensionamento de Frota
-6. [`logis:waste_fleet_sizing`](#6-dimensionamento-de-frota-de-coleta-logiswaste_fleet_sizing) — Dimensionamento de Frota de Coleta
+7. [`logis:waste_fleet_sizing`](#7-dimensionamento-de-frota-de-coleta-logiswaste_fleet_sizing) — Dimensionamento de Frota de Coleta
 
 ### 5. Indicadores Operacionais
-7. [`logis:waste_deadhead_ratio`](#7-razão-de-deadhead-por-rota-logiswaste_deadhead_ratio) — Razão de Deadhead por Rota
-8. [`logis:waste_sector_balance`](#8-equilíbrio-entre-setoresrotas-de-coleta-logiswaste_sector_balance) — Equilíbrio entre Setores/Rotas de Coleta
-9. [`logis:waste_destination_distance`](#9-distância-ao-destino-de-resíduos-logiswaste_destination_distance) — Distância ao Destino de Resíduos
-10. [`logis:waste_collection_coverage`](#10-cobertura-da-coleta-de-resíduos-por-setor-logiswaste_collection_coverage) — Cobertura da Coleta de Resíduos por Setor
+8. [`logis:waste_deadhead_ratio`](#8-razão-de-deadhead-por-rota-logiswaste_deadhead_ratio) — Razão de Deadhead por Rota
+9. [`logis:waste_sector_balance`](#9-equilíbrio-entre-setoresrotas-de-coleta-logiswaste_sector_balance) — Equilíbrio entre Setores/Rotas de Coleta
+10. [`logis:waste_destination_distance`](#10-distância-ao-destino-de-resíduos-logiswaste_destination_distance) — Distância ao Destino de Resíduos
+11. [`logis:waste_collection_coverage`](#11-cobertura-da-coleta-de-resíduos-por-setor-logiswaste_collection_coverage) — Cobertura da Coleta de Resíduos por Setor
 
 ---
 
-## 1. Estimativa de Geração de Resíduos Sólidos (`logis:waste_generation_estimate`)
+## 1. Associar Vias a Setores Censitários (`logis:waste_street_sector_join`)
+
+### O que faz
+Associa espacialmente cada trecho de via (camada de linhas) ao respectivo setor censitário ou área territorial de coleta (camada de polígonos), transferindo o campo identificador do setor para a malha viária.
+
+O algoritmo executa a operação nativa do QGIS (`native:joinattributesbylocation`) com a **regra da maior sobreposição** (`METHOD=2`, *one-to-one largest overlap*):
+- **Maior sobreposição:** Quando um trecho de via cruza a divisa entre dois ou mais setores, ele é associado exclusivamente ao setor onde possui maior extensão linear. Isso impede a duplicação de feições de via (evitando que os mesmos metros sejam computados duas vezes) e garante que o rateio posterior da geração de resíduos reflita a distribuição territorial correta.
+- **Trechos sem setor (`NULL`):** Trechos de via situados fora dos polígonos dos setores fornecidos não são descartados (`DISCARD_NONMATCHING=False`). Eles são integralmente preservados na camada de saída, recebendo valor `NULL` no campo de setor associado. Ao final da execução, o algoritmo emite um aviso no log (`pushWarning`) informando a quantidade total de trechos que ficaram sem setor atribuído.
+- **Determinismo do campo:** O campo criado na camada de vias resultante recebe exatamente o mesmo nome do campo identificador do setor selecionado na camada de entrada (`FIELD_SECTOR_ID`), sem gerar sufixos automáticos (como `_2`). Caso a camada de vias de entrada já contenha um campo com esse nome, o algoritmo levanta uma exceção (`QgsProcessingException`), orientando o usuário a utilizá-lo diretamente em vez de refazer a junção.
+
+### Parâmetros de Entrada
+
+| Identificador | Nome na UI | Tipo QGIS | Descrição | Valor Default |
+|---|---|---|---|---|
+| `INPUT_STREETS` | Camada de vias | `QgsProcessingParameterFeatureSource` (`TypeVectorLine`) | Trechos de via contendo a geometria da malha viária a associar. | *Obrigatório* |
+| `INPUT_SECTORS` | Camada de setores | `QgsProcessingParameterFeatureSource` (`TypeVectorPolygon`) | Polígonos dos setores censitários ou áreas territoriais de coleta. | *Obrigatório* |
+| `FIELD_SECTOR_ID` | Campo de identificação do setor | `QgsProcessingParameterField` (`Any`) | Campo da camada de setores que identifica unicamente cada setor. | *Obrigatório* |
+| `OUTPUT` | Vias com setor associado | `QgsProcessingParameterFeatureSink` | Camada de saída com os trechos de via e o campo de setor transferido. | *Obrigatório* |
+
+### Saídas e Resultados Gerados
+
+| Identificador | Nome na UI | Tipo | Descrição |
+|---|---|---|---|
+| `OUTPUT` | Vias com setor associado | `QgsFeatureSink` (Linhas) | Camada de linhas com todos os atributos originais preservados, acrescida do campo identificador do setor (com valor atribuído ou `NULL`). |
+
+### Referência Bibliográfica da Técnica
+* Smith, M. J. de, Goodchild, M. F., & Longley, P. A. (2018). *Geospatial Analysis: A Comprehensive Guide to Principles, Techniques and Software Tools* (6th ed.). Winchelsea Press.
+* Worboys, M., & Duckham, M. (2004). *GIS: A Computing Perspective* (2nd ed.). CRC Press.
+
+### Limite de Complexidade e Escala
+- **Complexidade de Tempo:** $\mathcal{O}((V + S) \log S)$ no pior caso, onde $V$ é o número de trechos de via e $S$ o número de setores censitários, dominada pela indexação espacial R-Tree nativa do QGIS e pelo cálculo de interseções geométricas.
+- **Complexidade de Espaço:** $\mathcal{O}(V)$ para a geração da camada resultante.
+- **Escala Testada:** Execução rápida com camadas de até 100.000 trechos de via e centenas de setores censitários.
+
+---
+
+## 2. Estimativa de Geração de Resíduos Sólidos (`logis:waste_generation_estimate`)
 
 ### O que calcula
 Estima a geração diária de resíduos sólidos (em kg/dia) por trecho de via de coleta, a partir da população residente de cada setor de referência e do rateio proporcional ao comprimento das vias pertencentes àquele setor.
@@ -57,7 +94,7 @@ A massa de resíduos gerada em cada trecho de via $i$ do setor $s$ ($g_i$) é al
 $$g_i = G_s \cdot \frac{l_i}{\sum_{j \in S_s} l_j}$$
 
 > [!NOTE]
-> A camada de vias de entrada deve conter um campo identificador do setor (`FIELD_STREET_SECTOR_ID`) associando previamente cada trecho ao seu respectivo setor.
+> A camada de vias de entrada deve conter um campo identificador do setor (`FIELD_STREET_SECTOR_ID`) associando previamente cada trecho ao seu respectivo setor (obtido via `logis:waste_street_sector_join`). No painel **logis — Coleta de Lixo**, se esse campo for deixado vazio ou a camada de vias ainda não o contiver, o painel associa automaticamente as vias aos setores antes de estimar a geração.
 
 ### Parâmetros de Entrada
 
@@ -90,7 +127,7 @@ $$g_i = G_s \cdot \frac{l_i}{\sum_{j \in S_s} l_j}$$
 
 ---
 
-## 2. Setorização de Coleta de Resíduos — *Districting* (`logis:waste_districting`)
+## 3. Setorização de Coleta de Resíduos — *Districting* (`logis:waste_districting`)
 
 ### O que calcula
 Particiona os trechos de via em $k$ setores de coleta contíguos e equilibrados em relação à carga total (massa de resíduos gerada em kg ou, na ausência do atributo, o comprimento acumulado dos trechos).
@@ -128,7 +165,7 @@ A heurística de setorização territorial opera em três etapas:
 
 ---
 
-## 3. Roteirização por Arcos — CPP (`logis:waste_cpp_route`)
+## 4. Roteirização por Arcos — CPP (`logis:waste_cpp_route`)
 
 ### O que calcula
 Determina o itinerário ótimo de coleta por arcos para varredura total em grafos não direcionados utilizando o **Problema do Carteiro Chinês** (*Chinese Postman Problem* - CPP). 
@@ -164,7 +201,7 @@ Garante que todas as vias da malha (ou de cada setor de coleta) sejam percorrida
 
 ---
 
-## 4. Roteirização por Arcos — RPP (`logis:waste_rpp_route`)
+## 5. Roteirização por Arcos — RPP (`logis:waste_rpp_route`)
 
 ### O que calcula
 Resolve o **Problema do Carteiro Rural** (*Rural Postman Problem* - RPP) para calcular o itinerário de coleta quando apenas um **subconjunto específico de vias é de coleta obrigatória**, enquanto os demais trechos da malha podem ser utilizados livremente como conectores para deslocamento improdutivo (*deadhead*).
@@ -202,7 +239,7 @@ Etapas do algoritmo:
 
 ---
 
-## 5. Roteirização por Arcos Capacitada — CARP (`logis:waste_carp_route`)
+## 6. Roteirização por Arcos Capacitada — CARP (`logis:waste_carp_route`)
 
 ### O que calcula
 Resolve o **Problema de Roteirização por Arcos Capacitada** (*Capacitated Arc Routing Problem* - CARP), determinando rotas para uma frota de caminhões de lixo com limitação rígida de capacidade que partem e retornam a um depósito, garagem ou estação de transbordo.
@@ -246,7 +283,7 @@ Utiliza a heurística **Path-Scanning** (Golden et al., 1983):
 
 ---
 
-## 6. Dimensionamento de Frota de Coleta (`logis:waste_fleet_sizing`)
+## 7. Dimensionamento de Frota de Coleta (`logis:waste_fleet_sizing`)
 
 ### O que calcula
 Estima a quantidade mínima de veículos de coleta necessários para cumprir todas as rotas/viagens de um setor durante a jornada de trabalho diária, aplicando a heurística **First-Fit Decreasing (FFD)** para o Problema de Empacotamento (*Bin Packing Problem*).
@@ -292,7 +329,7 @@ $$\sum_{r \in \text{veículo } k} T_r \le H$$
 
 ---
 
-## 7. Razão de Deadhead por Rota (`logis:waste_deadhead_ratio`)
+## 8. Razão de Deadhead por Rota (`logis:waste_deadhead_ratio`)
 
 ### O que calcula
 Mede a eficiência espacial do plano de roteirização calculando a extensão percorrida em modo **produtivo** ($d_{\text{prod}}$, vias onde há efetiva coleta de resíduos), a extensão **improdutiva** ($d_{\text{deadhead}}$, deslocamentos, conectores ou passagens repetidas) e a **Razão de Deadhead**:
@@ -327,7 +364,7 @@ Valores mais baixos indicam rotas mais eficientes; valores elevados indicam exce
 
 ---
 
-## 8. Equilíbrio entre Setores/Rotas de Coleta (`logis:waste_sector_balance`)
+## 9. Equilíbrio entre Setores/Rotas de Coleta (`logis:waste_sector_balance`)
 
 ### O que calcula
 Avalia o nível de equilíbrio (balanço operacional) de carga (em kg) e tempo total de serviço (em horas) entre as diversas rotas ou setores de coleta da cidade.
@@ -370,7 +407,7 @@ Para cada grupo de rotas, calcula estatísticas descritivas completas:
 
 ---
 
-## 9. Distância ao Destino de Resíduos (`logis:waste_destination_distance`)
+## 10. Distância ao Destino de Resíduos (`logis:waste_destination_distance`)
 
 ### O que calcula
 Calcula a menor distância (em km) ou o menor tempo de viagem (em minutos) entre cada setor/origem de coleta e a instalação de destino de resíduos mais próxima (aterro sanitário, estação de transbordo ou ecoponto), utilizando caminhos mínimos sobre o grafo da rede viária (`QgsGraph`).
@@ -408,7 +445,7 @@ Fluxo de cálculo:
 
 ---
 
-## 10. Cobertura da Coleta de Resíduos por Setor (`logis:waste_collection_coverage`)
+## 11. Cobertura da Coleta de Resíduos por Setor (`logis:waste_collection_coverage`)
 
 ### O que calcula
 Calcula a extensão de vias com exigência de coleta ($L_{\text{exigida}}$), a extensão de vias efetivamente percorrida e atendida por rotas de coleta ($L_{\text{coberta}}$) e a **taxa de cobertura de coleta** por setor e no total acumulado:

@@ -28,8 +28,8 @@ class WasteGenerationEstimate(QgsProcessingAlgorithm):
     ao comprimento dos trechos de via associados a esse setor.
 
     A camada de vias deve chegar com um campo de identificação do setor (`sector_id`) já
-    preenchido, associando cada trecho ao setor a que pertence (ex.: via
-    `native:joinbylocation`, executado previamente pelo usuário fora deste algorithm).
+    preenchido, associando cada trecho ao setor a que pertence (ex.: rodando antes
+    `logis:waste_street_sector_join`).
 
     Referência Bibliográfica da Técnica:
         Tchobanoglous, G., Theisen, H., & Vigil, S. A. (1993). Integrated Solid Waste
@@ -254,7 +254,7 @@ class WasteGenerationEstimate(QgsProcessingAlgorithm):
             "população de cada setor e do rateio proporcional ao comprimento dos trechos de via "
             "associados a esse setor.\n\n"
             "A camada de vias deve chegar com um campo de identificação do setor já preenchido "
-            "(ex.: executando native:joinbylocation manualmente no QGIS antes deste algorithm, "
+            "(ex.: rodando antes logis:waste_street_sector_join no QGIS antes deste algorithm, "
             "ou trazendo o campo de outra fonte) — este algorithm não faz nenhum spatial join.\n\n"
             "Parâmetros:\n"
             "- Camada de setores: feições de polígono representando os setores de coleta.\n"

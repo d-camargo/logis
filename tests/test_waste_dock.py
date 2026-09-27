@@ -1,6 +1,7 @@
-# -*- coding: utf-8 -*-
+import sys
+from pathlib import Path
 import unittest
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 
 try:
     from qgis.PyQt.QtWidgets import QApplication
@@ -9,6 +10,18 @@ try:
         app = QApplication([])
 except ImportError:
     pass
+
+try:
+    from qgis.core import QgsApplication
+    _qgs = QgsApplication.instance()
+    if not _qgs:
+        _qgs = QgsApplication([], False)
+        _qgs.initQgis()
+    sys.path.insert(0, str(Path(QgsApplication.pkgDataPath()) / "python" / "plugins"))
+    import processing
+    _HAS_PROCESSING = True
+except ImportError:
+    _HAS_PROCESSING = False
 
 from logis.gui.waste_dock import WasteDock
 from logis.logis_plugin import LogisPlugin
@@ -154,6 +167,129 @@ class TestWasteDock(unittest.TestCase):
         with patch('logis.gui.waste_dock.QMessageBox.warning') as mock_warning:
             self.dock.calculate_waste_generation()
             mock_warning.assert_called_once()
+
+    @unittest.skipIf(not _HAS_PROCESSING, "requer o módulo processing do QGIS")
+    def test_calculate_waste_generation_auto_join(self):
+        """(i) Combo vazio e vias sem o campo: executa waste_street_sector_join e depois waste_generation_estimate."""
+        mock_sectors = MagicMock()
+        mock_streets = MagicMock()
+        mock_joined = MagicMock()
+        mock_out = MagicMock()
+        mock_joined.featureCount.return_value = 10
+        mock_out.featureCount.return_value = 10
+
+        # Vias sem o campo do setor (indexFromName retorna -1)
+        mock_streets.fields.return_value.indexFromName.return_value = -1
+
+        self.dock.cmb_sectors.currentLayer = MagicMock(return_value=mock_sectors)
+        self.dock.cmb_sector_id.currentField = MagicMock(return_value="cd_setor")
+        self.dock.cmb_population.currentField = MagicMock(return_value="populacao")
+        self.dock.cmb_streets.currentLayer = MagicMock(return_value=mock_streets)
+        self.dock.cmb_street_sector_id.currentField = MagicMock(return_value="")
+
+        calls = []
+
+        def fake_run(alg, params):
+            calls.append((alg, params))
+            if alg == "logis:waste_street_sector_join":
+                return {"OUTPUT": mock_joined}
+            elif alg == "logis:waste_generation_estimate":
+                return {"OUTPUT": mock_out}
+            return {}
+
+        with patch("processing.run", side_effect=fake_run), \
+             patch("logis.gui.waste_dock.QgsProject.instance") as mock_proj:
+            mock_proj.return_value = MagicMock()
+            self.dock.calculate_waste_generation()
+
+        self.assertEqual(len(calls), 2)
+        # Primeira chamada: junção espacial
+        self.assertEqual(calls[0][0], "logis:waste_street_sector_join")
+        self.assertEqual(calls[0][1]["INPUT_STREETS"], mock_streets)
+        self.assertEqual(calls[0][1]["INPUT_SECTORS"], mock_sectors)
+        self.assertEqual(calls[0][1]["FIELD_SECTOR_ID"], "cd_setor")
+        self.assertEqual(calls[0][1]["OUTPUT"], "memory:")
+
+        # Segunda chamada: estimativa de geração
+        self.assertEqual(calls[1][0], "logis:waste_generation_estimate")
+        self.assertEqual(calls[1][1]["INPUT_STREETS"], mock_joined)
+        self.assertEqual(calls[1][1]["FIELD_STREET_SECTOR_ID"], "cd_setor")
+        self.assertEqual(calls[1][1]["FIELD_SECTOR_ID"], "cd_setor")
+        self.assertEqual(calls[1][1]["FIELD_POPULATION"], "populacao")
+        self.assertEqual(calls[1][1]["OUTPUT"], "memory:")
+
+    @unittest.skipIf(not _HAS_PROCESSING, "requer o módulo processing do QGIS")
+    def test_calculate_waste_generation_existing_field_no_join(self):
+        """(ii) Vias que já têm o campo: não chama a junção espacial."""
+        mock_sectors = MagicMock()
+        mock_streets = MagicMock()
+        mock_out = MagicMock()
+        mock_out.featureCount.return_value = 10
+
+        # Vias COM o campo do setor (indexFromName >= 0)
+        mock_streets.fields.return_value.indexFromName.return_value = 0
+
+        self.dock.cmb_sectors.currentLayer = MagicMock(return_value=mock_sectors)
+        self.dock.cmb_sector_id.currentField = MagicMock(return_value="cd_setor")
+        self.dock.cmb_population.currentField = MagicMock(return_value="populacao")
+        self.dock.cmb_streets.currentLayer = MagicMock(return_value=mock_streets)
+        self.dock.cmb_street_sector_id.currentField = MagicMock(return_value="")
+
+        calls = []
+
+        def fake_run(alg, params):
+            calls.append((alg, params))
+            if alg == "logis:waste_generation_estimate":
+                return {"OUTPUT": mock_out}
+            return {}
+
+        with patch("processing.run", side_effect=fake_run), \
+             patch("logis.gui.waste_dock.QgsProject.instance") as mock_proj:
+            mock_proj.return_value = MagicMock()
+            self.dock.calculate_waste_generation()
+
+        self.assertEqual(len(calls), 1)
+        self.assertEqual(calls[0][0], "logis:waste_generation_estimate")
+        self.assertEqual(calls[0][1]["INPUT_STREETS"], mock_streets)
+        self.assertEqual(calls[0][1]["FIELD_STREET_SECTOR_ID"], "cd_setor")
+        self.assertEqual(calls[0][1]["FIELD_SECTOR_ID"], "cd_setor")
+        self.assertEqual(calls[0][1]["FIELD_POPULATION"], "populacao")
+        self.assertEqual(calls[0][1]["OUTPUT"], "memory:")
+
+    @unittest.skipIf(not _HAS_PROCESSING, "requer o módulo processing do QGIS")
+    def test_calculate_waste_generation_combo_field_selected(self):
+        """(a) Campo escolhido no combo: usa o campo do combo sem chamar a junção."""
+        mock_sectors = MagicMock()
+        mock_streets = MagicMock()
+        mock_out = MagicMock()
+        mock_out.featureCount.return_value = 10
+
+        self.dock.cmb_sectors.currentLayer = MagicMock(return_value=mock_sectors)
+        self.dock.cmb_sector_id.currentField = MagicMock(return_value="cd_setor")
+        self.dock.cmb_population.currentField = MagicMock(return_value="populacao")
+        self.dock.cmb_streets.currentLayer = MagicMock(return_value=mock_streets)
+        self.dock.cmb_street_sector_id.currentField = MagicMock(return_value="custom_street_sector")
+
+        calls = []
+
+        def fake_run(alg, params):
+            calls.append((alg, params))
+            if alg == "logis:waste_generation_estimate":
+                return {"OUTPUT": mock_out}
+            return {}
+
+        with patch("processing.run", side_effect=fake_run), \
+             patch("logis.gui.waste_dock.QgsProject.instance") as mock_proj:
+            mock_proj.return_value = MagicMock()
+            self.dock.calculate_waste_generation()
+
+        self.assertEqual(len(calls), 1)
+        self.assertEqual(calls[0][0], "logis:waste_generation_estimate")
+        self.assertEqual(calls[0][1]["INPUT_STREETS"], mock_streets)
+        self.assertEqual(calls[0][1]["FIELD_STREET_SECTOR_ID"], "custom_street_sector")
+        self.assertEqual(calls[0][1]["FIELD_SECTOR_ID"], "cd_setor")
+        self.assertEqual(calls[0][1]["FIELD_POPULATION"], "populacao")
+        self.assertEqual(calls[0][1]["OUTPUT"], "memory:")
 
     def test_run_cpp_route_missing_inputs(self):
         """Verifica a validação de parâmetros incompletos ao clicar em executar roteirização CPP."""

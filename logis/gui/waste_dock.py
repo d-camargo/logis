@@ -265,8 +265,10 @@ class WasteDock(QgsDockWidget):
         layout.addWidget(self.cmb_streets)
 
         # Campo ID do setor na camada de vias
-        layout.addWidget(QLabel(self.tr("Campo ID do setor (Vias):")))
+        layout.addWidget(QLabel(self.tr("Campo ID do setor (Vias) — vazio: associa automaticamente")))
         self.cmb_street_sector_id = QgsFieldComboBox()
+        if hasattr(self.cmb_street_sector_id, 'setAllowEmptyFieldName'):
+            self.cmb_street_sector_id.setAllowEmptyFieldName(True)
         self.cmb_street_sector_id.setLayer(self.cmb_streets.currentLayer())
         self.cmb_streets.layerChanged.connect(self.cmb_street_sector_id.setLayer)
         layout.addWidget(self.cmb_street_sector_id)
@@ -789,7 +791,7 @@ class WasteDock(QgsDockWidget):
         per_capita = self.spin_per_capita.value()
         coverage = self.spin_coverage.value()
 
-        if not sectors_layer or not streets_layer or not field_sector_id or not field_population or not field_street_sector_id:
+        if not sectors_layer or not streets_layer or not field_sector_id or not field_population:
             QMessageBox.warning(
                 self,
                 self.tr("Aviso"),
@@ -813,12 +815,41 @@ class WasteDock(QgsDockWidget):
         self.txt_results.append(self.tr("<b>=== CALCULANDO ESTIMATIVA DE GERAÇÃO ===</b><br>"))
 
         try:
+            target_streets = streets_layer
+            target_street_sector_id = field_street_sector_id.strip() if field_street_sector_id else ""
+
+            if not target_street_sector_id:
+                if streets_layer.fields().indexFromName(field_sector_id) >= 0:
+                    target_street_sector_id = field_sector_id
+                else:
+                    join_res = processing.run("logis:waste_street_sector_join", {
+                        'INPUT_STREETS': streets_layer,
+                        'INPUT_SECTORS': sectors_layer,
+                        'FIELD_SECTOR_ID': field_sector_id,
+                        'OUTPUT': 'memory:'
+                    })
+                    joined_layer = join_res.get('OUTPUT')
+                    if joined_layer is not None:
+                        count = joined_layer.featureCount() if hasattr(joined_layer, 'featureCount') else 'OK'
+                        self.txt_results.append(
+                            self.tr("-> <b>Setores associados às vias com sucesso!</b> ({count} trechos viários)<br>").format(count=count)
+                        )
+                        target_streets = joined_layer
+                        target_street_sector_id = field_sector_id
+                    else:
+                        self.txt_results.append(
+                            self.tr("<span style='color: #fc8181;'>Erro: Falha na associação das vias aos setores.</span><br>")
+                        )
+                        self.txt_results.append(self.tr("<b>=== CÁLCULO CONCLUÍDO ===</b>"))
+                        self.btn_calculate_generation.setEnabled(True)
+                        return
+
             res = processing.run("logis:waste_generation_estimate", {
                 'INPUT_SECTORS': sectors_layer,
                 'FIELD_SECTOR_ID': field_sector_id,
                 'FIELD_POPULATION': field_population,
-                'INPUT_STREETS': streets_layer,
-                'FIELD_STREET_SECTOR_ID': field_street_sector_id,
+                'INPUT_STREETS': target_streets,
+                'FIELD_STREET_SECTOR_ID': target_street_sector_id,
                 'PER_CAPITA_KG_DAY': per_capita,
                 'COVERAGE_FRACTION': coverage,
                 'OUTPUT': 'memory:'
