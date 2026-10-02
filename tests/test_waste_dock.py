@@ -339,8 +339,45 @@ class TestWasteDock(unittest.TestCase):
             self.dock.run_deadhead_ratio()
             mock_warning.assert_called_once()
 
+    def test_run_districting_unassigned_sectors_static(self):
+        """Conferir estaticamente que run_districting lê collection_sector_id e trata o -1."""
+        waste_dock_path = Path(__file__).resolve().parent.parent / "logis" / "gui" / "waste_dock.py"
+        self.assertTrue(waste_dock_path.exists(), "O arquivo waste_dock.py deve existir.")
+        content = waste_dock_path.read_text(encoding="utf-8")
 
+        self.assertIn("def run_districting(self):", content)
+        run_dist_code = content.split("def run_districting(self):")[1].split("def run_cpp_route")[0]
 
+        # Verifica se lê collection_sector_id e trata o -1
+        self.assertIn("collection_sector_id", run_dist_code)
+        self.assertIn("-1", run_dist_code)
+        self.assertIn("unassigned_count", run_dist_code)
+        self.assertIn("#f6e05e", run_dist_code)
+        self.assertIn("self.tr(", run_dist_code)
+
+    @unittest.skipIf(not _HAS_PROCESSING, "requer o módulo processing do QGIS")
+    def test_run_districting_warns_on_unassigned_sectors(self):
+        """Verifica se run_districting detecta collection_sector_id == -1 e adiciona o aviso em amarelo."""
+        mock_streets = MagicMock()
+        mock_out = MagicMock()
+        mock_out.featureCount.return_value = 2
+
+        f1 = {"collection_sector_id": 0}
+        f2 = {"collection_sector_id": -1}
+        mock_out.getFeatures.return_value = [f1, f2]
+
+        self.dock.cmb_dist_streets.currentLayer = MagicMock(return_value=mock_streets)
+        self.dock.cmb_dist_field_load.currentField = MagicMock(return_value="")
+
+        with patch("processing.run", return_value={"OUTPUT": mock_out}), \
+             patch("logis.gui.waste_dock.QgsProject.instance") as mock_proj:
+            mock_proj.return_value = MagicMock()
+            self.dock.run_districting()
+
+        results_text = self.dock.txt_results.toPlainText()
+        self.assertIn("collection_sector_id", results_text)
+        self.assertIn("-1", results_text)
+        self.assertIn("1", results_text)
 
     def test_plugin_integration(self):
         """Verifica a integração da ação e dock no LogisPlugin."""

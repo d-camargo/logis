@@ -1805,7 +1805,7 @@ Returns:
     <message>
         <location filename="../gui/routing_dock.py" line="1049"/>
         <source>depósito {id}</source>
-        <translation>depot {id}</translation>
+        <translation type="obsolete">depot {id}</translation>
     </message>
 </context>
 <context>
@@ -3167,102 +3167,102 @@ Returns:
 <context>
     <name>VrpCvrp</name>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="180"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="181"/>
         <source>Camada de depósito (Pontos/Polígonos)</source>
         <translation>Depot layer (Points/Polygons)</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="196"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="197"/>
         <source>Camada de demanda / clientes (Pontos/Polígonos)</source>
         <translation>Demand / customer layer (Points/Polygons)</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="212"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="213"/>
         <source>Campo de peso/demanda (opcional, default=1.0)</source>
         <translation>Demand/weight field (optional, default=1.0)</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="221"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="222"/>
         <source>Capacidade do veículo</source>
         <translation>Vehicle capacity</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="230"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="231"/>
         <source>Camada de rede viária (Linhas) (opcional)</source>
         <translation>Road network layer (Lines) (optional)</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="238"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="239"/>
         <source>Aplicar busca local (2-opt e Or-opt)</source>
         <translation>Apply local search (2-opt and Or-opt)</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="257"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="258"/>
         <source>Rotas geradas</source>
         <translation>Generated routes</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="263"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="264"/>
         <source>Paradas por rota (opcional)</source>
         <translation>Stops per route (optional)</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="296"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="297"/>
         <source>Camada de depósito inválida.</source>
         <translation>Invalid depot layer.</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="298"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="299"/>
         <source>Camada de demanda inválida.</source>
         <translation>Invalid demand layer.</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="300"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="301"/>
         <source>A capacidade do veículo deve ser estritamente maior que zero.</source>
         <translation>Vehicle capacity must be strictly greater than zero.</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="317"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="318"/>
         <source>Nenhum ponto de depósito válido encontrado.</source>
         <translation>No valid depot point found.</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="325"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="326"/>
         <source>Lendo pontos de demanda...</source>
         <translation>Reading demand points...</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="359"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="360"/>
         <source>A demanda do nó excede a capacidade máxima do veículo ({weight} &gt; {cap}).</source>
         <translation>Node demand exceeds maximum vehicle capacity ({weight} &gt; {cap}).</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="388"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="387"/>
         <source>Nenhum ponto de demanda válido encontrado.</source>
         <translation>No valid demand point found.</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="510"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="509"/>
         <source>Construindo o grafo e calculando a matriz OD na rede...</source>
         <translation>Building graph and calculating network OD matrix...</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="544"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="543"/>
         <source>Erro ao construir o grafo: {}</source>
         <translation>Error building graph: {}</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="551"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="550"/>
         <source>O grafo construído possui menos de 2 vértices.</source>
         <translation>The constructed graph has fewer than 2 vertices.</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="570"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="569"/>
         <source>Erro ao calcular a matriz OD: {}</source>
         <translation>Error calculating OD matrix: {}</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="575"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="574"/>
         <source>Calculando matriz de distâncias euclidianas...</source>
         <translation>Calculating euclidean distance matrix...</translation>
     </message>
@@ -3277,12 +3277,12 @@ Returns:
         <translation type="obsolete">Routing completed. Generated routes: {count} | Total Distance: {dist:.2f}</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="802"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="800"/>
         <source>Roteirização de Veículos Capacitados (CVRP)</source>
         <translation>Capacitated Vehicle Routing (CVRP)</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="805"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="803"/>
         <source>Roteirização</source>
         <translation>Routing</translation>
     </message>
@@ -3318,72 +3318,72 @@ Outputs:
 - Stops per route: ordered point layer with route assignment and cumulative payload.</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="245"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="246"/>
         <source>Backend de otimização</source>
         <translation>Optimization backend</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="245"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="246"/>
         <source>Automático (OR-Tools quando disponível)</source>
         <translation>Automatic (OR-Tools when available)</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="245"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="246"/>
         <source>Python puro (heurística)</source>
         <translation>Pure Python (heuristic)</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="245"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="246"/>
         <source>OR-Tools</source>
         <translation>OR-Tools</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="324"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="325"/>
         <source>Lendo pontos de demanda…</source>
         <translation>Reading demand points…</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="536"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="535"/>
         <source>Janela de análise: {}</source>
         <translation>Analysis window: {}</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="540"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="539"/>
         <source>Construindo o grafo…</source>
         <translation>Building graph…</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="558"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="557"/>
         <source>Calculando a matriz OD…</source>
         <translation>Calculating OD matrix…</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="574"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="573"/>
         <source>Calculando matriz de distâncias euclidianas…</source>
         <translation>Calculating Euclidean distance matrix…</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="590"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="589"/>
         <source>Otimizando (OR-Tools)…</source>
         <translation>Optimizing (OR-Tools)…</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="592"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="591"/>
         <source>Otimizando (heurística Python)…</source>
         <translation>Optimizing (Python heuristic)…</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="600"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="599"/>
         <source>Executando a otimização CVRP...</source>
         <translation>Executing CVRP optimization...</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="619"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="618"/>
         <source>Roteirização concluída. Rotas geradas: {count} | Backend: {backend} | Distância Total: {dist:.2f}</source>
         <translation>Routing completed. Generated routes: {count} | Backend: {backend} | Total Distance: {dist:.2f}</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="626"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="625"/>
         <source>Gravando as saídas…</source>
         <translation>Writing outputs…</translation>
     </message>
@@ -3423,97 +3423,97 @@ Outputs:
 - Stops per route: ordered point layer with route assignment and cumulative load.</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="391"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="390"/>
         <source>depósito</source>
         <translation>depot</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="392"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="391"/>
         <source>demanda</source>
         <translation>demand</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="400"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="399"/>
         <source>SRC da rede: {}</source>
         <translation>Network CRS: {}</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="485"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="484"/>
         <source>SRC de depósito: {} → {}</source>
         <translation>Depot CRS: {} → {}</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="486"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="485"/>
         <source>SRC de demanda: {} → {}</source>
         <translation>Demand CRS: {} → {}</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="523"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="522"/>
         <source>Janela de análise calculada a partir dos pontos é inválida: {}</source>
         <translation>Analysis window calculated from points is invalid: {}</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="530"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="529"/>
         <source>Os pontos ({}) não caem na área da rede viária (rede em {}) — confira o SRC das camadas.</source>
         <translation>The points ({}) do not fall within the road network area (network in {}) — check the CRS of the layers.</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="478"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="477"/>
         <source>Transformação {src} → {dst} ok (prova ({x1:.4f}, {y1:.4f}) → ({x2:.4f}, {y2:.4f}))</source>
         <translation>Transformation {src} → {dst} ok (probe ({x1:.4f}, {y1:.4f}) → ({x2:.4f}, {y2:.4f}))</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="465"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="464"/>
         <source>Transformação para EPSG:5880 falhou ({exc}) — adotando fallback para {utm_auth}</source>
         <translation>Transformation to EPSG:5880 failed ({exc}) — adopting fallback to {utm_auth}</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="463"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="462"/>
         <source>Transformação para UTM ({utm}) falhou: {exc}</source>
         <translation>Transformation to UTM ({utm}) failed: {exc}</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="462"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="461"/>
         <source>Transformação de coordenadas falhou: {exc}</source>
         <translation>Coordinate transformation failed: {exc}</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="283"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="284"/>
         <source>Campo de ID do depósito (opcional)</source>
         <translation>Depot ID field (optional)</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="283"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="284"/>
         <source>Campo do depósito de cada ponto (opcional)</source>
         <translation>Depot field for each point (optional)</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="283"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="284"/>
         <source>O parâmetro '{param1}' não pode ser preenchido sem o '{param2}'.</source>
         <translation>Parameter '{param1}' cannot be filled without '{param2}'.</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="320"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="321"/>
         <source>ID de depósito repetido na camada de depósito.</source>
         <translation>Duplicate depot ID in depot layer.</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="371"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="372"/>
         <source>O valor '{val}' no campo de depósito da demanda não existe na camada de depósitos. IDs válidos: {ids}</source>
         <translation>Value '{val}' in demand depot field does not exist in depot layer. Valid IDs: {ids}</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="383"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="384"/>
         <source>{count} ponto(s) de demanda com o campo de depósito vazio; serão alocados ao depósito mais próximo.</source>
         <translation>{count} demand point(s) with empty depot field; will be allocated to the nearest depot.</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="788"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="786"/>
         <source>Depósito {did}: {count} rota(s), carga {load:.2f}</source>
         <translation>Depot {did}: {count} route(s), load {load:.2f}</translation>
     </message>
     <message>
-        <location filename="../algorithms/vrp_cvrp.py" line="811"/>
+        <location filename="../algorithms/vrp_cvrp.py" line="809"/>
         <source>Resolve o Problema de Roteirização de Veículos Capacitados (CVRP) a partir de uma ou mais feições de depósito e uma camada de pontos de demanda (clientes).
 
 Limitação (agrupa primeiro, roteiriza depois): os pontos são alocados aos depósitos antes da roteirização (Gillett &amp; Johnson, 1976) e nunca trocam de depósito, sendo uma solução boa, não ótima. Se o campo de depósito da demanda for vazio, o cliente é alocado ao depósito mais próximo.
@@ -4541,17 +4541,17 @@ Returns:
 <context>
     <name>WasteDistricting</name>
     <message>
-        <location filename="../algorithms/waste_districting.py" line="100"/>
+        <location filename="../algorithms/waste_districting.py" line="109"/>
         <source>Camada de vias</source>
         <translation>Roads layer</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_districting.py" line="107"/>
+        <location filename="../algorithms/waste_districting.py" line="116"/>
         <source>Campo de carga (opcional, default=comprimento do trecho)</source>
         <translation>Load field (optional, default=segment length)</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_districting.py" line="116"/>
+        <location filename="../algorithms/waste_districting.py" line="125"/>
         <source>Número de setores de coleta desejado</source>
         <translation>Desired number of collection sectors</translation>
     </message>
@@ -4561,72 +4561,72 @@ Returns:
         <translation type="obsolete">Node tolerance in meters (requires metric CRS)</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_districting.py" line="134"/>
+        <location filename="../algorithms/waste_districting.py" line="143"/>
         <source>Máximo de iterações de rebalanceamento de fronteira</source>
         <translation>Maximum boundary rebalancing iterations</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_districting.py" line="143"/>
+        <location filename="../algorithms/waste_districting.py" line="152"/>
         <source>Vias com setor de coleta atribuído</source>
         <translation>Roads with assigned collection sector</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_districting.py" line="158"/>
+        <location filename="../algorithms/waste_districting.py" line="167"/>
         <source>Camada de vias inválida.</source>
         <translation>Invalid roads layer.</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_districting.py" line="163"/>
+        <location filename="../algorithms/waste_districting.py" line="172"/>
         <source>Lendo trechos de via e construindo adjacência...</source>
         <translation>Reading road segments and building adjacency...</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_districting.py" line="207"/>
+        <location filename="../algorithms/waste_districting.py" line="221"/>
         <source>{count} trecho(s) com geometria inválida foram ignorados.</source>
         <translation>{count} segment(s) with invalid geometry were ignored.</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_districting.py" line="214"/>
+        <location filename="../algorithms/waste_districting.py" line="228"/>
         <source>Nenhum trecho de via válido encontrado na camada de entrada.</source>
         <translation>No valid road segment found in input layer.</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_districting.py" line="217"/>
+        <location filename="../algorithms/waste_districting.py" line="231"/>
         <source>O número de setores ({k}) não pode exceder o número de trechos válidos ({n}).</source>
         <translation>Number of sectors ({k}) cannot exceed valid segment count ({n}).</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_districting.py" line="224"/>
+        <location filename="../algorithms/waste_districting.py" line="292"/>
         <source>Selecionando sementes (farthest-first)...</source>
         <translation>Selecting seeds (farthest-first)...</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_districting.py" line="228"/>
+        <location filename="../algorithms/waste_districting.py" line="296"/>
         <source>Crescendo setores a partir das sementes...</source>
         <translation>Growing sectors from seeds...</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_districting.py" line="231"/>
+        <location filename="../algorithms/waste_districting.py" line="299"/>
         <source>Rebalanceando trechos de fronteira...</source>
         <translation>Rebalancing boundary segments...</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_districting.py" line="242"/>
+        <location filename="../algorithms/waste_districting.py" line="310"/>
         <source>Setorização concluída. Setores: {k} | carga mín={min:.2f} | carga máx={max:.2f} | carga média={avg:.2f}</source>
         <translation>Districting completed. Sectors: {k} | min load={min:.2f} | max load={max:.2f} | avg load={avg:.2f}</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_districting.py" line="258"/>
+        <location filename="../algorithms/waste_districting.py" line="327"/>
         <source>Não foi possível criar a camada de saída.</source>
         <translation>Could not create output layer.</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_districting.py" line="283"/>
+        <location filename="../algorithms/waste_districting.py" line="352"/>
         <source>Setorização de Coleta de Resíduos (Districting)</source>
         <translation>Waste Collection Districting</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_districting.py" line="286"/>
+        <location filename="../algorithms/waste_districting.py" line="355"/>
         <source>Logística Especializada — Coleta de Lixo</source>
         <translation>Specialized Logistics — Waste Collection</translation>
     </message>
@@ -4660,12 +4660,12 @@ Output:
 - Roads layer with new attribute 'collection_sector_id' (collection sector ID).</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_districting.py" line="125"/>
+        <location filename="../algorithms/waste_districting.py" line="134"/>
         <source>Tolerância de nó (m)</source>
         <translation>Node tolerance (m)</translation>
     </message>
     <message>
-        <location filename="../algorithms/waste_districting.py" line="170"/>
+        <location filename="../algorithms/waste_districting.py" line="179"/>
         <source>camada de vias</source>
         <translation>roads layer</translation>
     </message>
@@ -4684,7 +4684,7 @@ Parâmetros:
 
 Saída:
 - Camada de vias com o novo atributo 'collection_sector_id' (ID do setor de coleta).</source>
-        <translation>Partitions segments of a roads layer into k contiguous collection sectors balanced by payload (generated waste or, in the absence of field, segment length).
+        <translation type="obsolete">Partitions segments of a roads layer into k contiguous collection sectors balanced by payload (generated waste or, in the absence of field, segment length).
 
 Uses farthest-first seed heuristic (Gonzalez, 1985), followed by region growing from seeds and local refinement via boundary segment swapping to balance load between sectors while maintaining contiguity. Solution is good, not necessarily optimal.
 
@@ -4697,6 +4697,64 @@ Parameters:
 
 Output:
 - Roads layer with new attribute 'collection_sector_id' (collection sector ID).</translation>
+    </message>
+    <message>
+        <location filename="../algorithms/waste_districting.py" line="238"/>
+        <source>Verificando a conectividade da rede...</source>
+        <translation>Checking network connectivity...</translation>
+    </message>
+    <message>
+        <location filename="../algorithms/waste_districting.py" line="255"/>
+        <source>Rede fragmentada demais para setorizar: {pct:.1f}% da carga total está fora da rede principal, em {n_comp} componente(s) isolado(s) com {n_edges} trecho(s). Aumente a tolerância de nó ou trate os trechos isolados à parte.</source>
+        <translation>Network too fragmented to sectorize: {pct:.1f}% of the total load is outside the main network, in {n_comp} isolated component(s) with {n_edges} segment(s). Increase the node tolerance or handle the isolated segments separately.</translation>
+    </message>
+    <message>
+        <location filename="../algorithms/waste_districting.py" line="267"/>
+        <source>O número de setores ({k}) não pode exceder o número de trechos da rede principal ({n}; há {m} trecho(s) fora dela, que saem com collection_sector_id = -1).</source>
+        <translation>The number of sectors ({k}) cannot exceed the number of segments in the main network ({n}; there are {m} segment(s) outside it, which get collection_sector_id = -1).</translation>
+    </message>
+    <message>
+        <location filename="../algorithms/waste_districting.py" line="279"/>
+        <source>{count} trecho(s) de via fora da rede principal, em {n_comp} componente(s) isolado(s): {pct:.1f}% da carga total. Esses trechos saem com collection_sector_id = -1 e não entram em nenhum setor. IDs: {ids}. Confira a conexão dessas vias, aumente a tolerância de nó ou trate-as à parte.</source>
+        <translation>{count} street segment(s) outside the main network, in {n_comp} isolated component(s): {pct:.1f}% of the total load. These segments get collection_sector_id = -1 and are not part of any sector. IDs: {ids}. Check the connection of these streets, increase the node tolerance, or handle them separately.</translation>
+    </message>
+    <message>
+        <location filename="../algorithms/waste_districting.py" line="315"/>
+        <source> | trechos sem setor (-1): {n}</source>
+        <translation> | segments without a sector (-1): {n}</translation>
+    </message>
+    <message>
+        <location filename="../algorithms/waste_districting.py" line="361"/>
+        <source>Particiona os trechos de uma camada de vias em k setores de coleta contíguos e balanceados por carga (resíduos gerados ou, na ausência do campo, comprimento do trecho).
+
+Usa a heurística de sementes farthest-first (Gonzalez, 1985), seguida de crescimento de regiões a partir das sementes e refinamento local por troca de trechos de fronteira para equilibrar a carga entre setores mantendo contiguidade. A solução é boa, não necessariamente ótima.
+
+A adjacência entre trechos considera qualquer vértice compartilhado (não só as pontas), e a setorização roda apenas sobre o componente principal da rede (o de maior carga). Trechos que não se ligam à rede principal — ilhas, fragmentos do recorte municipal, vias internas isoladas — saem com collection_sector_id = -1 e são reportados em um aviso (quantos são, quanto da carga representam e seus IDs), porque não é possível formar setores contíguos com eles. Se mais de 50% da carga ficar fora da rede principal, a execução aborta com erro, indicando aumentar a tolerância de nó.
+
+Parâmetros:
+- Camada de vias: trechos de via (linhas) a setorizar.
+- Campo de carga: campo numérico com a carga de cada trecho (opcional; se omitido, usa o comprimento do trecho como proxy de carga).
+- Número de setores: quantidade desejada de setores de coleta (k &gt;= 2).
+- Tolerância de nó: distância, em metros, usada para considerar dois vértices de extremidade como o mesmo nó da rede. Funciona com qualquer SRC de entrada — a camada é lida já reprojetada para coordenadas métricas quando está em SRC geográfico, e o comprimento de cada trecho é medido de forma elipsoidal, em metros de verdade.
+- Máximo de iterações: limite de trocas locais de trechos de fronteira.
+
+Saída:
+- Camada de vias com o novo atributo 'collection_sector_id' (ID do setor de coleta; -1 = trecho fora da rede principal).</source>
+        <translation>Partitions the segments of a road layer into k contiguous collection sectors balanced by load (generated waste or, in the absence of the field, the segment length).
+
+Uses the farthest-first seed heuristic (Gonzalez, 1985), followed by region growing from the seeds and local refinement by boundary-segment exchanges to balance the load across sectors while keeping contiguity. The solution is good, not necessarily optimal.
+
+Adjacency between segments considers any shared vertex (not only endpoints), and sectorization runs only on the main network component (the one with the highest load). Segments that do not connect to the main network — islands, fragments from the municipal clip, isolated internal roads — get collection_sector_id = -1 and are reported in a warning (how many there are, how much load they represent, and their IDs), because contiguous sectors cannot be formed with them. If more than 50% of the load falls outside the main network, execution aborts with an error suggesting to increase the node tolerance.
+
+Parameters:
+- Road layer: road segments (lines) to sectorize.
+- Load field: numeric field with the load of each segment (optional; if omitted, the segment length is used as a load proxy).
+- Number of sectors: desired number of collection sectors (k &gt;= 2).
+- Node tolerance: distance, in meters, used to consider two vertices as the same network node. Works with any input CRS — the layer is read already reprojected to metric coordinates when it is in a geographic CRS, and each segment's length is measured ellipsoidally, in true meters.
+- Maximum iterations: limit of local boundary-segment exchanges.
+
+Output:
+- Road layer with the new attribute 'collection_sector_id' (collection sector ID; -1 = segment outside the main network).</translation>
     </message>
 </context>
 <context>
@@ -4972,7 +5030,7 @@ Output:
         <translation>Results:</translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="1425"/>
+        <location filename="../gui/waste_dock.py" line="1439"/>
         <source>Aviso</source>
         <translation>Warning</translation>
     </message>
@@ -4982,22 +5040,22 @@ Output:
         <translation>Please select all necessary layers and fields for generation estimation.</translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="1430"/>
+        <location filename="../gui/waste_dock.py" line="1444"/>
         <source>&lt;span style='color: #fc8181;'&gt;Erro: Parâmetros incompletos.&lt;/span&gt;</source>
         <translation>&lt;span style='color: #fc8181;'&gt;Error: Incomplete parameters.&lt;/span&gt;</translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="1436"/>
+        <location filename="../gui/waste_dock.py" line="1450"/>
         <source>Erro</source>
         <translation>Error</translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="1436"/>
+        <location filename="../gui/waste_dock.py" line="1450"/>
         <source>QGIS Processing não está disponível no ambiente atual.</source>
         <translation>QGIS Processing is not available in the current environment.</translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="1441"/>
+        <location filename="../gui/waste_dock.py" line="1455"/>
         <source>&lt;span style='color: #fc8181;'&gt;Erro: QGIS Processing não disponível.&lt;/span&gt;</source>
         <translation>&lt;span style='color: #fc8181;'&gt;Error: QGIS Processing not available.&lt;/span&gt;</translation>
     </message>
@@ -5022,187 +5080,187 @@ Output:
         <translation>&lt;span style='color: #fc8181;'&gt;Error calculating estimate: {error}&lt;/span&gt;&lt;br&gt;</translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="1473"/>
+        <location filename="../gui/waste_dock.py" line="1487"/>
         <source>&lt;b&gt;=== CÁLCULO CONCLUÍDO ===&lt;/b&gt;</source>
         <translation>&lt;b&gt;=== CALCULATION COMPLETED ===&lt;/b&gt;</translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="955"/>
+        <location filename="../gui/waste_dock.py" line="969"/>
         <source>Por favor, selecione a camada de vias para a roteirização CPP.</source>
         <translation>Please select the roads layer for CPP routing.</translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="975"/>
+        <location filename="../gui/waste_dock.py" line="989"/>
         <source>&lt;b&gt;=== EXECUTANDO ROTEIRIZAÇÃO CPP ===&lt;/b&gt;&lt;br&gt;</source>
         <translation>&lt;b&gt;=== EXECUTING CPP ROUTING ===&lt;/b&gt;&lt;br&gt;</translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="992"/>
+        <location filename="../gui/waste_dock.py" line="1006"/>
         <source>-&gt; &lt;b&gt;Roteirização CPP concluída com sucesso!&lt;/b&gt; (Camada com {count} trechos viários)&lt;br&gt;</source>
         <translation>-&gt; &lt;b&gt;CPP Routing completed successfully!&lt;/b&gt; (Layer with {count} road segments)&lt;br&gt;</translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="1130"/>
+        <location filename="../gui/waste_dock.py" line="1144"/>
         <source>-&gt; &lt;b&gt;Resultado da roteirização retornou vazio.&lt;/b&gt;&lt;br&gt;</source>
         <translation>-&gt; &lt;b&gt;Routing result returned empty.&lt;/b&gt;&lt;br&gt;</translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="999"/>
+        <location filename="../gui/waste_dock.py" line="1013"/>
         <source>&lt;span style='color: #fc8181;'&gt;Erro ao executar roteirização CPP: {error}&lt;/span&gt;&lt;br&gt;</source>
         <translation>&lt;span style='color: #fc8181;'&gt;Error executing CPP routing: {error}&lt;/span&gt;&lt;br&gt;</translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="1137"/>
+        <location filename="../gui/waste_dock.py" line="1151"/>
         <source>&lt;b&gt;=== ROTEIRIZAÇÃO CONCLUÍDA ===&lt;/b&gt;</source>
         <translation>&lt;b&gt;=== ROUTING COMPLETED ===&lt;/b&gt;</translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="1018"/>
+        <location filename="../gui/waste_dock.py" line="1032"/>
         <source>Por favor, selecione a camada de vias para a roteirização RPP.</source>
         <translation>Please select the roads layer for RPP routing.</translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="1038"/>
+        <location filename="../gui/waste_dock.py" line="1052"/>
         <source>&lt;b&gt;=== EXECUTANDO ROTEIRIZAÇÃO RPP ===&lt;/b&gt;&lt;br&gt;</source>
         <translation>&lt;b&gt;=== EXECUTING RPP ROUTING ===&lt;/b&gt;&lt;br&gt;</translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="1056"/>
+        <location filename="../gui/waste_dock.py" line="1070"/>
         <source>-&gt; &lt;b&gt;Roteirização RPP concluída com sucesso!&lt;/b&gt; (Camada com {count} trechos viários)&lt;br&gt;</source>
         <translation>-&gt; &lt;b&gt;RPP Routing completed successfully!&lt;/b&gt; (Layer with {count} road segments)&lt;br&gt;</translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="1063"/>
+        <location filename="../gui/waste_dock.py" line="1077"/>
         <source>&lt;span style='color: #fc8181;'&gt;Erro ao executar roteirização RPP: {error}&lt;/span&gt;&lt;br&gt;</source>
         <translation>&lt;span style='color: #fc8181;'&gt;Error executing RPP routing: {error}&lt;/span&gt;&lt;br&gt;</translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="1085"/>
+        <location filename="../gui/waste_dock.py" line="1099"/>
         <source>Por favor, selecione a camada de vias, o campo de demanda e a camada do depósito para a roteirização CARP.</source>
         <translation>Please select the roads layer, demand field, and depot layer for CARP routing.</translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="1105"/>
+        <location filename="../gui/waste_dock.py" line="1119"/>
         <source>&lt;b&gt;=== EXECUTANDO ROTEIRIZAÇÃO CARP ===&lt;/b&gt;&lt;br&gt;</source>
         <translation>&lt;b&gt;=== EXECUTING CARP ROUTING ===&lt;/b&gt;&lt;br&gt;</translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="1126"/>
+        <location filename="../gui/waste_dock.py" line="1140"/>
         <source>-&gt; &lt;b&gt;Roteirização CARP concluída com sucesso!&lt;/b&gt; (Camada com {count} trechos viários)&lt;br&gt;</source>
         <translation>-&gt; &lt;b&gt;CARP Routing completed successfully!&lt;/b&gt; (Layer with {count} road segments)&lt;br&gt;</translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="1133"/>
+        <location filename="../gui/waste_dock.py" line="1147"/>
         <source>&lt;span style='color: #fc8181;'&gt;Erro ao executar roteirização CARP: {error}&lt;/span&gt;&lt;br&gt;</source>
         <translation>&lt;span style='color: #fc8181;'&gt;Error executing CARP routing: {error}&lt;/span&gt;&lt;br&gt;</translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="1155"/>
+        <location filename="../gui/waste_dock.py" line="1169"/>
         <source>Por favor, selecione a camada de rotas e o campo ID da rota para o dimensionamento de frota.</source>
         <translation>Please select the routes layer and route ID field for fleet sizing.</translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="1175"/>
+        <location filename="../gui/waste_dock.py" line="1189"/>
         <source>&lt;b&gt;=== EXECUTANDO DIMENSIONAMENTO DE FROTA ===&lt;/b&gt;&lt;br&gt;</source>
         <translation>&lt;b&gt;=== EXECUTING FLEET SIZING ===&lt;/b&gt;&lt;br&gt;</translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="1196"/>
+        <location filename="../gui/waste_dock.py" line="1210"/>
         <source>-&gt; &lt;b&gt;Dimensionamento de frota concluído com sucesso!&lt;/b&gt; (Camada com {count} registros)&lt;br&gt;</source>
         <translation>-&gt; &lt;b&gt;Fleet sizing completed successfully!&lt;/b&gt; (Layer with {count} records)&lt;br&gt;</translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="1200"/>
+        <location filename="../gui/waste_dock.py" line="1214"/>
         <source>-&gt; &lt;b&gt;Resultado do dimensionamento retornou vazio.&lt;/b&gt;&lt;br&gt;</source>
         <translation>-&gt; &lt;b&gt;Sizing result returned empty.&lt;/b&gt;&lt;br&gt;</translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="1203"/>
+        <location filename="../gui/waste_dock.py" line="1217"/>
         <source>&lt;span style=&apos;color: #fc8181;&apos;&gt;Erro ao executar dimensionamento de frota: {error}&lt;/span&gt;&lt;br&gt;</source>
         <translation>&lt;span style='color: #fc8181;'&gt;Error executing fleet sizing: {error}&lt;/span&gt;&lt;br&gt;</translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="1207"/>
+        <location filename="../gui/waste_dock.py" line="1221"/>
         <source>&lt;b&gt;=== DIMENSIONAMENTO CONCLUÍDO ===&lt;/b&gt;</source>
         <translation>&lt;b&gt;=== SIZING COMPLETED ===&lt;/b&gt;</translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="1226"/>
+        <location filename="../gui/waste_dock.py" line="1240"/>
         <source>Por favor, selecione a camada de rotas e o campo de carga para a análise de equilíbrio.</source>
         <translation>Please select the routes layer and load field for balance analysis.</translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="1246"/>
+        <location filename="../gui/waste_dock.py" line="1260"/>
         <source>&lt;b&gt;=== EXECUTANDO EQUILÍBRIO ENTRE SETORES ===&lt;/b&gt;&lt;br&gt;</source>
         <translation>&lt;b&gt;=== EXECUTING SECTOR BALANCE ===&lt;/b&gt;&lt;br&gt;</translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="1268"/>
+        <location filename="../gui/waste_dock.py" line="1282"/>
         <source>-&gt; &lt;b&gt;Equilíbrio entre setores calculado com sucesso!&lt;/b&gt; (Camada com {count} registros)&lt;br&gt;</source>
         <translation>-&gt; &lt;b&gt;Balance between sectors calculated successfully!&lt;/b&gt; (Layer with {count} records)&lt;br&gt;</translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="1272"/>
+        <location filename="../gui/waste_dock.py" line="1286"/>
         <source>-&gt; &lt;b&gt;Resultado do equilíbrio retornou vazio.&lt;/b&gt;&lt;br&gt;</source>
         <translation>-&gt; &lt;b&gt;Balance result returned empty.&lt;/b&gt;&lt;br&gt;</translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="1275"/>
+        <location filename="../gui/waste_dock.py" line="1289"/>
         <source>&lt;span style='color: #fc8181;'&gt;Erro ao executar equilíbrio entre setores: {error}&lt;/span&gt;&lt;br&gt;</source>
         <translation>&lt;span style='color: #fc8181;'&gt;Error executing sector balance: {error}&lt;/span&gt;&lt;br&gt;</translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="1279"/>
+        <location filename="../gui/waste_dock.py" line="1293"/>
         <source>&lt;b&gt;=== ANÁLISE CONCLUÍDA ===&lt;/b&gt;</source>
         <translation>&lt;b&gt;=== ANALYSIS COMPLETED ===&lt;/b&gt;</translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="1294"/>
+        <location filename="../gui/waste_dock.py" line="1308"/>
         <source>Por favor, selecione a rede viária, a camada de destinos e a camada de setores para o cálculo de distância ao destino.</source>
         <translation>Please select the road network, destinations layer, and sectors layer for distance to destination calculation.</translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="1314"/>
+        <location filename="../gui/waste_dock.py" line="1328"/>
         <source>&lt;b&gt;=== EXECUTANDO DISTÂNCIA AO DESTINO ===&lt;/b&gt;&lt;br&gt;</source>
         <translation>&lt;b&gt;=== EXECUTING DISTANCE TO DESTINATION ===&lt;/b&gt;&lt;br&gt;</translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="1332"/>
+        <location filename="../gui/waste_dock.py" line="1346"/>
         <source>-&gt; &lt;b&gt;Distância ao destino calculada com sucesso!&lt;/b&gt; (Camada com {count} registro(s))&lt;br&gt;</source>
         <translation>-&gt; &lt;b&gt;Distance to destination calculated successfully!&lt;/b&gt; (Layer with {count} record(s))&lt;br&gt;</translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="1336"/>
+        <location filename="../gui/waste_dock.py" line="1350"/>
         <source>-&gt; &lt;b&gt;Resultado da distância ao destino retornou vazio.&lt;/b&gt;&lt;br&gt;</source>
         <translation>-&gt; &lt;b&gt;Distance to destination result returned empty.&lt;/b&gt;&lt;br&gt;</translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="1339"/>
+        <location filename="../gui/waste_dock.py" line="1353"/>
         <source>&lt;span style='color: #fc8181;'&gt;Erro ao executar distância ao destino: {error}&lt;/span&gt;&lt;br&gt;</source>
         <translation>&lt;span style='color: #fc8181;'&gt;Error executing distance to destination: {error}&lt;/span&gt;&lt;br&gt;</translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="1360"/>
+        <location filename="../gui/waste_dock.py" line="1374"/>
         <source>Por favor, selecione a camada de vias exigidas e a camada de rota coberta para o cálculo de cobertura por frequência.</source>
         <translation>Please select the required roads layer and covered route layer for frequency coverage calculation.</translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="1380"/>
+        <location filename="../gui/waste_dock.py" line="1394"/>
         <source>&lt;b&gt;=== EXECUTANDO COBERTURA POR FREQUÊNCIA ===&lt;/b&gt;&lt;br&gt;</source>
         <translation>&lt;b&gt;=== EXECUTING FREQUENCY COVERAGE ===&lt;/b&gt;&lt;br&gt;</translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="1400"/>
+        <location filename="../gui/waste_dock.py" line="1414"/>
         <source>-&gt; &lt;b&gt;Cobertura por frequência calculada com sucesso!&lt;/b&gt; (Camada com {count} registro(s))&lt;br&gt;</source>
         <translation>-&gt; &lt;b&gt;Frequency coverage calculated successfully!&lt;/b&gt; (Layer with {count} record(s))&lt;br&gt;</translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="1404"/>
+        <location filename="../gui/waste_dock.py" line="1418"/>
         <source>-&gt; &lt;b&gt;Resultado da cobertura por frequência retornou vazio.&lt;/b&gt;&lt;br&gt;</source>
         <translation>-&gt; &lt;b&gt;Frequency coverage result returned empty.&lt;/b&gt;&lt;br&gt;</translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="1407"/>
+        <location filename="../gui/waste_dock.py" line="1421"/>
         <source>&lt;span style='color: #fc8181;'&gt;Erro ao executar cobertura por frequência: {error}&lt;/span&gt;&lt;br&gt;</source>
         <translation>&lt;span style='color: #fc8181;'&gt;Error executing frequency coverage: {error}&lt;/span&gt;&lt;br&gt;</translation>
     </message>
@@ -5292,42 +5350,42 @@ Output:
         <translation>-&gt; &lt;b&gt;Districting completed successfully!&lt;/b&gt; (Layer with {count} road segments)&lt;br&gt;</translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="934"/>
+        <location filename="../gui/waste_dock.py" line="948"/>
         <source>-&gt; &lt;b&gt;Resultado da setorização retornou vazio.&lt;/b&gt;&lt;br&gt;</source>
         <translation>-&gt; &lt;b&gt;Districting result returned empty.&lt;/b&gt;&lt;br&gt;</translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="937"/>
+        <location filename="../gui/waste_dock.py" line="951"/>
         <source>&lt;span style='color: #fc8181;'&gt;Erro ao executar setorização: {error}&lt;/span&gt;&lt;br&gt;</source>
         <translation>&lt;span style='color: #fc8181;'&gt;Error executing districting: {error}&lt;/span&gt;&lt;br&gt;</translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="941"/>
+        <location filename="../gui/waste_dock.py" line="955"/>
         <source>&lt;b&gt;=== EXECUÇÃO CONCLUÍDA ===&lt;/b&gt;</source>
         <translation>&lt;b&gt;=== EXECUTION COMPLETE ===&lt;/b&gt;</translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="1425"/>
+        <location filename="../gui/waste_dock.py" line="1439"/>
         <source>Por favor, selecione a camada de rotas e o campo indicador de deadhead para a análise.</source>
         <translation>Please select the routes layer and the deadhead indicator field for the analysis.</translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="1445"/>
+        <location filename="../gui/waste_dock.py" line="1459"/>
         <source>&lt;b&gt;=== EXECUTANDO RAZÃO DE DEADHEAD ===&lt;/b&gt;&lt;br&gt;</source>
         <translation>&lt;b&gt;=== RUNNING DEADHEAD RATIO ===&lt;/b&gt;&lt;br&gt;</translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="1462"/>
+        <location filename="../gui/waste_dock.py" line="1476"/>
         <source>-&gt; &lt;b&gt;Razão de deadhead calculada com sucesso!&lt;/b&gt; (Camada com {count} registro(s))&lt;br&gt;</source>
         <translation>-&gt; &lt;b&gt;Deadhead ratio calculated successfully!&lt;/b&gt; (Layer with {count} record(s))&lt;br&gt;</translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="1466"/>
+        <location filename="../gui/waste_dock.py" line="1480"/>
         <source>-&gt; &lt;b&gt;Resultado da razão de deadhead retornou vazio.&lt;/b&gt;&lt;br&gt;</source>
         <translation>-&gt; &lt;b&gt;Deadhead ratio result returned empty.&lt;/b&gt;&lt;br&gt;</translation>
     </message>
     <message>
-        <location filename="../gui/waste_dock.py" line="1469"/>
+        <location filename="../gui/waste_dock.py" line="1483"/>
         <source>&lt;span style='color: #fc8181;'&gt;Erro ao executar razão de deadhead: {error}&lt;/span&gt;&lt;br&gt;</source>
         <translation>&lt;span style='color: #fc8181;'&gt;Error executing deadhead ratio: {error}&lt;/span&gt;&lt;br&gt;</translation>
     </message>
@@ -5345,6 +5403,11 @@ Output:
         <location filename="../gui/waste_dock.py" line="840"/>
         <source>&lt;span style='color: #fc8181;'&gt;Erro: Falha na associação das vias aos setores.&lt;/span&gt;&lt;br&gt;</source>
         <translation>&lt;span style='color: #fc8181;'&gt;Error: Failed to associate roads with sectors.&lt;/span&gt;&lt;br&gt;</translation>
+    </message>
+    <message>
+        <location filename="../gui/waste_dock.py" line="941"/>
+        <source>&lt;span style='color: #f6e05e;'&gt;Aviso: {count} trecho(s) fora da rede principal (filtre por &quot;collection_sector_id&quot; = -1 para visualizá-los).&lt;/span&gt;&lt;br&gt;</source>
+        <translation>&lt;span style='color: #f6e05e;'&gt;Warning: {count} segment(s) outside main network (filter by &quot;collection_sector_id&quot; = -1 to view them).&lt;/span&gt;&lt;br&gt;</translation>
     </message>
 </context>
 <context>

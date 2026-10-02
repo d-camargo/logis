@@ -930,6 +930,20 @@ class WasteDock(QgsDockWidget):
                 self.txt_results.append(
                     self.tr("-> <b>Setorização concluída com sucesso!</b> (Camada com {count} trechos viários)<br>").format(count=count)
                 )
+
+                unassigned_count = 0
+                if hasattr(out_layer, 'getFeatures'):
+                    for feat in out_layer.getFeatures():
+                        if feat['collection_sector_id'] == -1:
+                            unassigned_count += 1
+
+                if unassigned_count > 0:
+                    self.txt_results.append(
+                        self.tr(
+                            "<span style='color: #f6e05e;'>Aviso: {count} trecho(s) fora da rede principal "
+                            "(filtre por \"collection_sector_id\" = -1 para visualizá-los).</span><br>"
+                        ).format(count=unassigned_count)
+                    )
             else:
                 self.txt_results.append(self.tr("-> <b>Resultado da setorização retornou vazio.</b><br>"))
 

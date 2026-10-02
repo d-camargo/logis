@@ -121,6 +121,17 @@ Particiona as vias em setores de coleta contíguos e equilibrados por carga.
 O botão **Executar Setorização** adiciona ao projeto as vias com o campo
 `collection_sector_id`.
 
+Se a rede contiver vias desconexas da malha viária principal (ilhas, trechos cortados
+na divisa do município ou vias sem saída conectada), a setorização conclui normalmente
+sobre o componente principal e exibe um aviso em amarelo no painel com o total de trechos
+que ficaram fora. Esses trechos saem com `collection_sector_id = -1`. Nesses casos:
+- **Filtre a camada** por `"collection_sector_id" = -1` para inspecionar e visualizar no
+  mapa os trechos não incluídos em nenhum setor;
+- **Confira as vias na divisa do município**, verificando se o recorte gerou fragmentos
+  soltos ou se há vias interrompidas;
+- **Aumente a tolerância de nó** (por exemplo, de `0,01` m para `0,5` m ou `1,0` m) caso
+  a desconexão seja decorrente de pequenos desalinhamentos nos nós da malha viária.
+
 ---
 
 ## 5. Aba **Roteirização** — o itinerário sobre as ruas

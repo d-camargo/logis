@@ -2,6 +2,10 @@
 
 Este documento registra as principais alterações e evoluções do plugin **logis** organizadas por versão.
 
+## 0.7.1 - 2026-10-02
+
+- **Resíduos: a setorização não aborta mais com "Rede desconectada"** — trechos que se cruzam num vértice do meio da linha passam a contar como ligados, e os trechos que de fato ficam fora da rede principal saem com `collection_sector_id = -1` e um aviso (quantos são, quanto da carga representam e quais são), em vez de interromper a setorização inteira.
+
 ## 0.7.0 - 2026-09-27
 
 - **Roteirização (CVRP): vários depósitos de origem/destino** — a camada de depósito pode ter mais de um ponto; cada ponto de demanda vai para o depósito indicado num campo (ou, sem o campo, para o mais próximo), as rotas são montadas por depósito e as saídas ganham o campo `depot_id`; antes só o primeiro depósito era usado.

@@ -137,6 +137,9 @@ A heurística de setorização territorial opera em três etapas:
 2. **Crescimento de Regiões:** Expande os setores a partir das sementes sobre a estrutura do grafo de adjacência da malha.
 3. **Rebalanceamento de Fronteiras:** Realiza um refinamento local através de trocas iterativas de trechos localizados na fronteira dos setores para minimizar a variância de carga mantendo rigorosamente a contiguidade territorial.
 
+#### Rede desconectada
+Para garantir que a partição territorial seja contígua mesmo em redes viárias com vias isoladas ou fragmentos resultantes de recorte municipal, o algoritmo identifica os componentes conexos considerando a ligação por qualquer vértice compartilhado (extremidades ou vértices intermediários) via busca em largura (Hopcroft & Tarjan, 1973). A setorização (sementes, crescimento e rebalanceamento) roda exclusivamente sobre o **componente principal** (o de maior carga acumulada). Trechos fora da rede principal saem com `collection_sector_id = -1` e o algoritmo emite um aviso no log com a contagem de trechos, o percentual de carga que representam e os IDs das feições. Se a carga fora da rede principal exceder **50% do total**, ou se $k$ for maior que o número de trechos do componente principal, a execução é interrompida com exceção explícita.
+
 ### Parâmetros de Entrada
 
 | Identificador | Nome na UI | Tipo QGIS | Descrição | Valor Default |
@@ -152,9 +155,10 @@ A heurística de setorização territorial opera em três etapas:
 
 | Identificador | Nome na UI | Tipo | Descrição |
 |---|---|---|---|
-| `OUTPUT` | Vias com setor de coleta atribuído | `QgsFeatureSink` (Linhas) | Camada de vias contendo os atributos originais mais o campo `collection_sector_id` (Inteiro, ID do setor de coleta). |
+| `OUTPUT` | Vias com setor de coleta atribuído | `QgsFeatureSink` (Linhas) | Camada de vias contendo os atributos originais mais o campo `collection_sector_id` (Inteiro, ID do setor de coleta; `-1` = trecho fora da rede principal). |
 
 ### Referência Bibliográfica da Técnica
+* Hopcroft, J., & Tarjan, R. (1973). *Efficient algorithms for graph manipulation*. Communications of the ACM, 16(6), 372-378.
 * Gonzalez, T. F. (1985). *Clustering to minimize the maximum intercluster distance*. Theoretical Computer Science, 38, 293-306.
 * Kalcsics, J., Nickel, S., & Schröder, M. (2005). *Towards a unified territorial design approach – Applications, algorithms and GIS integration*. Top, 13(1), 1-56.
 

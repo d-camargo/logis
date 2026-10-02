@@ -36,12 +36,14 @@ except ImportError:
 
 try:
     from ..core.routing.districting import (
+        connected_components,
         select_seed_edges_farthest_first,
         grow_sectors_from_seeds,
         rebalance_boundary_edges
     )
 except ImportError:
     from core.routing.districting import (
+        connected_components,
         select_seed_edges_farthest_first,
         grow_sectors_from_seeds,
         rebalance_boundary_edges
@@ -50,16 +52,20 @@ except ImportError:
 
 def _edge_endpoints(geometry):
     """Retorna os pontos (x, y) do primeiro e do último vértice da geometria de linha."""
-    if geometry.isMultipart():
-        parts = geometry.asMultiPolyline()
-        vertices = parts[0] if parts else []
-    else:
-        vertices = geometry.asPolyline()
+    vertices = _all_vertices(geometry)
 
     if len(vertices) < 2:
         return None, None
 
     return vertices[0], vertices[-1]
+
+
+def _all_vertices(geometry):
+    """Retorna todos os pontos (x, y) de todas as partes da geometria de linha."""
+    if geometry.isMultipart():
+        parts = geometry.asMultiPolyline()
+        return [pt for part in parts for pt in part]
+    return geometry.asPolyline()
 
 
 class WasteDistricting(QgsProcessingAlgorithm):
@@ -72,6 +78,8 @@ class WasteDistricting(QgsProcessingAlgorithm):
     por troca de trechos de fronteira.
 
     Referência Bibliográfica da Técnica:
+        - Hopcroft, J., & Tarjan, R. (1973). Efficient algorithms for graph manipulation.
+          Communications of the ACM, 16(6), 372-378.
         - Gonzalez, T. F. (1985). Clustering to minimize the maximum intercluster
           distance. Theoretical Computer Science, 38, 293-306.
         - Kalcsics, J., Nickel, S., & Schröder, M. (2005). Towards a unified
@@ -79,9 +87,10 @@ class WasteDistricting(QgsProcessingAlgorithm):
           Top, 13(1), 1-56.
 
     Limite de Complexidade:
-        Complexidade de Tempo: O(K*E) para seleção de sementes + O(E log E) para
-        crescimento de regiões + O(I*E) para refinamento de fronteira, onde E é o
-        número de trechos de via, K o número de setores e I o número de iterações.
+        Complexidade de Tempo: O(E + soma dos graus) para os componentes conexos +
+        O(K*E) para seleção de sementes + O(E log E) para crescimento de regiões +
+        O(I*E) para refinamento de fronteira, onde E é o número de trechos de via,
+        K o número de setores e I o número de iterações.
         Testado com até ~5.000 trechos de via.
     """
 
@@ -187,6 +196,10 @@ class WasteDistricting(QgsProcessingAlgorithm):
 
             from_node = (round(start_pt.x() / tolerance), round(start_pt.y() / tolerance))
             to_node = (round(end_pt.x() / tolerance), round(end_pt.y() / tolerance))
+            nodes = {
+                (round(pt.x() / tolerance), round(pt.y() / tolerance))
+                for pt in _all_vertices(geometry)
+            }
 
             length_m = length_fn(feature.geometry())
             if load_field_idx != -1:
@@ -199,6 +212,7 @@ class WasteDistricting(QgsProcessingAlgorithm):
                 "id": feature.id(),
                 "from_node": from_node,
                 "to_node": to_node,
+                "nodes": nodes,
                 "length": length_m,
                 "load": load
             })
@@ -220,33 +234,88 @@ class WasteDistricting(QgsProcessingAlgorithm):
                 ).format(k=num_sectors, n=len(edges))
             )
 
-        # 2) Setorização: sementes farthest-first -> crescimento de regiões -> rebalanceamento
-        feedback.pushInfo(self.tr("Selecionando sementes (farthest-first)..."))
+        # 2) Componentes conexos: setorizar só a rede principal; o resto sai com -1
+        feedback.pushInfo(self.tr("Verificando a conectividade da rede..."))
         try:
-            seeds = select_seed_edges_farthest_first(edges, num_sectors)
-
-            feedback.pushInfo(self.tr("Crescendo setores a partir das sementes..."))
-            sector_of_edge = grow_sectors_from_seeds(edges, seeds)
-
-            feedback.pushInfo(self.tr("Rebalanceando trechos de fronteira..."))
-            sector_of_edge = rebalance_boundary_edges(edges, sector_of_edge, max_iterations=max_iterations)
+            components = connected_components(edges)
         except ValueError as exc:
             raise QgsProcessingException(str(exc))
 
-        # 3) Reportar carga mín/máx/média por setor
+        main_ids = set(components[0])
+        main_edges = [edge for edge in edges if edge["id"] in main_ids]
+        edge_by_id = {edge["id"]: edge for edge in edges}
+
+        outside_ids = [edge["id"] for edge in edges if edge["id"] not in main_ids]
+        outside_count = len(outside_ids)
+        outside_load = sum(edge_by_id[eid]["load"] for eid in outside_ids)
+        total_load = sum(edge["load"] for edge in edges)
+        outside_pct = (100.0 * outside_load / total_load) if total_load > 0 else 0.0
+
+        if outside_count > 0 and outside_pct > 50.0:
+            raise QgsProcessingException(
+                self.tr(
+                    "Rede fragmentada demais para setorizar: {pct:.1f}% da carga total está "
+                    "fora da rede principal, em {n_comp} componente(s) isolado(s) com "
+                    "{n_edges} trecho(s). Aumente a tolerância de nó ou trate os trechos "
+                    "isolados à parte."
+                ).format(
+                    pct=outside_pct, n_comp=len(components) - 1, n_edges=outside_count
+                )
+            )
+
+        if num_sectors > len(main_edges):
+            raise QgsProcessingException(
+                self.tr(
+                    "O número de setores ({k}) não pode exceder o número de trechos da rede "
+                    "principal ({n}; há {m} trecho(s) fora dela, que saem com "
+                    "collection_sector_id = -1)."
+                ).format(k=num_sectors, n=len(main_edges), m=outside_count)
+            )
+
+        if outside_count > 0:
+            ids_text = ", ".join(str(eid) for eid in sorted(outside_ids)[:20])
+            if outside_count > 20:
+                ids_text += ", …"
+            feedback.pushWarning(
+                self.tr(
+                    "{count} trecho(s) de via fora da rede principal, em {n_comp} "
+                    "componente(s) isolado(s): {pct:.1f}% da carga total. Esses trechos saem "
+                    "com collection_sector_id = -1 e não entram em nenhum setor. IDs: {ids}. "
+                    "Confira a conexão dessas vias, aumente a tolerância de nó ou trate-as à parte."
+                ).format(
+                    count=outside_count, n_comp=len(components) - 1,
+                    pct=outside_pct, ids=ids_text
+                )
+            )
+
+        # 3) Setorização: sementes farthest-first -> crescimento de regiões -> rebalanceamento
+        feedback.pushInfo(self.tr("Selecionando sementes (farthest-first)..."))
+        try:
+            seeds = select_seed_edges_farthest_first(main_edges, num_sectors)
+
+            feedback.pushInfo(self.tr("Crescendo setores a partir das sementes..."))
+            sector_of_edge = grow_sectors_from_seeds(main_edges, seeds)
+
+            feedback.pushInfo(self.tr("Rebalanceando trechos de fronteira..."))
+            sector_of_edge = rebalance_boundary_edges(main_edges, sector_of_edge, max_iterations=max_iterations)
+        except ValueError as exc:
+            raise QgsProcessingException(str(exc))
+
+        # 4) Reportar carga mín/máx/média por setor
         sector_loads = {}
-        for edge in edges:
+        for edge in main_edges:
             sid = sector_of_edge[edge["id"]]
             sector_loads[sid] = sector_loads.get(sid, 0.0) + edge["load"]
         loads = list(sector_loads.values())
-        feedback.pushInfo(
-            self.tr(
-                "Setorização concluída. Setores: {k} | carga mín={min:.2f} | "
-                "carga máx={max:.2f} | carga média={avg:.2f}"
-            ).format(k=len(loads), min=min(loads), max=max(loads), avg=sum(loads) / len(loads))
-        )
+        summary = self.tr(
+            "Setorização concluída. Setores: {k} | carga mín={min:.2f} | "
+            "carga máx={max:.2f} | carga média={avg:.2f}"
+        ).format(k=len(loads), min=min(loads), max=max(loads), avg=sum(loads) / len(loads))
+        if outside_count > 0:
+            summary += self.tr(" | trechos sem setor (-1): {n}").format(n=outside_count)
+        feedback.pushInfo(summary)
 
-        # 4) Gravar a camada de vias de saída com o campo novo collection_sector_id
+        # 5) Gravar a camada de vias de saída com o campo novo collection_sector_id
         out_fields = streets_source.fields()
         out_fields.append(QgsField("collection_sector_id", qgis_compat.field_type("int")))
 
@@ -297,6 +366,14 @@ class WasteDistricting(QgsProcessingAlgorithm):
             "crescimento de regiões a partir das sementes e refinamento local por troca de "
             "trechos de fronteira para equilibrar a carga entre setores mantendo contiguidade. "
             "A solução é boa, não necessariamente ótima.\n\n"
+            "A adjacência entre trechos considera qualquer vértice compartilhado (não só as "
+            "pontas), e a setorização roda apenas sobre o componente principal da rede (o de "
+            "maior carga). Trechos que não se ligam à rede principal — ilhas, fragmentos do "
+            "recorte municipal, vias internas isoladas — saem com "
+            "collection_sector_id = -1 e são reportados em um aviso (quantos são, quanto da "
+            "carga representam e seus IDs), porque não é possível formar setores contíguos com "
+            "eles. Se mais de 50% da carga ficar fora da rede principal, a execução aborta com "
+            "erro, indicando aumentar a tolerância de nó.\n\n"
             "Parâmetros:\n"
             "- Camada de vias: trechos de via (linhas) a setorizar.\n"
             "- Campo de carga: campo numérico com a carga de cada trecho (opcional; se "
@@ -309,7 +386,8 @@ class WasteDistricting(QgsProcessingAlgorithm):
             "metros de verdade.\n"
             "- Máximo de iterações: limite de trocas locais de trechos de fronteira.\n\n"
             "Saída:\n"
-            "- Camada de vias com o novo atributo 'collection_sector_id' (ID do setor de coleta)."
+            "- Camada de vias com o novo atributo 'collection_sector_id' (ID do setor de "
+            "coleta; -1 = trecho fora da rede principal)."
         )
 
     def createInstance(self):

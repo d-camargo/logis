@@ -5,6 +5,7 @@ from logis.core.routing.districting import (
     select_seed_edges_farthest_first,
     grow_sectors_from_seeds,
     rebalance_boundary_edges,
+    connected_components,
 )
 
 
@@ -106,6 +107,46 @@ class TestGrowSectorsFromSeeds(unittest.TestCase):
         with self.assertRaises(ValueError):
             grow_sectors_from_seeds(edges, seed_edge_ids=[0])
 
+    def test_internal_vertex_via_nodes_connects_and_grows(self):
+        # (i) dois trechos que se tocam só num vértice interno (o "nodes" de um contém a ponta do outro)
+        # -> vizinhos, e grow_sectors_from_seeds com uma semente cobre os dois
+        e1 = {
+            "id": "main",
+            "from_node": (0, 0),
+            "to_node": (0, 10),
+            "length": 10.0,
+            "load": 2.0,
+            "nodes": [(0, 0), (0, 5), (0, 10)],
+        }
+        e2 = {
+            "id": "branch",
+            "from_node": (0, 5),
+            "to_node": (5, 5),
+            "length": 5.0,
+            "load": 1.0,
+        }
+        sector_of_edge = grow_sectors_from_seeds([e1, e2], seed_edge_ids=["main"])
+        self.assertEqual(sector_of_edge, {"main": 0, "branch": 0})
+
+    def test_internal_vertex_without_nodes_raises_value_error(self):
+        # (ii) o mesmo par sem "nodes" -> continua levantando ValueError (retrocompatível)
+        e1 = {
+            "id": "main",
+            "from_node": (0, 0),
+            "to_node": (0, 10),
+            "length": 10.0,
+            "load": 2.0,
+        }
+        e2 = {
+            "id": "branch",
+            "from_node": (0, 5),
+            "to_node": (5, 5),
+            "length": 5.0,
+            "load": 1.0,
+        }
+        with self.assertRaises(ValueError):
+            grow_sectors_from_seeds([e1, e2], seed_edge_ids=["main"])
+
 
 class TestRebalanceBoundaryEdges(unittest.TestCase):
 
@@ -145,6 +186,53 @@ class TestRebalanceBoundaryEdges(unittest.TestCase):
     def test_empty_edges_raises(self):
         with self.assertRaises(ValueError):
             rebalance_boundary_edges([], sector_of_edge={}, max_iterations=10)
+
+
+class TestConnectedComponents(unittest.TestCase):
+
+    def test_line_and_island_orders_larger_component_first(self):
+        # (iii) connected_components com uma linha de 5 trechos mais uma ilha de 1 trecho
+        # -> dois componentes, a linha primeiro
+        line = _line_edges(5, load=1.0)
+        island = [
+            {"id": "island", "from_node": (100,), "to_node": (101,), "length": 1.0, "load": 1.0}
+        ]
+        edges = line + island
+        comps = connected_components(edges)
+        self.assertEqual(len(comps), 2)
+        self.assertEqual(comps[0], [0, 1, 2, 3, 4])
+        self.assertEqual(comps[1], ["island"])
+
+    def test_tie_in_load_broken_by_number_of_edges(self):
+        # (iv) empate de carga resolvido pelo número de trechos
+        edges = [
+            {"id": "single", "from_node": "a", "to_node": "b", "length": 1.0, "load": 10.0},
+            {"id": "pair_1", "from_node": "c", "to_node": "d", "length": 1.0, "load": 5.0},
+            {"id": "pair_2", "from_node": "d", "to_node": "e", "length": 1.0, "load": 5.0},
+        ]
+        comps = connected_components(edges)
+        self.assertEqual(len(comps), 2)
+        self.assertEqual(comps[0], ["pair_1", "pair_2"])
+        self.assertEqual(comps[1], ["single"])
+
+        # Desempate terciário: mesma carga e mesmo nº de trechos -> ordem de entrada do 1º trecho
+        equal_edges = [
+            {"id": "first", "from_node": "x1", "to_node": "x2", "length": 1.0, "load": 5.0},
+            {"id": "second", "from_node": "y1", "to_node": "y2", "length": 1.0, "load": 5.0},
+        ]
+        equal_comps = connected_components(equal_edges)
+        self.assertEqual(equal_comps, [["first"], ["second"]])
+
+    def test_connected_network_returns_single_component_with_all_ids(self):
+        # (v) rede conexa -> um componente com todos os ids
+        edges = _line_edges(4)
+        comps = connected_components(edges)
+        self.assertEqual(len(comps), 1)
+        self.assertEqual(set(comps[0]), {0, 1, 2, 3})
+
+    def test_empty_edges_raises(self):
+        with self.assertRaises(ValueError):
+            connected_components([])
 
 
 if __name__ == "__main__":
