@@ -2,6 +2,10 @@
 
 Este documento registra as principais alterações e evoluções do plugin **logis** organizadas por versão.
 
+## 0.8.0 - 2026-10-02
+
+- **Botão LoGIS na barra de ferramentas** — nova barra *LoGIS* com o ícone do complemento e uma seta que abre as opções do plugin (Rede Viária, Indicadores Urbanos e Regionais, Coleta de Lixo, Roteirização, Dependências e Documentação), sem precisar passar pelo menu Complementos.
+
 ## 0.7.2 - 2026-10-02
 
 - **Resíduos: trechos sem setor (-1) ficam fora da roteirização** — CPP, RPP e CARP, e também o equilíbrio entre setores, o dimensionamento de frota e a cobertura, passam a ignorar os trechos que a setorização deixou com `collection_sector_id = -1`, avisando quantos foram; antes eles eram roteirizados como se fossem mais um setor.

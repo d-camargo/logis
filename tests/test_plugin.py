@@ -4,7 +4,8 @@ import unittest
 from unittest.mock import MagicMock, patch
 
 # Mock QGIS/PyQt classes
-from qgis.PyQt.QtWidgets import QMainWindow, QApplication
+from qgis.PyQt.QtCore import Qt
+from qgis.PyQt.QtWidgets import QMainWindow, QApplication, QToolBar, QToolButton
 
 # Initialize QApplication if it doesn't exist (needed for QWidget/QMainWindow creation)
 app = QApplication.instance()
@@ -18,7 +19,9 @@ class TestLogisPlugin(unittest.TestCase):
         # Create a mock iface
         self.mock_iface = MagicMock()
         self.main_window = QMainWindow()
+        self.main_window.removeToolBar = MagicMock(wraps=self.main_window.removeToolBar)
         self.mock_iface.mainWindow.return_value = self.main_window
+        self.mock_iface.addToolBar.return_value = QToolBar()
         
         # Instantiate the plugin
         self.plugin = LogisPlugin(self.mock_iface)
@@ -43,6 +46,9 @@ class TestLogisPlugin(unittest.TestCase):
         self.assertIsNone(self.plugin.dock_regional)
         self.assertIsNone(self.plugin.dock_waste)
         self.assertIsNone(self.plugin.dock_routing)
+        self.assertIsNone(self.plugin.toolbar)
+        self.assertIsNone(self.plugin.toolbar_button)
+        self.assertIsNone(self.plugin.toolbar_menu)
 
     def test_init_gui(self):
         try:
@@ -74,6 +80,42 @@ class TestLogisPlugin(unittest.TestCase):
         self.mock_iface.addPluginToMenu.assert_any_call("logis", self.plugin.action_routing)
         self.mock_iface.addPluginToMenu.assert_any_call("logis", self.plugin.action_docs)
         self.assertEqual(self.mock_iface.addPluginToMenu.call_count, 7)
+
+    def test_toolbar_button(self):
+        try:
+            from qgis.core import QgsApplication
+            patcher = patch.object(QgsApplication, "processingRegistry", MagicMock())
+            patcher.start()
+            self.addCleanup(patcher.stop)
+        except Exception:
+            pass
+
+        self.plugin.initGui()
+
+        # mock_iface.addToolBar foi chamado com "LoGIS"
+        self.mock_iface.addToolBar.assert_called_with("LoGIS")
+
+        # o botão tem text() == "LoGIS", ícone não nulo, popupMode() InstantPopup, toolButtonStyle() ToolButtonTextBesideIcon
+        btn = self.plugin.toolbar_button
+        self.assertIsNotNone(btn)
+        self.assertEqual(btn.text(), "LoGIS")
+        self.assertFalse(btn.icon().isNull())
+        self.assertEqual(btn.popupMode(), QToolButton.ToolButtonPopupMode.InstantPopup)
+        self.assertEqual(btn.toolButtonStyle(), Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+
+        # e as ações do menu (ignorando separadores) são exatamente as 7 ações do plugin na ordem da Decisão 3
+        self.assertIsNotNone(self.plugin.toolbar_menu)
+        menu_actions = [a for a in self.plugin.toolbar_menu.actions() if not a.isSeparator()]
+        expected_actions = [
+            self.plugin.action_network,
+            self.plugin.action_urban,
+            self.plugin.action_regional,
+            self.plugin.action_waste,
+            self.plugin.action_routing,
+            self.plugin.action,
+            self.plugin.action_docs,
+        ]
+        self.assertEqual(menu_actions, expected_actions)
 
     def test_show_dependencies(self):
         self.plugin.initGui()
@@ -237,6 +279,7 @@ class TestLogisPlugin(unittest.TestCase):
         dock_regional = self.plugin.dock_regional
         dock_waste = self.plugin.dock_waste
         dock_routing = self.plugin.dock_routing
+        toolbar = self.plugin.toolbar
 
         # Unload plugin
         self.plugin.unload()
@@ -258,6 +301,9 @@ class TestLogisPlugin(unittest.TestCase):
         self.mock_iface.removeDockWidget.assert_any_call(dock_waste)
         self.mock_iface.removeDockWidget.assert_any_call(dock_routing)
 
+        # Check that toolbar was removed
+        self.main_window.removeToolBar.assert_called_once_with(toolbar)
+
         # Check references are cleaned
         self.assertIsNone(self.plugin.action)
         self.assertIsNone(self.plugin.action_network)
@@ -272,6 +318,9 @@ class TestLogisPlugin(unittest.TestCase):
         self.assertIsNone(self.plugin.dock_regional)
         self.assertIsNone(self.plugin.dock_waste)
         self.assertIsNone(self.plugin.dock_routing)
+        self.assertIsNone(self.plugin.toolbar)
+        self.assertIsNone(self.plugin.toolbar_button)
+        self.assertIsNone(self.plugin.toolbar_menu)
 
     def test_urban_dock_delivery_distance_controls(self):
         self.plugin.initGui()

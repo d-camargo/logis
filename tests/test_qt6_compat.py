@@ -70,6 +70,14 @@ class TestQt6Compat(unittest.TestCase):
             r"\bQMessageBox\.(Yes|No|Ok|Cancel|Abort|Retry|Ignore|Close|Apply|Discard|Save)\b",
             "Uso desescopado de QMessageBox.StandardButton.*",
         ),
+        (
+            r"\bQt\.ToolButton(IconOnly|TextOnly|TextBesideIcon|TextUnderIcon|FollowStyle)\b",
+            "Uso desescopado de Qt.ToolButton*",
+        ),
+        (
+            r"\bQToolButton\.(InstantPopup|MenuButtonPopup|DelayedPopup)\b",
+            "Uso desescopado de QToolButton.*Popup",
+        ),
     ]
 
     def test_no_qt6_incompatibilities(self):

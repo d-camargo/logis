@@ -4,7 +4,7 @@ import unittest
 from unittest.mock import patch, MagicMock
 
 try:
-    from qgis.PyQt.QtWidgets import QApplication
+    from qgis.PyQt.QtWidgets import QApplication, QMainWindow, QToolBar
     app = QApplication.instance()
     if not app:
         app = QApplication([])
@@ -31,9 +31,15 @@ class DummyIface:
     def __init__(self):
         self._docks = []
         self._menu_items = []
+        self._main_window = QMainWindow()
 
     def mainWindow(self):
-        return None
+        return self._main_window
+
+    def addToolBar(self, name):
+        toolbar = QToolBar(name)
+        self._main_window.addToolBar(toolbar)
+        return toolbar
 
     def addDockWidget(self, area, dock):
         self._docks.append((area, dock))

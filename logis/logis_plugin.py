@@ -1,13 +1,18 @@
 # -*- coding: utf-8 -*-
 """Ponto de entrada do plugin logis."""
 
+import os
+
 from qgis.core import QgsApplication
-from qgis.PyQt.QtCore import QCoreApplication
+from qgis.PyQt.QtCore import QCoreApplication, Qt
+from qgis.PyQt.QtGui import QIcon
 
 try:
     from qgis.PyQt.QtGui import QAction
 except ImportError:
     from qgis.PyQt.QtWidgets import QAction
+
+from qgis.PyQt.QtWidgets import QMenu, QToolButton
 
 from .provider import LogisProvider
 
@@ -33,6 +38,9 @@ class LogisPlugin:
         self.dock_regional = None
         self.dock_waste = None
         self.dock_routing = None
+        self.toolbar = None
+        self.toolbar_button = None
+        self.toolbar_menu = None
 
     def tr(self, s):
         return QCoreApplication.translate("LogisPlugin", s)
@@ -92,6 +100,33 @@ class LogisPlugin:
         
         # Registra a entrada no menu "logis"
         self.iface.addPluginToMenu("logis", self.action_docs)
+
+        # Cria a barra de ferramentas "LoGIS"
+        self.toolbar = self.iface.addToolBar("LoGIS")
+        self.toolbar.setObjectName("LogisToolbar")
+
+        # Cria o menu suspenso do botão da barra
+        self.toolbar_menu = QMenu(self.iface.mainWindow())
+        self.toolbar_menu.addAction(self.action_network)
+        self.toolbar_menu.addAction(self.action_urban)
+        self.toolbar_menu.addAction(self.action_regional)
+        self.toolbar_menu.addAction(self.action_waste)
+        self.toolbar_menu.addAction(self.action_routing)
+        self.toolbar_menu.addSeparator()
+        self.toolbar_menu.addAction(self.action)
+        self.toolbar_menu.addAction(self.action_docs)
+
+        # Cria o botão da barra de ferramentas
+        icon_path = os.path.join(os.path.dirname(__file__), "icon.svg")
+        self.toolbar_button = QToolButton(self.toolbar)
+        self.toolbar_button.setIcon(QIcon(icon_path))
+        self.toolbar_button.setText("LoGIS")
+        self.toolbar_button.setToolTip("LoGIS")
+        self.toolbar_button.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+        self.toolbar_button.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
+        self.toolbar_button.setMenu(self.toolbar_menu)
+
+        self.toolbar.addWidget(self.toolbar_button)
 
     def show_dependencies(self):
         from .gui.dependencies_dialog import DependenciesDialog
@@ -229,3 +264,23 @@ class LogisPlugin:
             if not sip.isdeleted(self.dock_routing):
                 self.iface.removeDockWidget(self.dock_routing)
             self.dock_routing = None
+
+        # Remove e libera a barra de ferramentas
+        if self.toolbar is not None:
+            from qgis.PyQt import sip
+            if not sip.isdeleted(self.toolbar):
+                self.iface.mainWindow().removeToolBar(self.toolbar)
+                self.toolbar.deleteLater()
+            self.toolbar = None
+
+        if self.toolbar_menu is not None:
+            from qgis.PyQt import sip
+            if not sip.isdeleted(self.toolbar_menu):
+                self.toolbar_menu.deleteLater()
+            self.toolbar_menu = None
+
+        if self.toolbar_button is not None:
+            from qgis.PyQt import sip
+            if not sip.isdeleted(self.toolbar_button):
+                self.toolbar_button.deleteLater()
+            self.toolbar_button = None

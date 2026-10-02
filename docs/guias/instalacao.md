@@ -42,15 +42,20 @@ exibição:
 
 ## Onde as funções aparecem
 
-Depois de instalado e habilitado, o logis se expõe em três lugares:
+Depois de instalado e habilitado, o logis se expõe em quatro lugares:
 
+- **Barra de ferramentas LoGIS** — botão com o ícone do logis e o nome *LoGIS*; a seta
+  abre as mesmas entradas do menu Complementos → logis. Se a barra não aparecer,
+  ative-a em **Ver → Barras de Ferramentas → LoGIS**.
 - **Caixa de Ferramentas de Processamento** — provedor **logis**, com todos os
   algoritmos (`logis:*`) agrupados por módulo. É a via scriptável, também acessível pelo
   Console Python via `processing.run("logis:...", {...})`.
-- **Menu Complementos → logis** — as entradas *Indicadores Urbanos*, *Indicadores
-  Regionais*, *Coleta de Lixo*, *Roteirização*, *Dependências…* e *Documentação*.
+- **Menu Complementos → logis** — as entradas *Rede Viária*, *Indicadores Urbanos*,
+  *Indicadores Regionais*, *Coleta de Lixo*, *Roteirização*, *Dependências…* e
+  *Documentação*.
 - **Painéis (docks)**, ancorados à **direita** da janela principal e abertos pelas
   entradas do menu acima:
+  - *logis — Rede Viária*
   - *logis — Indicadores Urbanos*
   - *logis — Indicadores Regionais*
   - *logis — Coleta de Lixo*
