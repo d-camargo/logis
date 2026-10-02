@@ -172,6 +172,14 @@ except ImportError:
         def tabText(self, index):
             return self._tabs[index]
 
+try:
+    from ..core.routing.districting import is_unassigned_sector
+except (ImportError, ValueError):
+    try:
+        from logis.core.routing.districting import is_unassigned_sector
+    except ImportError:
+        from core.routing.districting import is_unassigned_sector
+
 
 class WasteDock(QgsDockWidget):
     """
@@ -934,7 +942,7 @@ class WasteDock(QgsDockWidget):
                 unassigned_count = 0
                 if hasattr(out_layer, 'getFeatures'):
                     for feat in out_layer.getFeatures():
-                        if feat['collection_sector_id'] == -1:
+                        if is_unassigned_sector(feat['collection_sector_id']):
                             unassigned_count += 1
 
                 if unassigned_count > 0:

@@ -32,10 +32,12 @@ from qgis.core import (
 try:
     from ..core.crs_transform import TransformCheckError, length_meter
     from ..core.indicators.waste import estimate_fleet_size
+    from ..core.routing.districting import is_unassigned_sector
     from ..core import qgis_compat
 except ImportError:
     from core.crs_transform import TransformCheckError, length_meter
     from core.indicators.waste import estimate_fleet_size
+    from core.routing.districting import is_unassigned_sector
     from core import qgis_compat
 
 
@@ -165,13 +167,23 @@ class WasteFleetSizing(QgsProcessingAlgorithm):
 
         # sector_key -> { route_key -> distância acumulada (m) }
         sector_routes_m = {}
+        unassigned_routes = set()
 
+        feat_counter = 0
         for feature in routes_source.getFeatures():
             if feedback.isCanceled():
                 return {}
 
-            sec_val = feature.attribute(sector_field_idx) if sector_field_idx != -1 else 0
-            if sec_val is None:
+            feat_counter += 1
+            if sector_field_idx != -1:
+                sec_val = feature.attribute(sector_field_idx)
+                if is_unassigned_sector(sec_val):
+                    r_val = feature.attribute(route_id_idx) if route_id_idx != -1 else None
+                    unassigned_routes.add(r_val if r_val is not None else feat_counter)
+                    continue
+                if sec_val is None:
+                    sec_val = 0
+            else:
                 sec_val = 0
 
             route_val = feature.attribute(route_id_idx)
@@ -182,7 +194,23 @@ class WasteFleetSizing(QgsProcessingAlgorithm):
             routes_m = sector_routes_m.setdefault(sec_val, {})
             routes_m[route_val] = routes_m.get(route_val, 0.0) + length_m
 
+        if unassigned_routes:
+            sec_display = sector_field_name if sector_field_name else "route_sector_id"
+            feedback.pushWarning(
+                self.tr(
+                    "{count} rota(s) sem setor ({field} = -1) foram ignoradas."
+                ).format(count=len(unassigned_routes), field=sec_display)
+            )
+
         if not sector_routes_m:
+            if unassigned_routes:
+                sec_display = sector_field_name if sector_field_name else "route_sector_id"
+                raise QgsProcessingException(
+                    self.tr(
+                        "Todas as rotas estão sem setor ({field} = -1). "
+                        "Refaça a setorização da malha antes de dimensionar a frota."
+                    ).format(field=sec_display)
+                )
             raise QgsProcessingException(
                 self.tr("Nenhuma rota válida encontrada na camada de entrada.")
             )
@@ -294,7 +322,7 @@ class WasteFleetSizing(QgsProcessingAlgorithm):
             "('route_id'); a distância de cada rota é a soma do comprimento das geometrias.\n"
             "- Campo de setor de coleta (opcional): se informado, dimensiona a frota "
             "separadamente por setor ('route_sector_id'); se omitido, trata a camada inteira "
-            "como um único setor.\n"
+            "como um único setor. Trechos com setor -1 (sem setor, saída da setorização) são ignorados.\n"
             "- Velocidade média de coleta: velocidade operacional em km/h (default: 10 km/h).\n"
             "- Duração da jornada: tempo máximo de trabalho por veículo em horas (default: 8 h).\n"
             "- Tempo fixo de descarga: tempo gasto na descarga por rota em horas (default: 0.5 h).\n"

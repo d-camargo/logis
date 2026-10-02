@@ -184,7 +184,7 @@ Garante que todas as vias da malha (ou de cada setor de coleta) sejam percorrida
 | Identificador | Nome na UI | Tipo QGIS | Descrição | Valor Default |
 |---|---|---|---|---|
 | `INPUT_STREETS` | Camada de vias | `QgsProcessingParameterFeatureSource` (`TypeVectorLine`) | Trechos de via a serem percorridos. | *Obrigatório* |
-| `FIELD_COLLECTION_SECTOR` | Campo de setor de coleta (opcional) | `QgsProcessingParameterField` (`Any`) | Se informado, o CPP é resolvido separadamente por setor; se omitido, trata toda a camada como um setor único. | `None` (Opcional) |
+| `FIELD_COLLECTION_SECTOR` | Campo de setor de coleta (opcional) | `QgsProcessingParameterField` (`Any`) | Se informado, o CPP é resolvido separadamente por setor; se omitido, trata toda a camada como um setor único. Trechos com setor -1 (sem setor, saída da setorização) são ignorados, com aviso no log. | `None` (Opcional) |
 | `NODE_TOLERANCE` | Tolerância de nó (m) | `QgsProcessingParameterNumber` (`Double`) | Distância em metros para agregação de nós da malha, em coordenadas métricas (a camada é lida já reprojetada quando está em SRC geográfico). | `0.01` (min: `0.0001`) |
 | `OUTPUT` | Vias com rota de coleta (CPP) | `QgsProcessingParameterFeatureSink` | Camada de saída com a sequência da rota e marcação de deadhead. | *Obrigatório* |
 
@@ -221,7 +221,7 @@ Etapas do algoritmo:
 |---|---|---|---|---|
 | `INPUT_STREETS` | Camada de vias | `QgsProcessingParameterFeatureSource` (`TypeVectorLine`) | Malha viária completa contendo vias de coleta e vias de conexão. | *Obrigatório* |
 | `FIELD_REQUIRED` | Campo de via obrigatória para coleta (opcional) | `QgsProcessingParameterField` (`Any`) | Campo booleano ou numérico (`1`/`True`) indicando coleta obrigatória no trecho. | `None` (Opcional, assume todas como obrigatórias) |
-| `FIELD_COLLECTION_SECTOR` | Campo de setor de coleta (opcional) | `QgsProcessingParameterField` (`Any`) | Se informado, o RPP é resolvido separadamente por setor. | `None` (Opcional) |
+| `FIELD_COLLECTION_SECTOR` | Campo de setor de coleta (opcional) | `QgsProcessingParameterField` (`Any`) | Se informado, o RPP é resolvido separadamente por setor. Trechos com setor -1 (sem setor, saída da setorização) são ignorados, com aviso no log. | `None` (Opcional) |
 | `NODE_TOLERANCE` | Tolerância de nó (m) | `QgsProcessingParameterNumber` (`Double`) | Distância em metros para união de vértices, em coordenadas métricas (a camada é lida já reprojetada quando está em SRC geográfico). | `0.01` (min: `0.0001`) |
 | `OUTPUT` | Vias com rota de coleta (RPP) | `QgsProcessingParameterFeatureSink` | Camada de saída com a rota RPP gerada. | *Obrigatório* |
 
@@ -264,7 +264,7 @@ Utiliza a heurística **Path-Scanning** (Golden et al., 1983):
 | `INPUT_STREETS` | Camada de vias | `QgsProcessingParameterFeatureSource` (`TypeVectorLine`) | Trechos da malha viária. | *Obrigatório* |
 | `FIELD_DEMAND` | Campo de geração/demanda de resíduos (kg) | `QgsProcessingParameterField` (`Numeric`) | Campo numérico com a geração de resíduos do trecho (em kg). | *Obrigatório* |
 | `FIELD_REQUIRED` | Campo de via obrigatória para coleta (opcional) | `QgsProcessingParameterField` (`Any`) | Indica trechos com coleta obrigatória. | `None` (Opcional) |
-| `FIELD_COLLECTION_SECTOR` | Campo de setor de coleta (opcional) | `QgsProcessingParameterField` (`Any`) | Resolve o CARP separadamente por setor. | `None` (Opcional) |
+| `FIELD_COLLECTION_SECTOR` | Campo de setor de coleta (opcional) | `QgsProcessingParameterField` (`Any`) | Resolve o CARP separadamente por setor. Trechos com setor -1 (sem setor, saída da setorização) são ignorados, com aviso no log. | `None` (Opcional) |
 | `CAPACITY` | Capacidade do veículo | `QgsProcessingParameterNumber` (`Double`) | Capacidade máxima de carga por veículo ($Q_{\text{veículo}}$, em kg ou toneladas). | `10.0` (min: `0.0001`) |
 | `INPUT_DEPOT` | Camada de ponto do depósito/aterro | `QgsProcessingParameterFeatureSource` (`TypeVectorPoint`) | Ponto único representando a garagem/aterro/transbordo. | *Obrigatório* (1 feição) |
 | `NODE_TOLERANCE` | Tolerância de nó (m) | `QgsProcessingParameterNumber` (`Double`) | Tolerância para conexão de nós, em coordenadas métricas (a camada é lida já reprojetada quando está em SRC geográfico). | `0.01` (min: `0.0001`) |
@@ -310,7 +310,7 @@ $$\sum_{r \in \text{veículo } k} T_r \le H$$
 |---|---|---|---|---|
 | `INPUT_ROUTES` | Camada de rotas de coleta | `QgsProcessingParameterFeatureSource` (`TypeVectorLine`) | Camada de linhas contendo as rotas (ex.: saída do CARP). | *Obrigatório* |
 | `FIELD_ROUTE_ID` | Campo de identificação da rota | `QgsProcessingParameterField` (`Any`) | Campo que agrupa os segmentos por viagem/rota (`route_id`). | *Obrigatório* |
-| `FIELD_COLLECTION_SECTOR` | Campo de setor de coleta (opcional) | `QgsProcessingParameterField` (`Any`) | Se informado, dimensiona a frota separadamente por setor. | `None` (Opcional) |
+| `FIELD_COLLECTION_SECTOR` | Campo de setor de coleta (opcional) | `QgsProcessingParameterField` (`Any`) | Se informado, dimensiona a frota separadamente por setor. Trechos com setor -1 (sem setor, saída da setorização) são ignorados, com aviso no log. | `None` (Opcional) |
 | `AVG_SPEED` | Velocidade média de coleta (km/h) | `QgsProcessingParameterNumber` (`Double`) | Velocidade operacional média durante o recolhimento. | `10.0` (min: `0.0001`) |
 | `SHIFT_DURATION` | Duração da jornada de trabalho diária (horas) | `QgsProcessingParameterNumber` (`Double`) | Tempo máximo de trabalho diário por veículo ($H$). | `8.0` (min: `0.0001`) |
 | `UNLOAD_TIME` | Tempo fixo de descarga por rota (horas) | `QgsProcessingParameterNumber` (`Double`) | Tempo operacional no aterro/estação de transbordo. | `0.5` (min: `0.0`) |
@@ -388,7 +388,7 @@ Para cada grupo de rotas, calcula estatísticas descritivas completas:
 | `FIELD_LOAD` | Campo de carga da rota (kg) | `QgsProcessingParameterField` (`Numeric`) | Campo com a carga da rota em kg. | `route_load_kg` |
 | `FIELD_DISTANCE` | Campo de distância da rota em km (opcional) | `QgsProcessingParameterField` (`Numeric`) | Distância da rota em km (se omitido, usa a extensão geométrica). | `route_distance_km` |
 | `FIELD_ROUTE_ID` | Campo de identificação da rota (opcional) | `QgsProcessingParameterField` (`Any`) | Identificador único de rota/viagem. | `route_id` |
-| `FIELD_COLLECTION_SECTOR` | Campo de setor de coleta (opcional) | `QgsProcessingParameterField` (`Any`) | Identificador do setor de coleta. | `route_sector_id` |
+| `FIELD_COLLECTION_SECTOR` | Campo de setor de coleta (opcional) | `QgsProcessingParameterField` (`Any`) | Identificador do setor de coleta. Trechos com setor -1 (sem setor, saída da setorização) são ignorados, com aviso no log. | `route_sector_id` |
 | `AVG_SPEED` | Velocidade média de coleta (km/h) | `QgsProcessingParameterNumber` (`Double`) | Velocidade de operação. | `10.0` |
 | `UNLOAD_TIME` | Tempo fixo de descarga por rota (horas) | `QgsProcessingParameterNumber` (`Double`) | Tempo gasto na descarga por rota. | `0.0` |
 | `TRAVEL_TIME` | Tempo fixo de deslocamento ao destino por rota (horas) | `QgsProcessingParameterNumber` (`Double`) | Tempo de viagem até o destino por rota. | `0.0` |
@@ -464,10 +464,10 @@ $$\text{Taxa de Cobertura (\%)} = \frac{L_{\text{coberta}}}{L_{\text{exigida}}} 
 | Identificador | Nome na UI | Tipo QGIS | Descrição | Valor Default |
 |---|---|---|---|---|
 | `INPUT_REQUIRED_ROADS` | Camada de vias exigidas (faixa de frequência) | `QgsProcessingParameterFeatureSource` (`TypeVectorLine`) | Malha de vias que exigem atendimento de coleta. | *Obrigatório* |
-| `FIELD_REQUIRED_SECTOR` | Campo de setor da camada de vias exigidas | `QgsProcessingParameterField` (`Any`) | Identificador do setor nas vias exigidas. | `None` (Opcional) |
+| `FIELD_REQUIRED_SECTOR` | Campo de setor da camada de vias exigidas | `QgsProcessingParameterField` (`Any`) | Identificador do setor nas vias exigidas. Trechos com setor -1 (sem setor, saída da setorização) são ignorados, com aviso no log. | `None` (Opcional) |
 | `INPUT_COVERED_ROUTES` | Camada de rota coberta (vias percorridas) | `QgsProcessingParameterFeatureSource` (`TypeVectorLine`) | Malha com as rotas efetivamente percorridas. | *Obrigatório* |
 | `FIELD_COVERED_DEADHEAD` | Campo indicador de deadhead/conector | `QgsProcessingParameterField` (`Boolean`) | Campo booleano onde `True` desconsidera o trecho por ser deadhead. | `route_is_deadhead` |
-| `FIELD_COVERED_SECTOR` | Campo de setor da camada de rota coberta | `QgsProcessingParameterField` (`Any`) | Identificador do setor nas rotas cobertas. | `None` (Opcional) |
+| `FIELD_COVERED_SECTOR` | Campo de setor da camada de rota coberta | `QgsProcessingParameterField` (`Any`) | Identificador do setor nas rotas cobertas. Trechos com setor -1 (sem setor, saída da setorização) são ignorados, com aviso no log. | `None` (Opcional) |
 | `FREQUENCY_LABEL` | Rótulo de frequência de coleta | `QgsProcessingParameterString` | Rótulo de frequência do serviço (ex.: `"Diária"`, `"3x/semana"`). | `"Diária"` |
 | `OUTPUT` | Tabela de cobertura por setor | `QgsProcessingParameterFeatureSink` | Tabela de saída com os indicadores de cobertura. | *Obrigatório* |
 

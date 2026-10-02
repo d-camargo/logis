@@ -36,6 +36,7 @@ try:
         match_odd_degree_nodes,
         build_eulerian_circuit
     )
+    from ..core.routing.districting import is_unassigned_sector
     from ..core import qgis_compat
 except ImportError:
     from core.crs_transform import TransformCheckError, length_meter, read_lines_in_crs
@@ -44,6 +45,7 @@ except ImportError:
         match_odd_degree_nodes,
         build_eulerian_circuit
     )
+    from core.routing.districting import is_unassigned_sector
     from core import qgis_compat
 
 
@@ -153,6 +155,7 @@ class WasteCppRoute(QgsProcessingAlgorithm):
         sector_edges_map = {}
         feature_map = {}
         skipped_fids = []
+        unassigned_count = 0
 
         for feature, geometry in zip(features, proj_geoms):
             if feedback.isCanceled():
@@ -165,6 +168,16 @@ class WasteCppRoute(QgsProcessingAlgorithm):
                 skipped_fids.append(feature.id())
                 continue
 
+            if sector_field_idx != -1:
+                sec_val = feature.attribute(sector_field_idx)
+                if is_unassigned_sector(sec_val):
+                    unassigned_count += 1
+                    continue
+                if sec_val is None:
+                    sec_val = 0
+            else:
+                sec_val = 0
+
             from_node = (
                 round(start_pt.x() / tolerance),
                 round(start_pt.y() / tolerance)
@@ -173,13 +186,6 @@ class WasteCppRoute(QgsProcessingAlgorithm):
                 round(end_pt.x() / tolerance),
                 round(end_pt.y() / tolerance)
             )
-
-            if sector_field_idx != -1:
-                sec_val = feature.attribute(sector_field_idx)
-                if sec_val is None:
-                    sec_val = 0
-            else:
-                sec_val = 0
 
             if sec_val not in sector_edges_map:
                 sector_edges_map[sec_val] = []
@@ -198,7 +204,21 @@ class WasteCppRoute(QgsProcessingAlgorithm):
                 )
             )
 
+        if unassigned_count:
+            feedback.pushWarning(
+                self.tr(
+                    "{count} trecho(s) sem setor (collection_sector_id = -1) foram ignorados."
+                ).format(count=unassigned_count)
+            )
+
         if not sector_edges_map:
+            if unassigned_count:
+                raise QgsProcessingException(
+                    self.tr(
+                        "Todos os trechos de via estão sem setor (collection_sector_id = -1). "
+                        "Refaça a setorização da malha antes de gerar as rotas."
+                    )
+                )
             raise QgsProcessingException(
                 self.tr("Nenhum trecho de via válido encontrado na camada de entrada.")
             )
@@ -294,7 +314,7 @@ class WasteCppRoute(QgsProcessingAlgorithm):
             "- Camada de vias: feições de linha a serem percorridas.\n"
             "- Campo de setor de coleta (opcional): se informado, o CPP é resolvido "
             "separadamente para cada setor de coleta; se omitido, toda a camada é "
-            "tratada como um único setor.\n"
+            "tratada como um único setor. Trechos com setor -1 (sem setor, saída da setorização) são ignorados.\n"
             "- Tolerância de nó: distância em metros para conectar vértices das vias.\n\n"
             "Retorno:\n"
             "- Camada de linha com feições duplicadas nos trechos de deadhead e campos "

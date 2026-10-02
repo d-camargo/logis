@@ -32,10 +32,12 @@ from qgis.core import (
 try:
     from ..core.crs_transform import TransformCheckError, length_meter
     from ..core.indicators.waste import compute_collection_coverage
+    from ..core.routing.districting import is_unassigned_sector
     from ..core import qgis_compat
 except ImportError:
     from core.crs_transform import TransformCheckError, length_meter
     from core.indicators.waste import compute_collection_coverage
+    from core.routing.districting import is_unassigned_sector
     from core import qgis_compat
 
 
@@ -162,6 +164,8 @@ class WasteCollectionCoverage(QgsProcessingAlgorithm):
             raise QgsProcessingException(str(exc))
 
         required_by_sector = {}
+        unassigned_req_count = 0
+        unassigned_req_km = 0.0
         for feature in req_source.getFeatures():
             if feedback.isCanceled():
                 return {}
@@ -172,6 +176,10 @@ class WasteCollectionCoverage(QgsProcessingAlgorithm):
             sid = None
             if req_sector_idx != -1:
                 val = feature.attribute(req_sector_idx)
+                if is_unassigned_sector(val):
+                    unassigned_req_count += 1
+                    unassigned_req_km += length_km
+                    continue
                 if val is not None:
                     sid = val
 
@@ -182,6 +190,8 @@ class WasteCollectionCoverage(QgsProcessingAlgorithm):
         feedback.pushInfo(self.tr("Calculando extensão coberta por setor..."))
 
         covered_by_sector = {}
+        unassigned_cov_count = 0
+        unassigned_cov_km = 0.0
         for feature in cov_source.getFeatures():
             if feedback.isCanceled():
                 return {}
@@ -202,6 +212,10 @@ class WasteCollectionCoverage(QgsProcessingAlgorithm):
             sid = None
             if cov_sector_idx != -1:
                 val = feature.attribute(cov_sector_idx)
+                if is_unassigned_sector(val):
+                    unassigned_cov_count += 1
+                    unassigned_cov_km += length_km
+                    continue
                 if val is not None:
                     sid = val
 
@@ -209,8 +223,41 @@ class WasteCollectionCoverage(QgsProcessingAlgorithm):
                 covered_by_sector[sid] = 0.0
             covered_by_sector[sid] += length_km
 
+        if unassigned_req_count:
+            sec_display = req_sector_field if req_sector_field else "collection_sector_id"
+            feedback.pushWarning(
+                self.tr(
+                    "{count} trecho(s) ({km:.2f} km) de vias exigidas sem setor "
+                    "({field} = -1) foram ignorados."
+                ).format(
+                    count=unassigned_req_count,
+                    km=unassigned_req_km,
+                    field=sec_display
+                )
+            )
+
+        if unassigned_cov_count:
+            sec_display = cov_sector_field if cov_sector_field else "route_sector_id"
+            feedback.pushWarning(
+                self.tr(
+                    "{count} trecho(s) ({km:.2f} km) de rotas cobertas sem setor "
+                    "({field} = -1) foram ignorados."
+                ).format(
+                    count=unassigned_cov_count,
+                    km=unassigned_cov_km,
+                    field=sec_display
+                )
+            )
+
         all_sectors = list(set(required_by_sector.keys()) | set(covered_by_sector.keys()))
         if not all_sectors:
+            if unassigned_req_count or unassigned_cov_count:
+                raise QgsProcessingException(
+                    self.tr(
+                        "Todos os trechos estão sem setor (-1). "
+                        "Refaça a setorização da malha antes de calcular a cobertura."
+                    )
+                )
             raise QgsProcessingException(self.tr("Nenhum trecho válido encontrado nas camadas de entrada."))
 
         def sort_key(s):
@@ -354,12 +401,14 @@ class WasteCollectionCoverage(QgsProcessingAlgorithm):
             "de coleta (covered_km) e a taxa de cobertura (coverage_pct) por setor e no total acumulado.\n\n"
             "Parâmetros:\n"
             "- Camada de vias exigidas (faixa de frequência): feições de linha com as vias exigidas.\n"
-            "- Campo de setor da camada de vias exigidas (opcional): campo com o identificador do setor.\n"
+            "- Campo de setor da camada de vias exigidas (opcional): campo com o identificador do setor. "
+            "Trechos com setor -1 (sem setor, saída da setorização) são ignorados.\n"
             "- Camada de rota coberta (vias percorridas): feições de linha (ex.: saídas de "
             "logis:waste_cpp_route, logis:waste_rpp_route ou logis:waste_carp_route).\n"
             "- Campo indicador de deadhead/conector (opcional): campo booleano onde True indica trecho improdutivo "
             "(default: 'route_is_deadhead'). Trechos improdutivos são desconsiderados da cobertura.\n"
-            "- Campo de setor da camada de rota coberta (opcional): campo de setor na camada de rota.\n"
+            "- Campo de setor da camada de rota coberta (opcional): campo de setor na camada de rota. "
+            "Trechos com setor -1 (sem setor, saída da setorização) são ignorados.\n"
             "- Rótulo de frequência de coleta: rótulo textual de frequência (ex.: 'Diária', '3x/semana').\n\n"
             "Retorno:\n"
             "- Tabela sem geometria com uma feição por setor: 'sector_id', 'frequency_label', 'required_km', "

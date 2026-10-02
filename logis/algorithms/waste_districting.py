@@ -39,14 +39,16 @@ try:
         connected_components,
         select_seed_edges_farthest_first,
         grow_sectors_from_seeds,
-        rebalance_boundary_edges
+        rebalance_boundary_edges,
+        UNASSIGNED_SECTOR
     )
 except ImportError:
     from core.routing.districting import (
         connected_components,
         select_seed_edges_farthest_first,
         grow_sectors_from_seeds,
-        rebalance_boundary_edges
+        rebalance_boundary_edges,
+        UNASSIGNED_SECTOR
     )
 
 
@@ -332,7 +334,7 @@ class WasteDistricting(QgsProcessingAlgorithm):
             if feedback.isCanceled():
                 return {}
 
-            sector_id = sector_of_edge.get(feature.id(), -1)
+            sector_id = sector_of_edge.get(feature.id(), UNASSIGNED_SECTOR)
             out_feature = QgsFeature(out_fields)
             out_feature.setGeometry(feature.geometry())
             out_feature.setAttributes(feature.attributes() + [sector_id])

@@ -26,6 +26,21 @@ try:
 except ImportError:
     _HAS_QGIS = False
 
+
+class LogFeedback(QgsProcessingFeedback if _HAS_QGIS else object):
+    """Feedback que registra warnings para inspeção nos testes."""
+
+    def __init__(self):
+        if _HAS_QGIS:
+            super().__init__()
+        self.warnings = []
+
+    def pushWarning(self, warning):
+        self.warnings.append(warning)
+        if _HAS_QGIS:
+            super().pushWarning(warning)
+
+
 # Registra o provider "logis" no Processing (mesmo padrão de test_crs_migration.py), para
 # poder chamar processing.run("logis:...") como um usuário real faria. A referência global
 # _logis_provider_instance é obrigatória: sem ela, o wrapper Python do provider é coletado
@@ -208,6 +223,7 @@ class TestWaste(unittest.TestCase):
             self.assertTrue(callable(alg.createInstance))
             self.assertIsInstance(alg.createInstance(), WasteCppRoute)
             self.assertIn("route_is_deadhead", alg.shortHelpString())
+            self.assertIn("Trechos com setor -1", alg.shortHelpString())
         except ImportError:
             # Em ambiente sem QGIS C++ bindings completos, ignora instanciação
             pass
@@ -252,6 +268,70 @@ class TestWaste(unittest.TestCase):
         self.assertIn(True, deadhead_values)
         self.assertIn(False, deadhead_values)
 
+    @unittest.skipUnless(_HAS_QGIS, "requer bindings QGIS completos")
+    def test_waste_cpp_route_ignores_unassigned_sector(self):
+        from logis.algorithms.waste_cpp_route import WasteCppRoute
+
+        layer = QgsVectorLayer("LineString?crs=EPSG:3857", "streets", "memory")
+        provider = layer.dataProvider()
+        provider.addAttributes([QgsField("collection_sector_id", QVariant.Int)])
+        layer.updateFields()
+
+        def add_feature(coords, sector):
+            feat = QgsFeature(layer.fields())
+            feat.setGeometry(QgsGeometry.fromPolylineXY([QgsPointXY(*c) for c in coords]))
+            feat.setAttributes([sector])
+            provider.addFeature(feat)
+
+        # Setor 1: circuito válido (triângulo fechado A-B, B-C, C-A)
+        add_feature([(0, 0), (10, 0)], 1)
+        add_feature([(10, 0), (10, 10)], 1)
+        add_feature([(10, 10), (0, 0)], 1)
+        # Setor -1: trecho solto desconectado
+        add_feature([(100, 100), (110, 100)], -1)
+        layer.updateExtents()
+
+        alg = WasteCppRoute()
+        alg.initAlgorithm()
+        context = QgsProcessingContext()
+        feedback = LogFeedback()
+        params = {
+            alg.INPUT_STREETS: layer,
+            alg.FIELD_COLLECTION_SECTOR: "collection_sector_id",
+            alg.NODE_TOLERANCE: 0.01,
+            alg.OUTPUT: "memory:out",
+        }
+        result = alg.processAlgorithm(params, context, feedback)
+        out_layer = context.getMapLayer(result[alg.OUTPUT])
+
+        idx_sec = out_layer.fields().indexFromName("route_sector_id")
+        self.assertNotEqual(idx_sec, -1)
+        sec_values = [feat.attribute(idx_sec) for feat in out_layer.getFeatures()]
+        self.assertTrue(len(sec_values) > 0)
+        self.assertNotIn(-1, sec_values)
+        self.assertTrue(all(v == 1 for v in sec_values))
+        self.assertTrue(any("1 trecho" in w for w in feedback.warnings))
+
+        # Camada só com setor -1 -> QgsProcessingException
+        layer_unassigned = QgsVectorLayer("LineString?crs=EPSG:3857", "streets_unassigned", "memory")
+        prov_u = layer_unassigned.dataProvider()
+        prov_u.addAttributes([QgsField("collection_sector_id", QVariant.Int)])
+        layer_unassigned.updateFields()
+        f_u = QgsFeature(layer_unassigned.fields())
+        f_u.setGeometry(QgsGeometry.fromPolylineXY([QgsPointXY(0, 0), QgsPointXY(10, 0)]))
+        f_u.setAttributes([-1])
+        prov_u.addFeature(f_u)
+        layer_unassigned.updateExtents()
+
+        params_u = {
+            alg.INPUT_STREETS: layer_unassigned,
+            alg.FIELD_COLLECTION_SECTOR: "collection_sector_id",
+            alg.NODE_TOLERANCE: 0.01,
+            alg.OUTPUT: "memory:out",
+        }
+        with self.assertRaises(QgsProcessingException):
+            alg.processAlgorithm(params_u, context, LogFeedback())
+
     def test_waste_rpp_route_algorithm_metadata(self):
         try:
             from logis.algorithms.waste_rpp_route import WasteRppRoute
@@ -261,6 +341,7 @@ class TestWaste(unittest.TestCase):
             self.assertTrue(callable(alg.createInstance))
             self.assertIsInstance(alg.createInstance(), WasteRppRoute)
             self.assertIn("route_is_connector", alg.shortHelpString())
+            self.assertIn("Trechos com setor -1", alg.shortHelpString())
         except ImportError:
             pass
 
@@ -315,6 +396,76 @@ class TestWaste(unittest.TestCase):
                 seen_connector = True
         self.assertTrue(seen_connector, "nenhum trecho conetor foi gravado na saída")
 
+    @unittest.skipUnless(_HAS_QGIS, "requer bindings QGIS completos")
+    def test_waste_rpp_route_ignores_unassigned_sector(self):
+        from logis.algorithms.waste_rpp_route import WasteRppRoute
+
+        layer = QgsVectorLayer("LineString?crs=EPSG:3857", "streets", "memory")
+        provider = layer.dataProvider()
+        provider.addAttributes([
+            QgsField("required", QVariant.Bool),
+            QgsField("collection_sector_id", QVariant.Int)
+        ])
+        layer.updateFields()
+
+        def add_feature(coords, required, sector):
+            feat = QgsFeature(layer.fields())
+            feat.setGeometry(QgsGeometry.fromPolylineXY([QgsPointXY(*c) for c in coords]))
+            feat.setAttributes([required, sector])
+            provider.addFeature(feat)
+
+        add_feature([(0, 0), (10, 0)], True, 1)
+        add_feature([(10, 0), (10, 10)], True, 1)
+        add_feature([(10, 10), (0, 0)], True, 1)
+        add_feature([(100, 100), (110, 100)], True, -1)
+        layer.updateExtents()
+
+        alg = WasteRppRoute()
+        alg.initAlgorithm()
+        context = QgsProcessingContext()
+        feedback = LogFeedback()
+        params = {
+            alg.INPUT_STREETS: layer,
+            alg.FIELD_REQUIRED: "required",
+            alg.FIELD_COLLECTION_SECTOR: "collection_sector_id",
+            alg.NODE_TOLERANCE: 0.01,
+            alg.OUTPUT: "memory:out",
+        }
+        result = alg.processAlgorithm(params, context, feedback)
+        out_layer = context.getMapLayer(result[alg.OUTPUT])
+
+        idx_sec = out_layer.fields().indexFromName("route_sector_id")
+        self.assertNotEqual(idx_sec, -1)
+        sec_values = [feat.attribute(idx_sec) for feat in out_layer.getFeatures()]
+        self.assertTrue(len(sec_values) > 0)
+        self.assertNotIn(-1, sec_values)
+        self.assertTrue(all(v == 1 for v in sec_values))
+        self.assertTrue(any("1 trecho" in w for w in feedback.warnings))
+
+        # Camada só com setor -1 -> QgsProcessingException
+        layer_unassigned = QgsVectorLayer("LineString?crs=EPSG:3857", "streets_unassigned", "memory")
+        prov_u = layer_unassigned.dataProvider()
+        prov_u.addAttributes([
+            QgsField("required", QVariant.Bool),
+            QgsField("collection_sector_id", QVariant.Int)
+        ])
+        layer_unassigned.updateFields()
+        f_u = QgsFeature(layer_unassigned.fields())
+        f_u.setGeometry(QgsGeometry.fromPolylineXY([QgsPointXY(0, 0), QgsPointXY(10, 0)]))
+        f_u.setAttributes([True, -1])
+        prov_u.addFeature(f_u)
+        layer_unassigned.updateExtents()
+
+        params_u = {
+            alg.INPUT_STREETS: layer_unassigned,
+            alg.FIELD_REQUIRED: "required",
+            alg.FIELD_COLLECTION_SECTOR: "collection_sector_id",
+            alg.NODE_TOLERANCE: 0.01,
+            alg.OUTPUT: "memory:out",
+        }
+        with self.assertRaises(QgsProcessingException):
+            alg.processAlgorithm(params_u, context, LogFeedback())
+
     def test_waste_carp_route_algorithm_metadata(self):
         try:
             from logis.algorithms.waste_carp_route import WasteCarpRoute
@@ -324,6 +475,7 @@ class TestWaste(unittest.TestCase):
             self.assertTrue(callable(alg.createInstance))
             self.assertIsInstance(alg.createInstance(), WasteCarpRoute)
             self.assertIn("route_is_deadhead", alg.shortHelpString())
+            self.assertIn("Trechos com setor -1", alg.shortHelpString())
         except ImportError:
             pass
 
@@ -390,6 +542,85 @@ class TestWaste(unittest.TestCase):
         dist_values = [feat.attribute(idx_dist) for feat in out_layer.getFeatures()]
         self.assertTrue(all(v > 0.0 for v in dist_values))
 
+    @unittest.skipUnless(_HAS_QGIS, "requer bindings QGIS completos")
+    def test_waste_carp_route_ignores_unassigned_sector(self):
+        from logis.algorithms.waste_carp_route import WasteCarpRoute
+
+        layer = QgsVectorLayer("LineString?crs=EPSG:3857", "streets", "memory")
+        provider = layer.dataProvider()
+        provider.addAttributes([
+            QgsField("demand", QVariant.Double),
+            QgsField("collection_sector_id", QVariant.Int)
+        ])
+        layer.updateFields()
+
+        def add_feature(coords, demand, sector):
+            feat = QgsFeature(layer.fields())
+            feat.setGeometry(QgsGeometry.fromPolylineXY([QgsPointXY(*c) for c in coords]))
+            feat.setAttributes([demand, sector])
+            provider.addFeature(feat)
+
+        add_feature([(0, 0), (10, 0)], 5.0, 1)
+        add_feature([(100, 100), (110, 100)], 5.0, -1)
+        layer.updateExtents()
+
+        depot_layer = QgsVectorLayer("Point?crs=EPSG:3857", "depot", "memory")
+        depot_provider = depot_layer.dataProvider()
+        depot_feat = QgsFeature()
+        depot_feat.setGeometry(QgsGeometry.fromPointXY(QgsPointXY(0, 0)))
+        depot_provider.addFeature(depot_feat)
+        depot_layer.updateExtents()
+
+        alg = WasteCarpRoute()
+        alg.initAlgorithm()
+        context = QgsProcessingContext()
+        feedback = LogFeedback()
+        params = {
+            alg.INPUT_STREETS: layer,
+            alg.FIELD_DEMAND: "demand",
+            alg.FIELD_COLLECTION_SECTOR: "collection_sector_id",
+            alg.CAPACITY: 10.0,
+            alg.INPUT_DEPOT: depot_layer,
+            alg.NODE_TOLERANCE: 0.01,
+            alg.OUTPUT: "memory:out",
+        }
+        result = alg.processAlgorithm(params, context, feedback)
+        out_layer = context.getMapLayer(result[alg.OUTPUT])
+
+        idx_sec = out_layer.fields().indexFromName("route_sector_id")
+        self.assertNotEqual(idx_sec, -1)
+        sec_values = [feat.attribute(idx_sec) for feat in out_layer.getFeatures()]
+        self.assertTrue(len(sec_values) > 0)
+        self.assertNotIn(-1, sec_values)
+        self.assertTrue(all(v == 1 for v in sec_values))
+        self.assertTrue(any("1 trecho" in w for w in feedback.warnings))
+
+        # Camada só com setor -1 -> QgsProcessingException
+        layer_unassigned = QgsVectorLayer("LineString?crs=EPSG:3857", "streets_unassigned", "memory")
+        prov_u = layer_unassigned.dataProvider()
+        prov_u.addAttributes([
+            QgsField("demand", QVariant.Double),
+            QgsField("collection_sector_id", QVariant.Int)
+        ])
+        layer_unassigned.updateFields()
+        f_u = QgsFeature(layer_unassigned.fields())
+        f_u.setGeometry(QgsGeometry.fromPolylineXY([QgsPointXY(0, 0), QgsPointXY(10, 0)]))
+        f_u.setAttributes([5.0, -1])
+        prov_u.addFeature(f_u)
+        layer_unassigned.updateExtents()
+
+        params_u = {
+            alg.INPUT_STREETS: layer_unassigned,
+            alg.FIELD_DEMAND: "demand",
+            alg.FIELD_COLLECTION_SECTOR: "collection_sector_id",
+            alg.CAPACITY: 10.0,
+            alg.INPUT_DEPOT: depot_layer,
+            alg.NODE_TOLERANCE: 0.01,
+            alg.OUTPUT: "memory:out",
+        }
+        with self.assertRaises(QgsProcessingException):
+            alg.processAlgorithm(params_u, context, LogFeedback())
+
 
     def test_waste_fleet_sizing_algorithm_metadata(self):
         try:
@@ -399,6 +630,7 @@ class TestWaste(unittest.TestCase):
             self.assertEqual(alg.groupId(), "waste")
             self.assertTrue(callable(alg.createInstance))
             self.assertIsInstance(alg.createInstance(), WasteFleetSizing)
+            self.assertIn("Trechos com setor -1", alg.shortHelpString())
         except ImportError:
             pass
 
@@ -456,6 +688,87 @@ class TestWaste(unittest.TestCase):
         self.assertEqual(feat.attribute(idx_fleet), 2)
         self.assertEqual(feat.attribute(idx_routes), 3)
 
+    @unittest.skipUnless(_HAS_QGIS, "requer bindings QGIS completos")
+    def test_waste_fleet_sizing_ignores_unassigned_sector(self):
+        from logis.algorithms.waste_fleet_sizing import WasteFleetSizing
+
+        layer = QgsVectorLayer("LineString?crs=EPSG:3857", "routes", "memory")
+        provider = layer.dataProvider()
+        provider.addAttributes([
+            QgsField("route_id", QVariant.Int),
+            QgsField("route_sector_id", QVariant.Int)
+        ])
+        layer.updateFields()
+
+        def add_segment(route_id, sector_id, length_m):
+            feat = QgsFeature(layer.fields())
+            feat.setGeometry(QgsGeometry.fromPolylineXY([QgsPointXY(0, 0), QgsPointXY(length_m, 0)]))
+            feat.setAttributes([route_id, sector_id])
+            provider.addFeature(feat)
+
+        add_segment(1, 1, 30000.0)
+        add_segment(2, 1, 30000.0)
+        add_segment(3, 1, 30000.0)
+        # Rota 4 no setor -1: deve ser ignorada e não criar linha de setor -1
+        add_segment(4, -1, 30000.0)
+        layer.updateExtents()
+
+        alg = WasteFleetSizing()
+        alg.initAlgorithm()
+        context = QgsProcessingContext()
+        feedback = LogFeedback()
+        params = {
+            alg.INPUT_ROUTES: layer,
+            alg.FIELD_ROUTE_ID: "route_id",
+            alg.FIELD_COLLECTION_SECTOR: "route_sector_id",
+            alg.AVG_SPEED: 10.0,
+            alg.SHIFT_DURATION: 8.0,
+            alg.UNLOAD_TIME: 0.5,
+            alg.TRAVEL_TIME: 0.5,
+            alg.OUTPUT: "memory:out",
+        }
+        result = alg.processAlgorithm(params, context, feedback)
+        out_layer = context.getMapLayer(result[alg.OUTPUT])
+
+        self.assertEqual(out_layer.featureCount(), 1)
+        feat = next(out_layer.getFeatures())
+        idx_sector = out_layer.fields().indexFromName("sector_id")
+        idx_fleet = out_layer.fields().indexFromName("fleet_size")
+        idx_routes = out_layer.fields().indexFromName("num_routes")
+
+        self.assertEqual(feat.attribute(idx_sector), 1)
+        self.assertNotEqual(feat.attribute(idx_sector), -1)
+        self.assertEqual(feat.attribute(idx_fleet), 2)
+        self.assertEqual(feat.attribute(idx_routes), 3)
+        self.assertTrue(any("rota(s) sem setor" in w for w in feedback.warnings))
+
+        # Camada só com setor -1 -> QgsProcessingException
+        layer_unassigned = QgsVectorLayer("LineString?crs=EPSG:3857", "routes_u", "memory")
+        prov_u = layer_unassigned.dataProvider()
+        prov_u.addAttributes([
+            QgsField("route_id", QVariant.Int),
+            QgsField("route_sector_id", QVariant.Int)
+        ])
+        layer_unassigned.updateFields()
+        f_u = QgsFeature(layer_unassigned.fields())
+        f_u.setGeometry(QgsGeometry.fromPolylineXY([QgsPointXY(0, 0), QgsPointXY(1000, 0)]))
+        f_u.setAttributes([1, -1])
+        prov_u.addFeature(f_u)
+        layer_unassigned.updateExtents()
+
+        params_u = {
+            alg.INPUT_ROUTES: layer_unassigned,
+            alg.FIELD_ROUTE_ID: "route_id",
+            alg.FIELD_COLLECTION_SECTOR: "route_sector_id",
+            alg.AVG_SPEED: 10.0,
+            alg.SHIFT_DURATION: 8.0,
+            alg.UNLOAD_TIME: 0.5,
+            alg.TRAVEL_TIME: 0.5,
+            alg.OUTPUT: "memory:out",
+        }
+        with self.assertRaises(QgsProcessingException):
+            alg.processAlgorithm(params_u, context, LogFeedback())
+
     def test_waste_deadhead_ratio_algorithm_metadata(self):
         try:
             from logis.algorithms.waste_deadhead_ratio import WasteDeadheadRatio
@@ -475,6 +788,7 @@ class TestWaste(unittest.TestCase):
             self.assertEqual(alg.groupId(), "waste")
             self.assertTrue(callable(alg.createInstance))
             self.assertIsInstance(alg.createInstance(), WasteSectorBalance)
+            self.assertIn("Trechos com setor -1", alg.shortHelpString())
         except ImportError:
             pass
 
@@ -497,8 +811,123 @@ class TestWaste(unittest.TestCase):
             self.assertEqual(alg.groupId(), "waste")
             self.assertTrue(callable(alg.createInstance))
             self.assertIsInstance(alg.createInstance(), WasteCollectionCoverage)
+            self.assertIn("Trechos com setor -1", alg.shortHelpString())
         except ImportError:
             pass
+
+    @unittest.skipUnless(_HAS_QGIS, "requer bindings QGIS completos")
+    def test_waste_collection_coverage_ignores_unassigned_sector(self):
+        from logis.algorithms.waste_collection_coverage import WasteCollectionCoverage
+
+        # Camada de vias exigidas:
+        # Trecho 1: setor 1, 10 km (10000 m)
+        # Trecho 2: setor -1, 5 km (5000 m)
+        req_layer = QgsVectorLayer("LineString?crs=EPSG:3857", "required", "memory")
+        req_prov = req_layer.dataProvider()
+        req_prov.addAttributes([
+            QgsField("collection_sector_id", QVariant.Int)
+        ])
+        req_layer.updateFields()
+
+        f_req1 = QgsFeature(req_layer.fields())
+        f_req1.setGeometry(QgsGeometry.fromPolylineXY([QgsPointXY(0, 0), QgsPointXY(10000, 0)]))
+        f_req1.setAttributes([1])
+        req_prov.addFeature(f_req1)
+
+        f_req2 = QgsFeature(req_layer.fields())
+        f_req2.setGeometry(QgsGeometry.fromPolylineXY([QgsPointXY(0, 100), QgsPointXY(5000, 100)]))
+        f_req2.setAttributes([-1])
+        req_prov.addFeature(f_req2)
+        req_layer.updateExtents()
+
+        # Camada de vias cobertas:
+        # Trecho 1: setor 1, 8 km (8000 m), produtivo
+        # Trecho 2: setor -1, 5 km (5000 m), produtivo
+        cov_layer = QgsVectorLayer("LineString?crs=EPSG:3857", "covered", "memory")
+        cov_prov = cov_layer.dataProvider()
+        cov_prov.addAttributes([
+            QgsField("route_sector_id", QVariant.Int),
+            QgsField("route_is_deadhead", QVariant.Bool)
+        ])
+        cov_layer.updateFields()
+
+        f_cov1 = QgsFeature(cov_layer.fields())
+        f_cov1.setGeometry(QgsGeometry.fromPolylineXY([QgsPointXY(0, 0), QgsPointXY(8000, 0)]))
+        f_cov1.setAttributes([1, False])
+        cov_prov.addFeature(f_cov1)
+
+        f_cov2 = QgsFeature(cov_layer.fields())
+        f_cov2.setGeometry(QgsGeometry.fromPolylineXY([QgsPointXY(0, 100), QgsPointXY(5000, 100)]))
+        f_cov2.setAttributes([-1, False])
+        cov_prov.addFeature(f_cov2)
+        cov_layer.updateExtents()
+
+        alg = WasteCollectionCoverage()
+        alg.initAlgorithm()
+        context = QgsProcessingContext()
+        feedback = LogFeedback()
+        params = {
+            alg.INPUT_REQUIRED_ROADS: req_layer,
+            alg.FIELD_REQUIRED_SECTOR: "collection_sector_id",
+            alg.INPUT_COVERED_ROUTES: cov_layer,
+            alg.FIELD_COVERED_SECTOR: "route_sector_id",
+            alg.FIELD_COVERED_DEADHEAD: "route_is_deadhead",
+            alg.FREQUENCY_LABEL: "Diária",
+            alg.OUTPUT: "memory:out",
+        }
+        result = alg.processAlgorithm(params, context, feedback)
+        out_layer = context.getMapLayer(result[alg.OUTPUT])
+
+        out_feats = list(out_layer.getFeatures())
+        self.assertEqual(len(out_feats), 1)
+        feat = out_feats[0]
+
+        idx = out_layer.fields().indexFromName
+        self.assertEqual(feat.attribute(idx("sector_id")), 1)
+        self.assertNotEqual(feat.attribute(idx("sector_id")), -1)
+        req_km = feat.attribute(idx("required_km"))
+        cov_km = feat.attribute(idx("covered_km"))
+        pct = feat.attribute(idx("coverage_pct"))
+        self.assertAlmostEqual(pct, 0.8, places=3)
+        self.assertAlmostEqual(cov_km / req_km, 0.8, places=3)
+
+        self.assertTrue(any("vias exigidas sem setor" in w and "5.00 km" in w for w in feedback.warnings))
+        self.assertTrue(any("rotas cobertas sem setor" in w and "5.00 km" in w for w in feedback.warnings))
+
+        # Camada só com setor -1 -> QgsProcessingException
+        req_u = QgsVectorLayer("LineString?crs=EPSG:3857", "req_u", "memory")
+        p_ru = req_u.dataProvider()
+        p_ru.addAttributes([QgsField("collection_sector_id", QVariant.Int)])
+        req_u.updateFields()
+        f = QgsFeature(req_u.fields())
+        f.setGeometry(QgsGeometry.fromPolylineXY([QgsPointXY(0, 0), QgsPointXY(1000, 0)]))
+        f.setAttributes([-1])
+        p_ru.addFeature(f)
+        req_u.updateExtents()
+
+        cov_u = QgsVectorLayer("LineString?crs=EPSG:3857", "cov_u", "memory")
+        p_cu = cov_u.dataProvider()
+        p_cu.addAttributes([
+            QgsField("route_sector_id", QVariant.Int),
+            QgsField("route_is_deadhead", QVariant.Bool)
+        ])
+        cov_u.updateFields()
+        f2 = QgsFeature(cov_u.fields())
+        f2.setGeometry(QgsGeometry.fromPolylineXY([QgsPointXY(0, 0), QgsPointXY(1000, 0)]))
+        f2.setAttributes([-1, False])
+        p_cu.addFeature(f2)
+        cov_u.updateExtents()
+
+        params_u = {
+            alg.INPUT_REQUIRED_ROADS: req_u,
+            alg.FIELD_REQUIRED_SECTOR: "collection_sector_id",
+            alg.INPUT_COVERED_ROUTES: cov_u,
+            alg.FIELD_COVERED_SECTOR: "route_sector_id",
+            alg.FIELD_COVERED_DEADHEAD: "route_is_deadhead",
+            alg.OUTPUT: "memory:out",
+        }
+        with self.assertRaises(QgsProcessingException):
+            alg.processAlgorithm(params_u, context, LogFeedback())
 
     def test_waste_street_sector_join_algorithm_metadata(self):
         try:
@@ -795,6 +1224,95 @@ class TestWaste(unittest.TestCase):
         self.assertAlmostEqual(feat.attribute(idx("mean_time_h")), 2.0)
         self.assertAlmostEqual(feat.attribute(idx("std_dev_time_h")), 1.0)
         self.assertAlmostEqual(feat.attribute(idx("cv_time")), 0.5)
+
+    @unittest.skipUnless(_HAS_QGIS, "requer bindings QGIS completos")
+    def test_waste_sector_balance_ignores_unassigned_sector(self):
+        from logis.algorithms.waste_sector_balance import WasteSectorBalance
+
+        layer = QgsVectorLayer("LineString?crs=EPSG:3857", "routes", "memory")
+        provider = layer.dataProvider()
+        provider.addAttributes([
+            QgsField("route_id", QVariant.Int),
+            QgsField("route_sector_id", QVariant.Int),
+            QgsField("route_load_kg", QVariant.Double),
+            QgsField("route_distance_km", QVariant.Double),
+        ])
+        layer.updateFields()
+
+        def add_feature(coords, route_id, sector_id, load_kg, distance_km):
+            feat = QgsFeature(layer.fields())
+            feat.setGeometry(QgsGeometry.fromPolylineXY([QgsPointXY(*c) for c in coords]))
+            feat.setAttributes([route_id, sector_id, load_kg, distance_km])
+            provider.addFeature(feat)
+
+        add_feature([(0, 0), (1, 0)], 1, 1, 100.0, 10.0)
+        add_feature([(1, 0), (2, 0)], 1, 1, 100.0, 10.0)
+        add_feature([(0, 0), (0, 1)], 2, 1, 300.0, 30.0)
+        add_feature([(0, 1), (0, 2)], 2, 1, 300.0, 30.0)
+        # Rota 3 no setor -1: deve ser ignorada e não contaminar as estatísticas
+        add_feature([(10, 10), (20, 20)], 3, -1, 500.0, 50.0)
+        layer.updateExtents()
+
+        alg = WasteSectorBalance()
+        alg.initAlgorithm()
+        context = QgsProcessingContext()
+        feedback = LogFeedback()
+        params = {
+            alg.INPUT_ROUTES: layer,
+            alg.FIELD_LOAD: "route_load_kg",
+            alg.FIELD_DISTANCE: "route_distance_km",
+            alg.FIELD_ROUTE_ID: "route_id",
+            alg.FIELD_COLLECTION_SECTOR: "route_sector_id",
+            alg.AVG_SPEED: 10.0,
+            alg.UNLOAD_TIME: 0.0,
+            alg.TRAVEL_TIME: 0.0,
+            alg.OUTPUT: "memory:out",
+        }
+        result = alg.processAlgorithm(params, context, feedback)
+        out_layer = context.getMapLayer(result[alg.OUTPUT])
+
+        out_feats = list(out_layer.getFeatures())
+        self.assertEqual(len(out_feats), 1)
+        feat = out_feats[0]
+
+        idx = out_layer.fields().indexFromName
+        self.assertEqual(feat.attribute(idx("sector_id")), 1)
+        self.assertNotEqual(feat.attribute(idx("sector_id")), -1)
+        self.assertEqual(feat.attribute(idx("num_routes")), 2)
+        self.assertAlmostEqual(feat.attribute(idx("total_load_kg")), 400.0)
+        self.assertAlmostEqual(feat.attribute(idx("mean_load_kg")), 200.0)
+        self.assertAlmostEqual(feat.attribute(idx("min_load_kg")), 100.0)
+        self.assertAlmostEqual(feat.attribute(idx("max_load_kg")), 300.0)
+        self.assertAlmostEqual(feat.attribute(idx("std_dev_load_kg")), 100.0)
+        self.assertAlmostEqual(feat.attribute(idx("cv_load")), 0.5)
+        self.assertTrue(any("rota(s) sem setor" in w for w in feedback.warnings))
+
+        # Camada só com setor -1 -> QgsProcessingException
+        layer_unassigned = QgsVectorLayer("LineString?crs=EPSG:3857", "routes_u", "memory")
+        prov_u = layer_unassigned.dataProvider()
+        prov_u.addAttributes([
+            QgsField("route_id", QVariant.Int),
+            QgsField("route_sector_id", QVariant.Int),
+            QgsField("route_load_kg", QVariant.Double),
+            QgsField("route_distance_km", QVariant.Double),
+        ])
+        layer_unassigned.updateFields()
+        f_u = QgsFeature(layer_unassigned.fields())
+        f_u.setGeometry(QgsGeometry.fromPolylineXY([QgsPointXY(0, 0), QgsPointXY(1, 0)]))
+        f_u.setAttributes([1, -1, 100.0, 10.0])
+        prov_u.addFeature(f_u)
+        layer_unassigned.updateExtents()
+
+        params_u = {
+            alg.INPUT_ROUTES: layer_unassigned,
+            alg.FIELD_LOAD: "route_load_kg",
+            alg.FIELD_DISTANCE: "route_distance_km",
+            alg.FIELD_ROUTE_ID: "route_id",
+            alg.FIELD_COLLECTION_SECTOR: "route_sector_id",
+            alg.OUTPUT: "memory:out",
+        }
+        with self.assertRaises(QgsProcessingException):
+            alg.processAlgorithm(params_u, context, LogFeedback())
 
     @unittest.skipUnless(_HAS_QGIS, "requer bindings QGIS completos")
     def test_waste_deadhead_ratio_computes_ratios(self):

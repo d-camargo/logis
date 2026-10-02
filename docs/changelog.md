@@ -2,6 +2,10 @@
 
 Este documento registra as principais alterações e evoluções do plugin **logis** organizadas por versão.
 
+## 0.7.2 - 2026-10-02
+
+- **Resíduos: trechos sem setor (-1) ficam fora da roteirização** — CPP, RPP e CARP, e também o equilíbrio entre setores, o dimensionamento de frota e a cobertura, passam a ignorar os trechos que a setorização deixou com `collection_sector_id = -1`, avisando quantos foram; antes eles eram roteirizados como se fossem mais um setor.
+
 ## 0.7.1 - 2026-10-02
 
 - **Resíduos: a setorização não aborta mais com "Rede desconectada"** — trechos que se cruzam num vértice do meio da linha passam a contar como ligados, e os trechos que de fato ficam fora da rede principal saem com `collection_sector_id = -1` e um aviso (quantos são, quanto da carga representam e quais são), em vez de interromper a setorização inteira.

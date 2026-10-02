@@ -46,6 +46,34 @@ import heapq
 from collections import deque
 from typing import List, Dict, Optional, Set
 
+UNASSIGNED_SECTOR = -1
+
+
+def is_unassigned_sector(value: object) -> bool:
+    """Verifica se o valor representa trecho sem setor (-1).
+
+    Tipos aceitos: int, float (-1.0) ou str (ex.: "-1", " -1 ").
+    Valores nulos (None / NULL), texto não numérico ou outros números retornam False.
+    """
+    if value is None or isinstance(value, bool):
+        return False
+    if hasattr(value, "isNull") and callable(value.isNull) and value.isNull():
+        return False
+    if not isinstance(value, (int, float, str)):
+        if hasattr(value, "value") and callable(value.value):
+            try:
+                value = value.value()
+            except (TypeError, ValueError):
+                return False
+    if isinstance(value, (int, float)):
+        return value == UNASSIGNED_SECTOR
+    if isinstance(value, str):
+        try:
+            return float(value.strip()) == float(UNASSIGNED_SECTOR)
+        except (ValueError, TypeError):
+            return False
+    return False
+
 
 def _validate_edges(edges: List[Dict]) -> Dict[object, Dict]:
     """Validates the edges list and returns a dict of edge_id -> edge."""

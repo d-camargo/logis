@@ -32,10 +32,12 @@ from qgis.core import (
 try:
     from ..core.crs_transform import TransformCheckError, length_meter
     from ..core.indicators.waste import compute_route_balance
+    from ..core.routing.districting import is_unassigned_sector
     from ..core import qgis_compat
 except ImportError:
     from core.crs_transform import TransformCheckError, length_meter
     from core.indicators.waste import compute_route_balance
+    from core.routing.districting import is_unassigned_sector
     from core import qgis_compat
 
 
@@ -197,17 +199,25 @@ class WasteSectorBalance(QgsProcessingAlgorithm):
 
         # sector_val -> { route_key -> {'load_vals': [], 'dist_vals': [], 'geom_len_m': 0.0} }
         sector_grouped = {}
+        unassigned_routes = set()
 
         feat_counter = 0
         for feature in routes_source.getFeatures():
             if feedback.isCanceled():
                 return {}
 
-            sec_val = feature.attribute(sector_field_idx) if sector_field_idx != -1 else 0
-            if sec_val is None:
+            feat_counter += 1
+            if sector_field_idx != -1:
+                sec_val = feature.attribute(sector_field_idx)
+                if is_unassigned_sector(sec_val):
+                    r_val = feature.attribute(route_id_idx) if route_id_idx != -1 else None
+                    unassigned_routes.add(r_val if r_val is not None else feat_counter)
+                    continue
+                if sec_val is None:
+                    sec_val = 0
+            else:
                 sec_val = 0
 
-            feat_counter += 1
             if route_id_idx != -1:
                 r_val = feature.attribute(route_id_idx)
                 route_key = r_val if r_val is not None else feat_counter
@@ -231,7 +241,23 @@ class WasteSectorBalance(QgsProcessingAlgorithm):
 
             r_data['geom_len_m'] += length_m
 
+        if unassigned_routes:
+            sec_display = sector_field_name if sector_field_name else "route_sector_id"
+            feedback.pushWarning(
+                self.tr(
+                    "{count} rota(s) sem setor ({field} = -1) foram ignoradas."
+                ).format(count=len(unassigned_routes), field=sec_display)
+            )
+
         if not sector_grouped:
+            if unassigned_routes:
+                sec_display = sector_field_name if sector_field_name else "route_sector_id"
+                raise QgsProcessingException(
+                    self.tr(
+                        "Todas as rotas estão sem setor ({field} = -1). "
+                        "Refaça a setorização da malha antes de avaliar o equilíbrio das rotas."
+                    ).format(field=sec_display)
+                )
             raise QgsProcessingException(self.tr("Nenhuma rota válida encontrada na camada de entrada."))
 
         out_fields = QgsFields()
@@ -404,7 +430,7 @@ class WasteSectorBalance(QgsProcessingAlgorithm):
             "se omitido, utiliza a extensão das geometrias das rotas.\n"
             "- Campo de identificação da rota (opcional): se informado, agrupa feições por rota.\n"
             "- Campo de setor de coleta (opcional): se informado, calcula o equilíbrio separadamente "
-            "para cada setor.\n"
+            "para cada setor. Trechos com setor -1 (sem setor, saída da setorização) são ignorados.\n"
             "- Velocidade média de coleta: velocidade operacional em km/h (default: 10 km/h).\n"
             "- Tempo fixo de descarga: tempo gasto na descarga por rota em horas (default: 0.0 h).\n"
             "- Tempo fixo de deslocamento: tempo de viagem ao aterro/depósito em horas (default: 0.0 h).\n\n"

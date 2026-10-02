@@ -2,6 +2,8 @@
 import os
 import unittest
 
+from logis.core.routing.districting import UNASSIGNED_SECTOR, is_unassigned_sector
+
 try:
     from qgis.core import (
         QgsApplication,
@@ -175,6 +177,24 @@ class TestWasteDistrictingAlgorithm(unittest.TestCase):
             self._run(layer, num_sectors=3)
         msg = str(ctx.exception)
         self.assertIn("rede principal", msg)
+
+
+class TestUnassignedSector(unittest.TestCase):
+    """Testes puros (sem QGIS) para UNASSIGNED_SECTOR e is_unassigned_sector."""
+
+    def test_unassigned_sector_constant_is_minus_one(self):
+        # O valor é contrato de dados: camadas 0.7.1 já gravadas levam -1 no campo.
+        self.assertEqual(UNASSIGNED_SECTOR, -1)
+
+    def test_unassigned_sector_truthy(self):
+        for val in (-1, -1.0, "-1", " -1 "):
+            with self.subTest(val=val):
+                self.assertTrue(is_unassigned_sector(val))
+
+    def test_is_unassigned_sector_falsy(self):
+        for val in (0, 1, None, "abc", -2):
+            with self.subTest(val=val):
+                self.assertFalse(is_unassigned_sector(val))
 
 
 if __name__ == "__main__":
